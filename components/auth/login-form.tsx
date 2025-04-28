@@ -1,101 +1,96 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
-import { LockKeyhole, User } from "lucide-react"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
-const loginSchema = z.object({
-  username: z.string().min(1, "Tên đăng nhập là bắt buộc"),
-  password: z.string().min(1, "Mật khẩu là bắt buộc"),
-})
-
-type LoginFormValues = z.infer<typeof loginSchema>
-
-export function LoginForm() {
-  const router = useRouter()
-  const { toast } = useToast()
+export default function LoginForm() {
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-  })
-
-  const onSubmit = async (data: LoginFormValues) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setIsLoading(true)
+    setError(null)
 
     try {
       const result = await signIn("credentials", {
-        username: data.username,
-        password: data.password,
+        username,
+        password,
         redirect: false,
       })
 
       if (result?.error) {
-        toast({
-          title: "Đăng nhập thất bại",
-          description: "Tên đăng nhập hoặc mật khẩu không đúng",
-          variant: "destructive",
-        })
-        return
+        setError("Đăng nhập thất bại. Vui lòng kiểm tra lại tên đăng nhập và mật khẩu.")
+      } else {
+        router.push("/dashboard")
       }
-
-      toast({
-        title: "Đăng nhập thành công",
-        description: "Chào mừng bạn quay trở lại",
-      })
-
-      router.push("/dashboard")
-      router.refresh()
-    } catch (error) {
-      toast({
-        title: "Đăng nhập thất bại",
-        description: "Đã xảy ra lỗi khi đăng nhập",
-        variant: "destructive",
-      })
+    } catch (err) {
+      setError("Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại sau.")
+      console.error("Lỗi đăng nhập:", err)
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="username">Tên đăng nhập</Label>
-        <div className="relative">
-          <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <Input id="username" placeholder="Nhập tên đăng nhập" className="pl-10" {...register("username")} />
-        </div>
-        {errors.username && <p className="text-sm font-medium text-red-500">{errors.username.message}</p>}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Mật khẩu</Label>
-        <div className="relative">
-          <LockKeyhole className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <Input
-            id="password"
-            type="password"
-            placeholder="Nhập mật khẩu"
-            className="pl-10"
-            {...register("password")}
-          />
-        </div>
-        {errors.password && <p className="text-sm font-medium text-red-500">{errors.password.message}</p>}
-      </div>
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
-      </Button>
-    </form>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle className="text-2xl">Đăng nhập</CardTitle>
+        <CardDescription>Nhập thông tin đăng nhập của bạn để truy cập hệ thống</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="username">Tên đăng nhập</Label>
+            <Input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Mật khẩu</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+          </Button>
+        </form>
+      </CardContent>
+      <CardFooter className="flex justify-center">
+        <p className="text-sm text-gray-500">
+          Chưa có tài khoản?{" "}
+          <a href="/register" className="text-blue-600 hover:underline">
+            Đăng ký
+          </a>
+        </p>
+      </CardFooter>
+    </Card>
   )
 }

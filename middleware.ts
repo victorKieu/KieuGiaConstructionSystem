@@ -1,47 +1,48 @@
-﻿import { NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { getToken } from "next-auth/jwt"
+
+// Các đường dẫn công khai không cần xác thực
+const publicPaths = ["/login", "/register", "/api/auth"]
 
 export async function middleware(request: NextRequest) {
-    try {
-        const supabase = createClient()
+  const { pathname } = request.nextUrl
 
-        // Kiểm tra phiên đăng nhập
-        const {
-            data: { session },
-        } = await supabase.auth.getSession()
+  // Kiểm tra xem đường dẫn có phải là công khai không
+  const isPublicPath = publicPaths.some((path) => pathname.startsWith(path))
 
-        // Các đường dẫn công khai không cần xác thực
-        const publicPaths = ["/login", "/register", "/api/auth", "/"]
-        const isPublicPath = publicPaths.some(
-            (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + "/"),
-        )
+  // Nếu là đường dẫn công khai, cho phép truy cập
+  if (isPublicPath) {
+    return NextResponse.next()
+  }
 
-        // Các đường dẫn tĩnh không cần xác thực
-        const isStaticPath =
-            request.nextUrl.pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js)$/) ||
-            request.nextUrl.pathname.startsWith("/_next/")
+  // Kiểm tra token từ NextAuth
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
 
-        // Nếu không có phiên đăng nhập và không phải là đường dẫn công khai hoặc tĩnh
-        if (!session && !isPublicPath && !isStaticPath) {
-            return NextResponse.redirect(new URL("/login", request.url))
-        }
+  // Nếu không có token, chuyển hướng đến trang đăng nhập
+  if (!token) {
+    const loginUrl = new URL("/login", request.url)
+    loginUrl.searchParams.set("callbackUrl", encodeURI(request.url))
+    return NextResponse.redirect(loginUrl)
+  }
 
-        // Nếu đã đăng nhập và đang truy cập trang đăng nhập/đăng ký
-        if (session && (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/register")) {
-            return NextResponse.redirect(new URL("/dashboard", request.url))
-        }
-
-        return NextResponse.next()
-    } catch (error) {
-        console.error("Middleware error:", error)
-        // Trong trường hợp lỗi, cho phép request tiếp tục
-        return NextResponse.next()
-    }
+  // Nếu có token, cho phép truy cập
+  return NextResponse.next()
 }
 
-// Chỉ áp dụng middleware cho các đường dẫn sau
+// Chỉ áp dụng middleware cho các đường dẫn cần xác thực
 export const config = {
-    matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public (public files)
+     * - login (login page)
+     * - register (register page)
+     * - api/auth (auth API)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|public|login|register|api/auth).*)",
+  ],
 }
-
