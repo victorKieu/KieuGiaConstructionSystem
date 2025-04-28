@@ -38,25 +38,30 @@ export const authOptions: NextAuthOptions = {
                     return null
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: { username: credentials.username },
-                })
+                try {
+                    const user = await prisma.user.findUnique({
+                        where: { username: credentials.username },
+                    })
 
-                if (!user) {
+                    if (!user) {
+                        return null
+                    }
+
+                    const isPasswordValid = await compare(credentials.password, user.password)
+
+                    if (!isPasswordValid) {
+                        return null
+                    }
+
+                    return {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        username: user.username,
+                    }
+                } catch (error) {
+                    console.error("Lỗi khi xác thực người dùng:", error)
                     return null
-                }
-
-                const isPasswordValid = await compare(credentials.password, user.password)
-
-                if (!isPasswordValid) {
-                    return null
-                }
-
-                return {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    username: user.username,
                 }
             },
         },
@@ -81,11 +86,12 @@ export const authOptions: NextAuthOptions = {
 
 // Kiểm tra xem người dùng đã đăng nhập chưa
 export async function getSession() {
-    const supabase = createClient()
     try {
+        const supabase = createClient()
         const { data, error } = await supabase.auth.getSession()
         if (error) {
-            throw error
+            console.error("Lỗi khi lấy phiên đăng nhập:", error)
+            return null
         }
         return data.session
     } catch (error) {
@@ -96,11 +102,12 @@ export async function getSession() {
 
 // Lấy thông tin người dùng hiện tại
 export async function getCurrentUser() {
-    const supabase = createClient()
     try {
+        const supabase = createClient()
         const { data, error } = await supabase.auth.getUser()
         if (error) {
-            throw error
+            console.error("Lỗi khi lấy thông tin người dùng:", error)
+            return null
         }
         return data.user
     } catch (error) {
@@ -111,10 +118,15 @@ export async function getCurrentUser() {
 
 // Middleware để kiểm tra xác thực
 export async function requireAuth(request) {
-    const session = await getSession()
-    if (!session) {
-        // Thay vì sử dụng redirect từ next/navigation, sử dụng NextResponse.redirect
+    try {
+        const session = await getSession()
+        if (!session) {
+            // Thay vì sử dụng redirect từ next/navigation, sử dụng NextResponse.redirect
+            return NextResponse.redirect(new URL("/login", request.url))
+        }
+        return session
+    } catch (error) {
+        console.error("Lỗi khi kiểm tra xác thực:", error)
         return NextResponse.redirect(new URL("/login", request.url))
     }
-    return session
 }
