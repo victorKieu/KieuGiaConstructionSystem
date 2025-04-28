@@ -1,5 +1,12 @@
 import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { NextResponse } from "next/server"
+
+// Export biến auth để các file khác có thể import
+export const auth = {
+    getSession,
+    getCurrentUser,
+    requireAuth,
+}
 
 // Kiểm tra xem người dùng đã đăng nhập chưa
 export async function getSession() {
@@ -32,10 +39,11 @@ export async function getCurrentUser() {
 }
 
 // Middleware để kiểm tra xác thực
-export async function requireAuth() {
+export async function requireAuth(request) {
     const session = await getSession()
     if (!session) {
-        redirect("/login")
+        // Thay vì sử dụng redirect từ next/navigation, sử dụng NextResponse.redirect
+        return NextResponse.redirect(new URL("/login", request.url))
     }
     return session
 }

@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Loại bỏ swcMinify vì nó không được hỗ trợ trong Next.js 15
+  reactStrictMode: true,
+  // Loại bỏ swcMinify vì không được hỗ trợ trong Next.js 15
   // swcMinify: true,
   eslint: {
     ignoreDuringBuilds: true,
@@ -9,7 +10,6 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    domains: ['images.unsplash.com'],
     unoptimized: true,
   },
 }
