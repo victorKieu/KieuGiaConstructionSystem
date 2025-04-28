@@ -6,29 +6,32 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("SUPABASE_POSTGRES_PRISMA_URL")
+  directUrl = env("SUPABASE_POSTGRES_URL_NON_POOLING")
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String?
-  email     String?  @unique
-  username  String   @unique
+  email     String?   @unique
+  username  String    @unique
   password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  accounts  Account[]
+  sessions  Session[]
 }
 
 model Project {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   description String?
   status      String
   startDate   DateTime
   endDate     DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Customer {
@@ -62,14 +65,14 @@ model Employee {
 }
 
 model Asset {
-  id          String   @id @default(cuid())
-  name        String
-  type        String
-  status      String
+  id           String   @id @default(cuid())
+  name         String
+  type         String
+  status       String
   purchaseDate DateTime
-  value       Float
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  value        Float
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Supplier {
@@ -84,29 +87,29 @@ model Supplier {
 }
 
 model MaterialRequest {
-  id          String   @id @default(cuid())
-  projectId   String
-  status      String
-  requestDate DateTime @default(now())
+  id           String    @id @default(cuid())
+  projectId    String
+  status       String
+  requestDate  DateTime  @default(now())
   approvedDate DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 // NextAuth.js Models
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
