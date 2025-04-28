@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { compare } from "bcryptjs" // Sửa: Thay bcrypt bằng bcryptjs
+import { compare } from "bcryptjs" // Thay đổi từ bcrypt sang bcryptjs
 import prisma from "@/lib/db"
 import { z } from "zod"
-import { cookies } from "next/headers" // Thêm: Import cookies từ next/headers
+import { cookies } from "next/headers" // Thêm import cookies từ next/headers
 
 // Schema cho đăng nhập
 const loginSchema = z.object({
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
             user: userWithoutPassword,
         })
 
-        // Sửa: Thay đổi cách thiết lập cookie
+        // Thiết lập cookie sử dụng API mới
         cookies().set({
             name: "auth",
             value: "true",
@@ -56,10 +56,6 @@ export async function POST(request: NextRequest) {
 
         if (error instanceof z.ZodError) {
             return NextResponse.json({ success: false, error: "Validation error", details: error.errors }, { status: 400 })
-        }
-
-        if (error instanceof Error) {
-            return NextResponse.json({ success: false, message: error.message }, { status: 500 })
         }
 
         return NextResponse.json({ success: false, message: "Lỗi server" }, { status: 500 })

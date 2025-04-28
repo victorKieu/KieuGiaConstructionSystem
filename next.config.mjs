@@ -1,28 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  swcMinify: true,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  images: {
-    domains: ['localhost'],
-  },
-  // Thêm cấu hình webpack để xử lý lỗi ESM URL Scheme
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      // Đảm bảo webpack không cố gắng giải quyết các đường dẫn tuyệt đối
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        path: false,
-      };
-    }
-    return config;
-  },
+    // Loại bỏ swcMinify vì nó không được hỗ trợ trong Next.js 15
+    // swcMinify: true,
+    eslint: {
+        ignoreDuringBuilds: true,
+    },
+    typescript: {
+        ignoreBuildErrors: true,
+    },
+    images: {
+        domains: ['images.unsplash.com'],
+        unoptimized: true,
+    },
 }
 
 export default nextConfig

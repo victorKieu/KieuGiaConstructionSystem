@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { hash } from "bcryptjs" // Thay bcrypt bằng bcryptjs
+import { hash } from "bcryptjs" // Thay đổi từ bcrypt sang bcryptjs
 import prisma from "@/lib/db"
 import { z } from "zod"
 import { cookies } from "next/headers" // Thêm import cookies từ next/headers
 
 // Schema cho đăng ký
 const registerSchema = z.object({
-    username: z.string().min(3, "Tên đăng nhập phải có ít nhất 3 ký tự"),
-    email: z.string().email("Email không hợp lệ"),
-    password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
-    fullName: z.string().optional(),
+    username: z.string().min(3),
+    email: z.string().email(),
+    password: z.string().min(6),
 })
 
 export async function POST(request: NextRequest) {
@@ -19,9 +18,9 @@ export async function POST(request: NextRequest) {
 
         // Validate dữ liệu
         const validatedData = registerSchema.parse(body)
-        const { username, email, password, fullName } = validatedData
+        const { username, email, password } = validatedData
 
-        // Kiểm tra xem username hoặc email đã tồn tại chưa
+        // Kiểm tra username đã tồn tại chưa
         const existingUser = await prisma.user.findFirst({
             where: {
                 OR: [{ username }, { email }],
@@ -32,13 +31,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 {
                     success: false,
-                    message: "Tên đăng nhập hoặc email đã tồn tại",
+                    message: "Username hoặc email đã tồn tại",
                 },
                 { status: 400 },
             )
         }
 
-        // Mã hóa mật khẩu
+        // Hash mật khẩu
         const hashedPassword = await hash(password, 10)
 
         // Tạo người dùng mới
@@ -47,20 +46,17 @@ export async function POST(request: NextRequest) {
                 username,
                 email,
                 password: hashedPassword,
-                fullName: fullName || "",
             },
         })
 
-        // Loại bỏ mật khẩu khỏi response
-        const { password: _, ...userWithoutPassword } = newUser
-
         // Tạo response thành công
+        const { password: _, ...userWithoutPassword } = newUser
         const response = NextResponse.json({
             success: true,
             user: userWithoutPassword,
         })
 
-        // Thiết lập cookie
+        // Thiết lập cookie sử dụng API mới
         cookies().set({
             name: "auth",
             value: "true",
@@ -80,16 +76,6 @@ export async function POST(request: NextRequest) {
                     details: error.errors,
                 },
                 { status: 400 },
-            )
-        }
-
-        if (error instanceof Error) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: error.message,
-                },
-                { status: 500 },
             )
         }
 

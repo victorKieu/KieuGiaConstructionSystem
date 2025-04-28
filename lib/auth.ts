@@ -1,7 +1,5 @@
-import { createClient } from "@/lib/supabase/server-new"
+import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-// Nếu file này import bcrypt, thay đổi thành bcryptjs
-// import { compare, hash } from "bcryptjs"
 
 // Kiểm tra xem người dùng đã đăng nhập chưa
 export async function getSession() {
