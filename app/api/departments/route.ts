@@ -1,0 +1,34 @@
+import { type NextRequest, NextResponse } from "next/server"
+import prisma from "@/lib/prisma-client"
+
+export async function GET(request: NextRequest) {
+  try {
+    const departments = await prisma.department.findMany({
+      include: {
+        users: true,
+      },
+    })
+    return NextResponse.json(departments)
+  } catch (error) {
+    console.error("Error fetching departments:", error)
+    return NextResponse.json({ error: "Failed to fetch departments" }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const data = await request.json()
+
+    const department = await prisma.department.create({
+      data: {
+        name: data.name,
+        description: data.description,
+      },
+    })
+
+    return NextResponse.json(department)
+  } catch (error) {
+    console.error("Error creating department:", error)
+    return NextResponse.json({ error: "Failed to create department" }, { status: 500 })
+  }
+}

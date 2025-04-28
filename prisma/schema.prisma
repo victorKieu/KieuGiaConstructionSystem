@@ -1,0 +1,342 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  username      String    @unique
+  email         String?   @unique
+  emailVerified DateTime?
+  password      String
+  image         String?
+  role          String    @default("USER") // ADMIN, PROJECT_MANAGER, STAFF, ACCOUNTANT, etc.
+  department    String?
+  position      String?
+  phone         String?
+  address       String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relationships
+  accounts      Account[]
+  sessions      Session[]
+  projects      ProjectMember[]
+  assignedTasks Task[]          @relation("AssignedTo")
+  createdTasks  Task[]          @relation("CreatedBy")
+  constructionLogs ConstructionLog[]
+  financialRecords Financial[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Project {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  name            String
+  description     String?   @db.Text
+  clientId        String
+  location        String
+  startDate       DateTime
+  expectedEndDate DateTime
+  actualEndDate   DateTime?
+  status          String    // PLANNING, IN_PROGRESS, COMPLETED, ON_HOLD, CANCELLED
+  progress        Float     @default(0)
+  budget          Float
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationships
+  client          Client    @relation(fields: [clientId], references: [id])
+  members         ProjectMember[]
+  stages          ProjectStage[]
+  tasks           Task[]
+  documents       Document[]
+  constructionLogs ConstructionLog[]
+  financialRecords Financial[]
+  warranties      Warranty[]
+}
+
+model Client {
+  id          String    @id @default(cuid())
+  name        String
+  contactName String?
+  email       String?
+  phone       String?
+  address     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relationships
+  projects    Project[]
+}
+
+model ProjectMember {
+  id        String    @id @default(cuid())
+  projectId String
+  userId    String
+  role      String    // PROJECT_MANAGER, ENGINEER, WORKER, etc.
+  startDate DateTime
+  endDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relationships
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ProjectStage {
+  id                  String    @id @default(cuid())
+  projectId           String
+  name                String
+  description         String?   @db.Text
+  startDate           DateTime
+  endDate             DateTime
+  status              String    // NOT_STARTED, IN_PROGRESS, COMPLETED, DELAYED
+  completionPercentage Float     @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relationships
+  project             Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks               Task[]
+}
+
+model Task {
+  id                  String        @id @default(cuid())
+  projectId           String
+  stageId             String?
+  name                String
+  description         String?       @db.Text
+  assignedToId        String?
+  startDate           DateTime
+  dueDate             DateTime
+  status              String        // NOT_STARTED, IN_PROGRESS, COMPLETED, DELAYED
+  priority            String        // LOW, MEDIUM, HIGH, URGENT
+  completionPercentage Float         @default(0)
+  createdById         String
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  // Relationships
+  project             Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stage               ProjectStage? @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  assignedTo          User?         @relation("AssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy           User          @relation("CreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  projectId   String
+  name        String
+  type        String   // CONTRACT, DRAWING, PERMIT, REPORT, OTHER
+  filePath    String
+  fileSize    Int?
+  uploadedAt  DateTime @default(now())
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ConstructionLog {
+  id            String   @id @default(cuid())
+  projectId     String
+  date          DateTime
+  weather       String?
+  temperature   String?
+  workPerformed String   @db.Text
+  issues        String?  @db.Text
+  createdById   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relationships
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy     User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  media         Media[]
+}
+
+model Media {
+  id                String         @id @default(cuid())
+  constructionLogId String
+  type              String         // IMAGE, VIDEO
+  url               String
+  description       String?
+  uploadedAt        DateTime       @default(now())
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  // Relationships
+  constructionLog   ConstructionLog @relation(fields: [constructionLogId], references: [id], onDelete: Cascade)
+}
+
+model Financial {
+  id          String   @id @default(cuid())
+  projectId   String
+  type        String   // INCOME, EXPENSE
+  amount      Float
+  date        DateTime
+  description String   @db.Text
+  reference   String?
+  paymentMethod String
+  status      String   // PENDING, COMPLETED
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+}
+
+model Warranty {
+  id          String    @id @default(cuid())
+  projectId   String
+  itemName    String
+  description String?   @db.Text
+  startDate   DateTime
+  endDate     DateTime
+  status      String    // ACTIVE, EXPIRED, CLAIMED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relationships
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  inspections WarrantyInspection[]
+}
+
+model WarrantyInspection {
+  id          String   @id @default(cuid())
+  warrantyId  String
+  date        DateTime
+  inspector   String
+  status      String   // PASSED, FAILED, NEEDS_ATTENTION
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  warranty    Warranty @relation(fields: [warrantyId], references: [id], onDelete: Cascade)
+}
+
+model Inventory {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  category    String
+  unit        String
+  quantity    Float
+  minQuantity Float    @default(0)
+  unitPrice   Float
+  location    String?
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  transactions InventoryTransaction[]
+}
+
+model InventoryTransaction {
+  id          String    @id @default(cuid())
+  inventoryId String
+  type        String    // IN, OUT
+  quantity    Float
+  date        DateTime
+  projectId   String?
+  notes       String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relationships
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+}
+
+model Supplier {
+  id          String   @id @default(cuid())
+  name        String
+  contactName String?
+  email       String?
+  phone       String?
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Equipment {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  name           String
+  type           String
+  serialNumber   String?
+  purchaseDate   DateTime
+  status         String   // AVAILABLE, IN_USE, MAINTENANCE, RETIRED
+  assignedTo     String?
+  location       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relationships
+  maintenance    EquipmentMaintenance[]
+}
+
+model EquipmentMaintenance {
+  id          String   @id @default(cuid())
+  equipmentId String
+  date        DateTime
+  type        String   // ROUTINE, REPAIR, INSPECTION
+  description String   @db.Text
+  cost        Float?
+  technician  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+}
