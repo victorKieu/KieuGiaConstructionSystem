@@ -1,74 +1,109 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+
 import { Button } from "@/components/ui/button"
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { User, LockKeyhole } from "lucide-react"
+import { toast } from "sonner"
 
-export default function LoginForm() {
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const router = useRouter()
+const formSchema = z.object({
+    email: z.string().email({
+        message: "Vui lòng nhập email hợp lệ.",
+    }),
+    password: z.string().min(6, {
+        message: "Mật khẩu phải có ít nhất 6 ký tự.",
+    }),
+})
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+export function LoginForm() {
+    const router = useRouter()
+    const [isLoading, setIsLoading] = useState(false)
 
-    // Kiểm tra thông tin đăng nhập đơn giản
-    if (username === "admin" && password === "password") {
-      // Chuyển hướng trực tiếp đến trang dashboard
-      router.push("/dashboard")
-    } else {
-      setError("Tên đăng nhập hoặc mật khẩu không đúng")
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            email: "",
+            password: "",
+        },
+    })
+
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        setIsLoading(true)
+
+        try {
+            const result = await signIn("credentials", {
+                email: values.email,
+                password: values.password,
+                redirect: false,
+            })
+
+            if (result?.error) {
+                toast.error("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.")
+                return
+            }
+
+            toast.success("Đăng nhập thành công!")
+            router.push("/dashboard")
+            router.refresh()
+        } catch (error) {
+            toast.error("Đã xảy ra lỗi khi đăng nhập.")
+        } finally {
+            setIsLoading(false)
+        }
     }
 
-    setIsLoading(false)
-  }
-
-  return (
-    <div className="w-full">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="username">Tên đăng nhập</Label>
-          <div className="relative">
-            <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              id="username"
-              placeholder="Nhập tên đăng nhập"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="pl-10 border-gray-300"
-              required
-            />
-          </div>
+    return (
+        <div className="w-full max-w-md space-y-6">
+            <div className="space-y-2 text-center">
+                <h1 className="text-3xl font-bold">Đăng nhập</h1>
+                <p className="text-gray-500">Nhập thông tin đăng nhập của bạn</p>
+            </div>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="your@email.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Mật khẩu</FormLabel>
+                                <FormControl>
+                                    <Input type="password" placeholder="••••••••" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+                    </Button>
+                </form>
+            </Form>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="password">Mật khẩu</Label>
-          <div className="relative">
-            <LockKeyhole className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              id="password"
-              type="password"
-              placeholder="Nhập mật khẩu"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 border-gray-300"
-              required
-            />
-          </div>
-        </div>
-        {error && <p className="text-sm font-medium text-red-500">{error}</p>}
-        <Button type="submit" className="w-full bg-[#d5a95e] hover:bg-[#c69a50] text-white" disabled={isLoading}>
-          {isLoading ? "Đang đăng nhập..." : "Đăng Nhập"}
-        </Button>
-      </form>
-    </div>
-  )
+    )
 }
