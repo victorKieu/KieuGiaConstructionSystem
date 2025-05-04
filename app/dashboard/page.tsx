@@ -1,18 +1,28 @@
+import { createClient } from "@/lib/supabase/server"
+import { DashboardHeader } from "@/components/dashboard/dashboard-header"
+import { DashboardShell } from "@/components/dashboard/dashboard-shell"
+import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 
-export default async function DashboardPage() {
-    const headersList = headers()
-    const request = {
-        url: headersList.get("x-url") || "http://localhost:3000",
-    }
 
-    const session = await auth.requireAuth(request)
+export default async function DashboardPage() {
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+        redirect("/login")
+    }
 
     // Nếu requireAuth trả về NextResponse, chúng ta sẽ không đến được đây
     // vì NextResponse.redirect sẽ chuyển hướng người dùng
 
     return (
+        <DashboardShell>
+            <DashboardHeader
+                heading="Dashboard"
+                text={`Chào mừng ${session.user.email || 'bạn'} đến với hệ thống quản lý xây dựng Kieu Gia.`}
+            />
         <div className="container mx-auto p-8">
             <h1 className="text-3xl font-bold mb-6">Bảng điều khiển</h1>
 
@@ -37,6 +47,7 @@ export default async function DashboardPage() {
                     </div>
                 </div>
             </div>
-        </div>
+            </div>
+        </DashboardShell>
     )
 }

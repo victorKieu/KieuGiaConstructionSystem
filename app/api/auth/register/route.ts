@@ -1,90 +1,29 @@
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
-import { hash } from "bcryptjs" // Thay đổi từ bcrypt sang bcryptjs
-import prisma from "@/lib/db"
-import { z } from "zod"
-import { cookies } from "next/headers" // Thêm import cookies từ next/headers
+import { createClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server'
 
-// Schema cho đăng ký
-const registerSchema = z.object({
-    username: z.string().min(3),
-    email: z.string().email(),
-    password: z.string().min(6),
-})
-
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
     try {
-        const body = await request.json()
+        const supabase = createClient()
+        const { email, password } = await request.json()
 
-        // Validate dữ liệu
-        const validatedData = registerSchema.parse(body)
-        const { username, email, password } = validatedData
-
-        // Kiểm tra username đã tồn tại chưa
-        const existingUser = await prisma.user.findFirst({
-            where: {
-                OR: [{ username }, { email }],
-            },
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`,
+            }
         })
 
-        if (existingUser) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: "Username hoặc email đã tồn tại",
-                },
-                { status: 400 },
-            )
+        if (error) {
+            return NextResponse.json({ error: error.message }, { status: 400 })
         }
 
-        // Hash mật khẩu
-        const hashedPassword = await hash(password, 10)
-
-        // Tạo người dùng mới
-        const newUser = await prisma.user.create({
-            data: {
-                username,
-                email,
-                password: hashedPassword,
-            },
+        return NextResponse.json({
+            user: data.user,
+            session: data.session
         })
-
-        // Tạo response thành công
-        const { password: _, ...userWithoutPassword } = newUser
-        const response = NextResponse.json({
-            success: true,
-            user: userWithoutPassword,
-        })
-
-        // Thiết lập cookie sử dụng API mới
-        cookies().set({
-            name: "auth",
-            value: "true",
-            httpOnly: true,
-            path: "/",
-        })
-
-        return response
     } catch (error) {
-        console.error("Register error:", error)
-
-        if (error instanceof z.ZodError) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: "Validation error",
-                    details: error.errors,
-                },
-                { status: 400 },
-            )
-        }
-
-        return NextResponse.json(
-            {
-                success: false,
-                message: "Lỗi server",
-            },
-            { status: 500 },
-        )
+        console.error("[AUTH_REGISTER]", error)
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
 }
