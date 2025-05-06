@@ -8,6 +8,8 @@ type SidebarContextType = {
   isExpanded: boolean
   setIsExpanded: (value: boolean) => void
   isMobile: boolean
+  toggleSidebar: () => void
+  closeSidebar: () => void
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
@@ -22,7 +24,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
       const mobile = window.innerWidth < 768
       setIsMobile(mobile)
       // Trên mobile, mặc định sidebar sẽ thu gọn
-      if (mobile) {
+      if (mobile && isExpanded) {
         setIsExpanded(false)
       }
     }
@@ -35,9 +37,25 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 
     // Cleanup
     return () => window.removeEventListener("resize", checkScreenSize)
-  }, [])
+  }, [isExpanded])
 
-  return <SidebarContext.Provider value={{ isExpanded, setIsExpanded, isMobile }}>{children}</SidebarContext.Provider>
+  // Hàm toggle sidebar
+  const toggleSidebar = () => {
+    setIsExpanded(!isExpanded)
+  }
+
+  // Hàm đóng sidebar (hữu ích cho mobile)
+  const closeSidebar = () => {
+    if (isMobile) {
+      setIsExpanded(false)
+    }
+  }
+
+  return (
+    <SidebarContext.Provider value={{ isExpanded, setIsExpanded, isMobile, toggleSidebar, closeSidebar }}>
+      {children}
+    </SidebarContext.Provider>
+  )
 }
 
 export function useSidebar() {

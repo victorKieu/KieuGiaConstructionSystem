@@ -2,27 +2,13 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import {
-  MoreHorizontal,
-  ArrowUpDown,
-  ChevronDown,
-  Building,
-  User,
-  Landmark,
-  Phone,
-  Mail,
-  MapPin,
-  Edit,
-  Trash2,
-  Eye,
-  Search,
-} from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Building, Edit, Eye, Landmark, MoreHorizontal, Search, Trash2, User, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -31,106 +17,54 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { deleteCustomer } from "@/lib/actions/customer-actions"
 import { toast } from "@/components/ui/use-toast"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { useRouter } from "next/navigation"
+import { deleteCustomer } from "@/lib/actions/customer-actions"
 
 export function CustomerList({ customers = [] }) {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [typeFilter, setTypeFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [sortField, setSortField] = useState("name")
-  const [sortDirection, setSortDirection] = useState("asc")
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [customerToDelete, setCustomerToDelete] = useState<{ id: string; name: string } | null>(null)
 
   // Xử lý xóa khách hàng
-  const handleDeleteCustomer = async () => {
-    if (!customerToDelete) return
-
-    try {
-      const result = await deleteCustomer(customerToDelete.id)
-
+  const handleDelete = async (id, name) => {
+    if (confirm(`Bạn có chắc chắn muốn xóa khách hàng "${name}" không?`)) {
+      const result = await deleteCustomer(id)
       if (result.success) {
         toast({
-          title: "Xóa khách hàng thành công",
-          description: `Đã xóa khách hàng "${customerToDelete.name}" khỏi hệ thống.`,
+          title: "Xóa thành công",
+          description: `Đã xóa khách hàng "${name}"`,
         })
         router.refresh()
       } else {
         toast({
-          title: "Lỗi khi xóa khách hàng",
-          description: result.error || "Đã xảy ra lỗi khi xóa khách hàng.",
+          title: "Lỗi",
+          description: result.error || "Không thể xóa khách hàng",
           variant: "destructive",
         })
       }
-    } catch (error) {
-      console.error("Error deleting customer:", error)
-      toast({
-        title: "Lỗi khi xóa khách hàng",
-        description: "Đã xảy ra lỗi khi xóa khách hàng. Vui lòng thử lại sau.",
-        variant: "destructive",
-      })
-    } finally {
-      setDeleteDialogOpen(false)
-      setCustomerToDelete(null)
     }
   }
 
-  // Lọc và sắp xếp danh sách khách hàng
-  const filteredCustomers = customers
-    .filter((customer) => {
-      // Lọc theo từ khóa tìm kiếm
-      const searchMatch =
-        customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.phone?.includes(searchTerm) ||
-        customer.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  // Lọc khách hàng theo tìm kiếm và bộ lọc
+  const filteredCustomers = customers.filter((customer) => {
+    const matchesSearch =
+      customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.contact_person?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.phone?.includes(searchTerm) ||
+      customer.email?.toLowerCase().includes(searchTerm.toLowerCase())
 
-      // Lọc theo loại khách hàng
-      const typeMatch = typeFilter === "all" || customer.type === typeFilter
+    const matchesType = typeFilter === "all" || customer.type === typeFilter
+    const matchesStatus = statusFilter === "all" || customer.status === statusFilter
 
-      // Lọc theo trạng thái
-      const statusMatch = statusFilter === "all" || customer.status === statusFilter
-
-      return searchMatch && typeMatch && statusMatch
-    })
-    .sort((a, b) => {
-      // Sắp xếp theo trường đã chọn
-      const fieldA = a[sortField] || ""
-      const fieldB = b[sortField] || ""
-
-      if (typeof fieldA === "string" && typeof fieldB === "string") {
-        return sortDirection === "asc" ? fieldA.localeCompare(fieldB) : fieldB.localeCompare(fieldA)
-      }
-
-      return sortDirection === "asc" ? (fieldA > fieldB ? 1 : -1) : fieldA < fieldB ? 1 : -1
-    })
-
-  // Xử lý sắp xếp
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
-    } else {
-      setSortField(field)
-      setSortDirection("asc")
-    }
-  }
+    return matchesSearch && matchesType && matchesStatus
+  })
 
   // Lấy icon cho loại khách hàng
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type) => {
     switch (type) {
       case "company":
         return <Building className="h-4 w-4 text-blue-500" />
@@ -139,12 +73,12 @@ export function CustomerList({ customers = [] }) {
       case "government":
         return <Landmark className="h-4 w-4 text-purple-500" />
       default:
-        return <Building className="h-4 w-4" />
+        return null
     }
   }
 
   // Lấy tên hiển thị cho loại khách hàng
-  const getTypeName = (type: string) => {
+  const getTypeName = (type) => {
     switch (type) {
       case "company":
         return "Doanh nghiệp"
@@ -157,150 +91,106 @@ export function CustomerList({ customers = [] }) {
     }
   }
 
-  // Lấy badge cho trạng thái khách hàng
-  const getStatusBadge = (status: string) => {
+  // Lấy badge cho trạng thái
+  const getStatusBadge = (status) => {
     switch (status) {
       case "active":
-        return <Badge className="bg-green-100 text-green-800">Đang hợp tác</Badge>
+        return <Badge className="bg-green-500">Đang hợp tác</Badge>
       case "potential":
-        return <Badge className="bg-blue-100 text-blue-800">Tiềm năng</Badge>
+        return <Badge className="bg-blue-500">Tiềm năng</Badge>
       case "inactive":
-        return <Badge className="bg-gray-100 text-gray-800">Ngừng hợp tác</Badge>
+        return <Badge variant="outline">Ngừng hợp tác</Badge>
       default:
-        return <Badge>{status}</Badge>
+        return <Badge variant="outline">{status}</Badge>
     }
   }
 
   return (
-    <Card className="mt-6">
+    <Card>
       <CardHeader>
         <CardTitle>Danh sách khách hàng</CardTitle>
-        <CardDescription>Quản lý thông tin khách hàng của công ty</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col md:flex-row items-center py-4 gap-3">
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <CardDescription>Quản lý danh sách khách hàng và đối tác của công ty</CardDescription>
+        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+          <div className="flex flex-1 items-center space-x-2">
             <Input
-              placeholder="Tìm kiếm khách hàng..."
+              placeholder="Tìm kiếm theo tên, mã, email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
+              className="max-w-sm"
+              prefix={<Search className="h-4 w-4 text-muted-foreground" />}
             />
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                Loại khách hàng <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Lọc theo loại</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem checked={typeFilter === "all"} onCheckedChange={() => setTypeFilter("all")}>
-                Tất cả
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={typeFilter === "company"}
-                onCheckedChange={() => setTypeFilter("company")}
-              >
-                Doanh nghiệp
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={typeFilter === "individual"}
-                onCheckedChange={() => setTypeFilter("individual")}
-              >
-                Cá nhân
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={typeFilter === "government"}
-                onCheckedChange={() => setTypeFilter("government")}
-              >
-                Cơ quan nhà nước
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                Trạng thái <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Lọc theo trạng thái</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem checked={statusFilter === "all"} onCheckedChange={() => setStatusFilter("all")}>
-                Tất cả
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={statusFilter === "active"}
-                onCheckedChange={() => setStatusFilter("active")}
-              >
-                Đang hợp tác
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={statusFilter === "potential"}
-                onCheckedChange={() => setStatusFilter("potential")}
-              >
-                Tiềm năng
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={statusFilter === "inactive"}
-                onCheckedChange={() => setStatusFilter("inactive")}
-              >
-                Ngừng hợp tác
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Loại khách hàng" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả loại</SelectItem>
+                <SelectItem value="company">Doanh nghiệp</SelectItem>
+                <SelectItem value="individual">Cá nhân</SelectItem>
+                <SelectItem value="government">Cơ quan nhà nước</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="active">Đang hợp tác</SelectItem>
+                <SelectItem value="potential">Tiềm năng</SelectItem>
+                <SelectItem value="inactive">Ngừng hợp tác</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Mã KH</TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort("name")}>
-                  <div className="flex items-center">
-                    Tên khách hàng
-                    {sortField === "name" && <ArrowUpDown className="ml-2 h-4 w-4" />}
-                  </div>
-                </TableHead>
-                <TableHead>Loại</TableHead>
-                <TableHead>Liên hệ</TableHead>
-                <TableHead>Địa chỉ</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCustomers.length > 0 ? (
-                filteredCustomers.map((customer) => (
+      </CardHeader>
+      <CardContent>
+        {filteredCustomers.length === 0 ? (
+          <div className="flex h-[300px] flex-col items-center justify-center rounded-md border border-dashed p-8 text-center">
+            <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
+              <h3 className="mt-4 text-lg font-semibold">Không tìm thấy khách hàng</h3>
+              <p className="mb-4 mt-2 text-sm text-muted-foreground">
+                Không có khách hàng nào phù hợp với tiêu chí tìm kiếm. Vui lòng thử lại với tiêu chí khác.
+              </p>
+              <Button asChild>
+                <Link href="/dashboard/customers/new">
+                  <Plus className="mr-2 h-4 w-4" /> Thêm khách hàng mới
+                </Link>
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Mã</TableHead>
+                  <TableHead>Tên khách hàng</TableHead>
+                  <TableHead>Loại</TableHead>
+                  <TableHead>Liên hệ</TableHead>
+                  <TableHead>Điện thoại</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCustomers.map((customer) => (
                   <TableRow key={customer.id}>
                     <TableCell className="font-medium">{customer.code}</TableCell>
-                    <TableCell>{customer.name}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1">
+                      <div className="font-medium">{customer.name}</div>
+                      <div className="text-sm text-muted-foreground">{customer.email}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
                         {getTypeIcon(customer.type)}
-                        <span>{getTypeName(customer.type)}</span>
+                        <span className="ml-2">{getTypeName(customer.type)}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1">
-                          <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-sm">{customer.phone}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-sm">{customer.email}</span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-sm truncate max-w-[200px]">{customer.address}</span>
-                      </div>
-                    </TableCell>
+                    <TableCell>{customer.contact_person}</TableCell>
+                    <TableCell>{customer.phone}</TableCell>
                     <TableCell>{getStatusBadge(customer.status)}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -314,60 +204,31 @@ export function CustomerList({ customers = [] }) {
                           <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
                           <DropdownMenuItem asChild>
                             <Link href={`/dashboard/customers/${customer.id}`}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              Xem chi tiết
+                              <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link href={`/dashboard/customers/${customer.id}/edit`}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Chỉnh sửa
+                              <Edit className="mr-2 h-4 w-4" /> Chỉnh sửa
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-red-600"
-                            onClick={() => {
-                              setCustomerToDelete({ id: customer.id, name: customer.name })
-                              setDeleteDialogOpen(true)
-                            }}
+                            onClick={() => handleDelete(customer.id, customer.name)}
                           >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Xóa
+                            <Trash2 className="mr-2 h-4 w-4" /> Xóa
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
-                    Không tìm thấy khách hàng nào.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </CardContent>
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc chắn muốn xóa khách hàng này?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Hành động này không thể hoàn tác. Khách hàng "{customerToDelete?.name}" sẽ bị xóa vĩnh viễn khỏi hệ thống.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteCustomer} className="bg-red-600 hover:bg-red-700">
-              Xóa khách hàng
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Card>
   )
 }

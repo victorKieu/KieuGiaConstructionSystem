@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache"
 // Lấy danh sách khách hàng
 export async function getCustomers() {
   try {
-    const { data, error } = await supabase.from("customers").select("*").order("createdAt", { ascending: false })
+    const { data, error } = await supabase.from("customers").select("*").order("created_at", { ascending: false })
 
     if (error) {
       console.error("Error fetching customers:", error)
@@ -47,16 +47,23 @@ export async function createCustomer(customerData: any) {
       customerData.code = `${prefix}${timestamp}`
     }
 
-    const { data, error } = await supabase
-      .from("customers")
-      .insert([
-        {
-          ...customerData,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ])
-      .select()
+    // Đảm bảo các trường phù hợp với cấu trúc bảng
+    const customer = {
+      name: customerData.name,
+      type: customerData.type,
+      contact_person: customerData.contactPerson || null,
+      phone: customerData.phone || null,
+      email: customerData.email || null,
+      address: customerData.address || null,
+      tax_code: customerData.taxCode || null,
+      status: customerData.status || "active",
+      notes: customerData.description || null,
+      code: customerData.code,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
+    const { data, error } = await supabase.from("customers").insert([customer]).select()
 
     if (error) {
       console.error("Error creating customer:", error)
@@ -76,14 +83,21 @@ export async function createCustomer(customerData: any) {
 // Cập nhật khách hàng
 export async function updateCustomer(id: string, customerData: any) {
   try {
-    const { data, error } = await supabase
-      .from("customers")
-      .update({
-        ...customerData,
-        updatedAt: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select()
+    // Đảm bảo các trường phù hợp với cấu trúc bảng
+    const customer = {
+      name: customerData.name,
+      type: customerData.type,
+      contact_person: customerData.contactPerson || null,
+      phone: customerData.phone || null,
+      email: customerData.email || null,
+      address: customerData.address || null,
+      tax_code: customerData.taxCode || null,
+      status: customerData.status || "active",
+      notes: customerData.description || null,
+      updated_at: new Date().toISOString(),
+    }
+
+    const { data, error } = await supabase.from("customers").update(customer).eq("id", id).select()
 
     if (error) {
       console.error("Error updating customer:", error)
@@ -127,8 +141,8 @@ export async function getCustomerContacts(customerId: string) {
     const { data, error } = await supabase
       .from("customer_contacts")
       .select("*")
-      .eq("customerId", customerId)
-      .order("isPrimary", { ascending: false })
+      .eq("customer_id", customerId)
+      .order("is_primary", { ascending: false })
 
     if (error) {
       console.error("Error fetching customer contacts:", error)
@@ -148,8 +162,8 @@ export async function getCustomerProjects(customerId: string) {
     const { data, error } = await supabase
       .from("projects")
       .select("*")
-      .eq("customerId", customerId)
-      .order("createdAt", { ascending: false })
+      .eq("customer_id", customerId)
+      .order("created_at", { ascending: false })
 
     if (error) {
       console.error("Error fetching customer projects:", error)

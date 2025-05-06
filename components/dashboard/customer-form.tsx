@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { Building, Landmark, User, Save, Loader2 } from "lucide-react"
+import { Building, Landmark, User, Save, Loader2, ArrowLeft } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "@/components/ui/use-toast"
 import { createCustomer, updateCustomer } from "@/lib/actions/customer-actions"
+import { Toaster } from "@/components/ui/toaster"
 
 // Schema validation cho form
 const customerSchema = z.object({
@@ -29,6 +30,7 @@ const customerSchema = z.object({
   status: z.enum(["active", "potential", "inactive"], {
     required_error: "Vui lòng chọn trạng thái",
   }),
+  contactPerson: z.string().optional(),
   phone: z.string().optional(),
   email: z
     .string()
@@ -39,13 +41,6 @@ const customerSchema = z.object({
     .or(z.literal("")),
   address: z.string().optional(),
   taxCode: z.string().optional(),
-  website: z
-    .string()
-    .url({
-      message: "Website không hợp lệ",
-    })
-    .optional()
-    .or(z.literal("")),
   description: z.string().optional(),
 })
 
@@ -62,18 +57,25 @@ export function CustomerForm({ customer = null }) {
       name: customer?.name || "",
       type: customer?.type || "company",
       status: customer?.status || "active",
+      contactPerson: customer?.contact_person || "",
       phone: customer?.phone || "",
       email: customer?.email || "",
       address: customer?.address || "",
-      taxCode: customer?.taxCode || "",
-      website: customer?.website || "",
-      description: customer?.description || "",
+      taxCode: customer?.tax_code || "",
+      description: customer?.notes || "",
     },
   })
 
   // Xử lý khi submit form
   async function onSubmit(values) {
     setIsSubmitting(true)
+
+    // Hiển thị thông báo đang xử lý
+    toast({
+      title: "Đang xử lý",
+      description: "Vui lòng đợi trong giây lát...",
+    })
+
     try {
       let result
 
@@ -120,236 +122,245 @@ export function CustomerForm({ customer = null }) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{isEditing ? "Chỉnh sửa thông tin khách hàng" : "Thêm khách hàng mới"}</CardTitle>
-        <CardDescription>
-          {isEditing ? "Cập nhật thông tin chi tiết của khách hàng" : "Nhập thông tin chi tiết để tạo khách hàng mới"}
-        </CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {/* Mã khách hàng */}
-              <FormField
-                control={form.control}
-                name="code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mã khách hàng</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Tự động tạo nếu để trống" {...field} disabled={isEditing} />
-                    </FormControl>
-                    <FormDescription>Mã khách hàng sẽ được tạo tự động nếu để trống</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <>
+      <Toaster />
+      <div className="mb-6">
+        <Button variant="outline" onClick={() => router.back()} className="mb-4">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Trở về
+        </Button>
+      </div>
 
-              {/* Tên khách hàng */}
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Tên khách hàng <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nhập tên khách hàng" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Loại khách hàng */}
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Loại khách hàng <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="company" />
-                          </FormControl>
-                          <FormLabel className="font-normal flex items-center">
-                            <Building className="mr-2 h-4 w-4 text-blue-500" />
-                            Doanh nghiệp
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="individual" />
-                          </FormControl>
-                          <FormLabel className="font-normal flex items-center">
-                            <User className="mr-2 h-4 w-4 text-green-500" />
-                            Cá nhân
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="government" />
-                          </FormControl>
-                          <FormLabel className="font-normal flex items-center">
-                            <Landmark className="mr-2 h-4 w-4 text-purple-500" />
-                            Cơ quan nhà nước
-                          </FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Trạng thái */}
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Trạng thái <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+      <Card>
+        <CardHeader>
+          <CardTitle>{isEditing ? "Chỉnh sửa thông tin khách hàng" : "Thêm khách hàng mới"}</CardTitle>
+          <CardDescription>
+            {isEditing ? "Cập nhật thông tin chi tiết của khách hàng" : "Nhập thông tin chi tiết để tạo khách hàng mới"}
+          </CardDescription>
+        </CardHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {/* Mã khách hàng */}
+                <FormField
+                  control={form.control}
+                  name="code"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mã khách hàng</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn trạng thái" />
-                        </SelectTrigger>
+                        <Input placeholder="Tự động tạo nếu để trống" {...field} disabled={isEditing} />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="active">Đang hợp tác</SelectItem>
-                        <SelectItem value="potential">Tiềm năng</SelectItem>
-                        <SelectItem value="inactive">Ngừng hợp tác</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormDescription>Mã khách hàng sẽ được tạo tự động nếu để trống</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Số điện thoại */}
+                {/* Tên khách hàng */}
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Tên khách hàng <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập tên khách hàng" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Loại khách hàng */}
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Loại khách hàng <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-col space-y-1"
+                        >
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="company" />
+                            </FormControl>
+                            <FormLabel className="font-normal flex items-center">
+                              <Building className="mr-2 h-4 w-4 text-blue-500" />
+                              Doanh nghiệp
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="individual" />
+                            </FormControl>
+                            <FormLabel className="font-normal flex items-center">
+                              <User className="mr-2 h-4 w-4 text-green-500" />
+                              Cá nhân
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="government" />
+                            </FormControl>
+                            <FormLabel className="font-normal flex items-center">
+                              <Landmark className="mr-2 h-4 w-4 text-purple-500" />
+                              Cơ quan nhà nước
+                            </FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Trạng thái */}
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Trạng thái <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn trạng thái" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="active">Đang hợp tác</SelectItem>
+                          <SelectItem value="potential">Tiềm năng</SelectItem>
+                          <SelectItem value="inactive">Ngừng hợp tác</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Người liên hệ */}
+                <FormField
+                  control={form.control}
+                  name="contactPerson"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Người liên hệ</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập tên người liên hệ" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Số điện thoại */}
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Số điện thoại</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập số điện thoại" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Email */}
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập địa chỉ email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Mã số thuế */}
+                <FormField
+                  control={form.control}
+                  name="taxCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mã số thuế</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập mã số thuế" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Địa chỉ */}
               <FormField
                 control={form.control}
-                name="phone"
+                name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Số điện thoại</FormLabel>
+                    <FormLabel>Địa chỉ</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nhập số điện thoại" {...field} />
+                      <Input placeholder="Nhập địa chỉ" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* Email */}
+              {/* Mô tả */}
               <FormField
                 control={form.control}
-                name="email"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Mô tả</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nhập địa chỉ email" {...field} />
+                      <Textarea placeholder="Nhập thông tin mô tả về khách hàng" className="resize-none" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              {/* Mã số thuế */}
-              <FormField
-                control={form.control}
-                name="taxCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mã số thuế</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nhập mã số thuế" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button type="button" variant="outline" onClick={() => router.back()}>
+                Hủy
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    {isEditing ? "Cập nhật" : "Tạo mới"}
+                  </>
                 )}
-              />
-
-              {/* Website */}
-              <FormField
-                control={form.control}
-                name="website"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nhập địa chỉ website" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Địa chỉ */}
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Địa chỉ</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nhập địa chỉ" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Mô tả */}
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mô tả</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Nhập thông tin mô tả về khách hàng" className="resize-none" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button type="button" variant="outline" onClick={() => router.back()}>
-              Hủy
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang lưu...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  {isEditing ? "Cập nhật" : "Tạo mới"}
-                </>
-              )}
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
+    </>
   )
 }
