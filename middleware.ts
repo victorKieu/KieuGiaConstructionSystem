@@ -1,58 +1,31 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 
-export async function middleware(request: NextRequest) {
-    let response = NextResponse.next({
-        request: {
-            headers: request.headers,
-        },
-    })
-
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) {
-                    return request.cookies.get(name)?.value
-                },
-                set(name: string, value: string, options: CookieOptions) {
-                    response.cookies.set({
-                        name,
-                        value,
-                        ...options,
-                    })
-                },
-                remove(name: string, options: CookieOptions) {
-                    response.cookies.set({
-                        name,
-                        value: '',
-                        ...options,
-                    })
-                },
-            },
-        }
+export function middleware(request: NextRequest) {
+  // Kiểm tra nếu request đến API route
+  if (
+    request.nextUrl.pathname.startsWith("/api/") &&
+    !request.nextUrl.pathname.startsWith("/api/env-check") &&
+    !request.nextUrl.pathname.startsWith("/api/debug")
+  ) {
+    // Trả về phản hồi bảo trì
+    return NextResponse.json(
+      {
+        status: "maintenance",
+        message: "API đang được bảo trì. Vui lòng thử lại sau.",
+        timestamp: new Date().toISOString(),
+      },
+      { status: 503 },
     )
+  }
 
-    // Tùy chọn: Kiểm tra phiên đăng nhập
-    const { data: { session } } = await supabase.auth.getSession()
-
-    // Tùy chọn: Chuyển hướng nếu không có phiên đăng nhập
-    if (!session && request.nextUrl.pathname.startsWith('/dashboard')) {
-        return NextResponse.redirect(new URL('/login', request.url))
-    }
-
-    return response
+  // Cho phép request đi tiếp
+  return NextResponse.next()
 }
 
-// Cấu hình matcher để chỉ định các đường dẫn mà middleware sẽ được áp dụng
 export const config = {
-    matcher: [
-        // Áp dụng middleware cho các đường dẫn cần xác thực
-        '/dashboard/:path*',
-        '/api/:path*',
-        // Không áp dụng cho các tài nguyên tĩnh
-        '/((?!_next/static|_next/image|favicon.ico).*)',
-    ],
+  matcher: [
+    // Áp dụng middleware cho tất cả các API route
+    "/api/:path*",
+  ],
 }
