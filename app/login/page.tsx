@@ -1,6 +1,6 @@
-import LoginFormSupabase from "@/components/auth/login-form-supabase"
+import Image from "next/image"
+import LoginForm from "@/components/auth/login-form"
 import { isSupabaseReady } from "@/lib/supabase/client"
-import Link from "next/link"
 
 export default function LoginPage() {
   // Kiểm tra xem Supabase có sẵn sàng không
@@ -16,23 +16,49 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <div className="container mx-auto px-4 py-4">
-        <Link href="/" className="text-gray-600 hover:text-gray-900">
-          ← Quay lại trang chủ
-        </Link>
+    <div className="flex min-h-screen bg-gray-100">
+      {/* Form đăng nhập */}
+      <div className="flex-1 flex flex-col items-center justify-center p-4 bg-white">
+        <div className="w-full max-w-md">
+          <div className="flex justify-center mb-6">
+            <Image src="/logo-kieu-gia.png" alt="Kieu Gia Logo" width={150} height={150} className="mb-4" />
+          </div>
+
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-800">Kieu Gia Construction</h1>
+            <p className="text-gray-600">Đăng Nhập Hệ Thống</p>
+          </div>
+
+          <LoginForm />
+
+          <div className="text-center mt-8 text-gray-600 text-sm">
+            <p>Nâng Tầm Cuộc Sống, Giá Trị Tương Lai</p>
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center py-12 sm:px-6 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            Đăng nhập vào tài khoản của bạn
-          </h2>
-        </div>
+      {/* Sidebar thông tin */}
+      <div className="hidden lg:flex lg:flex-col lg:w-1/3 bg-gray-800 text-white p-10">
+        <div className="flex-1 flex flex-col justify-center">
+          <h2 className="text-3xl font-bold mb-4">Kieu Gia Construction</h2>
+          <p className="text-gray-300 mb-10">Hệ thống quản lý toàn diện cho công ty xây dựng hàng đầu Việt Nam</p>
 
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white px-4 py-8 shadow sm:rounded-lg sm:px-10">
-            <LoginFormSupabase />
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Tầm nhìn:</h3>
+              <p className="text-gray-300">
+                Trở thành công ty tư vấn và xây dựng hàng đầu tại Việt Nam, nổi bật với chất lượng công trình và dịch vụ
+                khách hàng xuất sắc.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Sứ mệnh:</h3>
+              <p className="text-gray-300">
+                Đem đến giải pháp xây dựng tối ưu, an toàn và bền vững cho khách hàng, góp phần phát triển hạ tầng và đô
+                thị Việt Nam.
+              </p>
+            </div>
           </div>
         </div>
       </div>

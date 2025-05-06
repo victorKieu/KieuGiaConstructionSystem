@@ -1,8 +1,12 @@
 import { isSupabaseReady } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2, Package, Truck, Users, TrendingUp, AlertTriangle } from "lucide-react"
+import { getProjects } from "@/lib/actions/projects"
+import { getCustomers } from "@/lib/actions/customers"
+import { getMaterials } from "@/lib/actions/inventory"
+import { getEmployees } from "@/lib/actions/employees"
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
   // Kiểm tra xem Supabase có sẵn sàng không
   if (typeof window === "undefined" && !isSupabaseReady()) {
     return (
@@ -15,6 +19,64 @@ export default function DashboardPage() {
     )
   }
 
+  // Lấy dữ liệu tổng quan
+  let projects = []
+  let customers = []
+  let materials = []
+  let employees = []
+
+  try {
+    ;[projects, customers, materials, employees] = await Promise.all([
+      getProjects(),
+      getCustomers(),
+      getMaterials(),
+      getEmployees(),
+    ])
+  } catch (error) {
+    console.error("Error fetching dashboard data:", error)
+  }
+
+  // Dữ liệu mẫu cho tiến độ dự án
+  const projectProgress = [
+    {
+      name: "Chung cư Kiều Gia",
+      progress: 75,
+      color: "bg-green-500",
+    },
+    {
+      name: "Biệt thự Vinhomes",
+      progress: 45,
+      color: "bg-blue-500",
+    },
+    {
+      name: "Nhà phố Thủ Đức",
+      progress: 90,
+      color: "bg-purple-500",
+    },
+  ]
+
+  // Dữ liệu mẫu cho hoạt động gần đây
+  const recentActivities = [
+    {
+      icon: <TrendingUp className="h-5 w-5 text-green-500" />,
+      title: "Hoàn thành giai đoạn 1",
+      description: "Dự án Chung cư Kiều Gia đã hoàn thành giai đoạn 1 đúng tiến độ",
+      time: "2 giờ trước",
+    },
+    {
+      icon: <AlertTriangle className="h-5 w-5 text-amber-500" />,
+      title: "Thiếu vật liệu",
+      description: "Kho hàng báo cáo thiếu xi măng cho dự án Nhà phố Thủ Đức",
+      time: "5 giờ trước",
+    },
+    {
+      icon: <Users className="h-5 w-5 text-blue-500" />,
+      title: "Nhân viên mới",
+      description: "Nguyễn Văn A đã tham gia vào đội ngũ kỹ sư",
+      time: "1 ngày trước",
+    },
+  ]
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Tổng quan</h1>
@@ -26,7 +88,7 @@ export default function DashboardPage() {
             <Building2 className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{projects.length || 12}</div>
             <p className="text-xs text-gray-500">4 dự án đang hoạt động</p>
           </CardContent>
         </Card>
@@ -37,7 +99,7 @@ export default function DashboardPage() {
             <Package className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">243</div>
+            <div className="text-2xl font-bold">{materials.length || 243}</div>
             <p className="text-xs text-gray-500">18 mặt hàng sắp hết</p>
           </CardContent>
         </Card>
@@ -59,7 +121,7 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">32</div>
+            <div className="text-2xl font-bold">{employees.length || 32}</div>
             <p className="text-xs text-gray-500">5 nhân viên mới trong tháng</p>
           </CardContent>
         </Card>
@@ -72,35 +134,20 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm">Chung cư Kiều Gia</span>
-                  <span className="text-sm font-medium">75%</span>
+              {projectProgress.map((project) => (
+                <div key={project.name}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm">{project.name}</span>
+                    <span className="text-sm font-medium">{project.progress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className={`${project.color} h-2 rounded-full`}
+                      style={{ width: `${project.progress}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-500 h-2 rounded-full" style={{ width: "75%" }}></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm">Biệt thự Vinhomes</span>
-                  <span className="text-sm font-medium">45%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-500 h-2 rounded-full" style={{ width: "45%" }}></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm">Nhà phố Thủ Đức</span>
-                  <span className="text-sm font-medium">90%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-purple-500 h-2 rounded-full" style={{ width: "90%" }}></div>
-                </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -111,40 +158,16 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-start">
-                <div className="mr-4 mt-1">
-                  <TrendingUp className="h-5 w-5 text-green-500" />
+              {recentActivities.map((activity, index) => (
+                <div key={index} className="flex items-start">
+                  <div className="mr-4 mt-1">{activity.icon}</div>
+                  <div>
+                    <p className="text-sm font-medium">{activity.title}</p>
+                    <p className="text-xs text-gray-500">{activity.description}</p>
+                    <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium">Hoàn thành giai đoạn 1</p>
-                  <p className="text-xs text-gray-500">
-                    Dự án Chung cư Kiều Gia đã hoàn thành giai đoạn 1 đúng tiến độ
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">2 giờ trước</p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <div className="mr-4 mt-1">
-                  <AlertTriangle className="h-5 w-5 text-amber-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Thiếu vật liệu</p>
-                  <p className="text-xs text-gray-500">Kho hàng báo cáo thiếu xi măng cho dự án Nhà phố Thủ Đức</p>
-                  <p className="text-xs text-gray-400 mt-1">5 giờ trước</p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <div className="mr-4 mt-1">
-                  <Users className="h-5 w-5 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Nhân viên mới</p>
-                  <p className="text-xs text-gray-500">Nguyễn Văn A đã tham gia vào đội ngũ kỹ sư</p>
-                  <p className="text-xs text-gray-400 mt-1">1 ngày trước</p>
-                </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>

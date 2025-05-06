@@ -1,10 +1,10 @@
 import type React from "react"
 import { isSupabaseReady } from "@/lib/supabase/client"
-import { Sidebar } from "@/components/dashboard/sidebar"
-import { Header } from "@/components/dashboard/header"
+import { Sidebar } from "@/components/layout/sidebar"
+import { Header } from "@/components/layout/header"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  // Kiểm tra xem Supabase có sẵn sàng không
+  // Kiểm tra xem Supabase c�� sẵn sàng không
   if (typeof window === "undefined" && !isSupabaseReady()) {
     return (
       <div className="container mx-auto p-4">
@@ -18,7 +18,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <Sidebar />
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
         <main className="flex-1 overflow-y-auto p-4">{children}</main>
