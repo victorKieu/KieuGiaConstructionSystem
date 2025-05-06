@@ -1,35 +1,41 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { NextResponse } from "next/server"
 
-export async function DELETE(
-    request: Request,
-    { params }: { params: { id: string; memberId: string } }
-) {
-    try {
-        const supabase = createClient()
-        const { data: { session } } = await supabase.auth.getSession()
+export async function GET() {
+    return NextResponse.json({
+        status: "maintenance",
+        message: "API đang được bảo trì. Vui lòng thử lại sau.",
+        timestamp: new Date().toISOString(),
+    })
+}
 
-        if (!session) {
-            return new NextResponse("Unauthorized", { status: 401 })
-        }
+export async function POST() {
+    return NextResponse.json({
+        status: "maintenance",
+        message: "API đang được bảo trì. Vui lòng thử lại sau.",
+        timestamp: new Date().toISOString(),
+    })
+}
 
-        const { id, memberId } = params
+export async function PUT() {
+    return NextResponse.json({
+        status: "maintenance",
+        message: "API đang được bảo trì. Vui lòng thử lại sau.",
+        timestamp: new Date().toISOString(),
+    })
+}
 
-        // Kiểm tra quyền truy cập (ví dụ: chỉ admin hoặc chủ dự án mới có thể xóa thành viên)
-        // Thêm logic kiểm tra quyền ở đây
+export async function DELETE() {
+    return NextResponse.json({
+        status: "maintenance",
+        message: "API đang được bảo trì. Vui lòng thử lại sau.",
+        timestamp: new Date().toISOString(),
+    })
+}
 
-        // Xóa thành viên khỏi dự án
-        await db.projectMember.delete({
-            where: {
-                id: memberId,
-                projectId: id
-            }
-        })
-
-        return NextResponse.json({ success: true })
-    } catch (error) {
-        console.error("[MEMBER_DELETE]", error)
-        return new NextResponse("Internal Error", { status: 500 })
-    }
+export async function PATCH() {
+    return NextResponse.json({
+        status: "maintenance",
+        message: "API đang được bảo trì. Vui lòng thử lại sau.",
+        timestamp: new Date().toISOString(),
+    })
 }
