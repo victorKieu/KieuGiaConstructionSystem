@@ -22,6 +22,8 @@ import { MainLayout } from "@/components/layout/main-layout"
 import Link from "next/link"
 import { getMaterials, getWarehouses } from "@/lib/actions/inventory-actions"
 
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
   title: "Tổng quan kho vật tư | Kieu Gia Construction",
   description: "Tổng quan về tình trạng kho vật tư, thiết bị",
@@ -250,7 +252,7 @@ export default async function InventoryDashboardPage() {
               categories={["Giá trị tồn kho"]}
               index="name"
               colors={["#2563eb"]}
-              valueFormatter={(value) => `${value.toFixed(2)} tỷ`}
+              valueFormatter="number"
               showLegend={false}
               showXAxis
               showYAxis
@@ -291,7 +293,7 @@ export default async function InventoryDashboardPage() {
                     ]}
                     categories={["Tổng_kho", "Kho_công_trình", "Kho_vệ_tinh"]}
                     colors={["#2563eb", "#f59e0b", "#10b981"]}
-                    valueFormatter={(value) => `${(value / 1000).toFixed(1)}tr`}
+                    valueFormatter="number"
                     showLegend
                     showXAxis
                     showYAxis
@@ -313,7 +315,7 @@ export default async function InventoryDashboardPage() {
                     category="value"
                     index="name"
                     colors={["#2563eb", "#f59e0b", "#10b981", "#8b5cf6"]}
-                    valueFormatter={(value) => `${value.toLocaleString()} vật tư`}
+                    valueFormatter="number"
                     showLabel
                     showAnimation
                   />
