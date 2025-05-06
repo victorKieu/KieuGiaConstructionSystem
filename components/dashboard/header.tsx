@@ -1,63 +1,77 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Bell, Search, Menu } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Bell, Menu, Sun, Moon, User } from "lucide-react"
 import { useSidebar } from "./sidebar-context"
+import { useTheme } from "next-themes"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { createClient } from "@/lib/supabase/client"
 
 export function DashboardHeader() {
-  const router = useRouter()
-  const { toggleSidebar, isMobile } = useSidebar()
+  const { toggleSidebar } = useSidebar()
+  const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  const [userName, setUserName] = useState<string | null>(null)
+  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
     setMounted(true)
-
-    const fetchUserProfile = async () => {
+    const fetchUser = async () => {
       const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (user) {
-        setUserName(user.email?.split("@")[0] || "User")
+      const { data } = await supabase.auth.getUser()
+      if (data?.user) {
+        setUser(data.user)
       }
     }
-
-    fetchUserProfile()
+    fetchUser()
   }, [])
+
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    window.location.href = "/login"
+  }
 
   if (!mounted) return null
 
   return (
-    <header className="bg-white border-b px-4 py-3 flex items-center justify-between">
+    <header className="sticky top-0 z-10 flex h-16 w-full items-center justify-between border-b bg-white px-4 dark:bg-gray-900">
       <div className="flex items-center">
-        {isMobile && (
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2">
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Menu</span>
-          </Button>
-        )}
-        <div className="relative w-64 hidden md:block">
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input type="search" placeholder="Tìm kiếm..." className="pl-8 h-9 w-full bg-gray-50 border-gray-200" />
-        </div>
-      </div>
-      <div className="flex items-center space-x-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5 text-gray-600" />
-          <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
-          <span className="sr-only">Thông báo</span>
+        <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2 lg:hidden" aria-label="Toggle Menu">
+          <Menu className="h-5 w-5" />
         </Button>
-        <div className="flex items-center">
-          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-800 font-medium">
-            {userName ? userName.charAt(0).toUpperCase() : "U"}
-          </div>
-          <span className="ml-2 text-sm font-medium text-gray-700 hidden md:inline-block">{userName || "User"}</span>
-        </div>
+      </div>
+
+      <div className="flex items-center space-x-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          aria-label="Toggle Theme"
+        >
+          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </Button>
+
+        <Button variant="ghost" size="icon" aria-label="Notifications">
+          <Bell className="h-5 w-5" />
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User Menu">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user?.user_metadata?.avatar_url || ""} alt="Avatar" />
+                <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || <User />}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>Hồ sơ</DropdownMenuItem>
+            <DropdownMenuItem>Cài đặt</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSignOut}>Đăng xuất</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )

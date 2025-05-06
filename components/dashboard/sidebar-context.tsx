@@ -1,55 +1,65 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect, useCallback } from "react"
+
+import { createContext, useContext, useEffect, useState } from "react"
 
 type SidebarContextType = {
-  isExpanded: boolean
-  setIsExpanded: React.Dispatch<React.SetStateAction<boolean>>
-  isMobile: boolean
+  isOpen: boolean
+  isPinned: boolean // Thêm trạng thái ghim
   toggleSidebar: () => void
   closeSidebar: () => void
+  togglePin: () => void // Thêm hàm toggle pin
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const [isExpanded, setIsExpanded] = useState(true)
-  const [isMobile, setIsMobile] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+  const [isPinned, setIsPinned] = useState(false) // Khởi tạo trạng thái ghim
+  const [isMounted, setIsMounted] = useState(false)
 
-  // Kiểm tra kích thước màn hình và cập nhật trạng thái
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-      if (window.innerWidth < 768) {
-        setIsExpanded(false)
-      } else {
-        setIsExpanded(true)
+    setIsMounted(true)
+    // Khôi phục trạng thái ghim từ localStorage
+    const savedPinState = localStorage.getItem("sidebarPinned")
+    if (savedPinState) {
+      setIsPinned(savedPinState === "true")
+      // Nếu đã ghim, mở sidebar
+      if (savedPinState === "true") {
+        setIsOpen(true)
       }
     }
-
-    // Kiểm tra khi component mount
-    checkMobile()
-
-    // Thêm event listener
-    window.addEventListener("resize", checkMobile)
-
-    // Cleanup
-    return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
-  // Hàm toggle sidebar
-  const toggleSidebar = useCallback(() => {
-    setIsExpanded((prev) => !prev)
-  }, [])
+  // Chỉ lưu trạng thái khi component đã mount
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem("sidebarPinned", isPinned.toString())
+    }
+  }, [isPinned, isMounted])
 
-  // Hàm đóng sidebar
-  const closeSidebar = useCallback(() => {
-    setIsExpanded(false)
-  }, [])
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen)
+  }
+
+  const closeSidebar = () => {
+    // Chỉ đóng sidebar nếu không được ghim
+    if (!isPinned) {
+      setIsOpen(false)
+    }
+  }
+
+  const togglePin = () => {
+    setIsPinned(!isPinned)
+    // Nếu ghim, đảm bảo sidebar được mở
+    if (!isPinned) {
+      setIsOpen(true)
+    }
+  }
 
   return (
-    <SidebarContext.Provider value={{ isExpanded, setIsExpanded, isMobile, toggleSidebar, closeSidebar }}>
+    <SidebarContext.Provider value={{ isOpen, isPinned, toggleSidebar, closeSidebar, togglePin }}>
       {children}
     </SidebarContext.Provider>
   )
