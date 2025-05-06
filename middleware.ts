@@ -1,48 +1,58 @@
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
-import { getToken } from "next-auth/jwt"
-
-// Các đường dẫn công khai không cần xác thực
-const publicPaths = ["/login", "/register", "/api/auth"]
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+    let response = NextResponse.next({
+        request: {
+            headers: request.headers,
+        },
+    })
 
-  // Kiểm tra xem đường dẫn có phải là công khai không
-  const isPublicPath = publicPaths.some((path) => pathname.startsWith(path))
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) {
+                    return request.cookies.get(name)?.value
+                },
+                set(name: string, value: string, options: CookieOptions) {
+                    response.cookies.set({
+                        name,
+                        value,
+                        ...options,
+                    })
+                },
+                remove(name: string, options: CookieOptions) {
+                    response.cookies.set({
+                        name,
+                        value: '',
+                        ...options,
+                    })
+                },
+            },
+        }
+    )
 
-  // Nếu là đường dẫn công khai, cho phép truy cập
-  if (isPublicPath) {
-    return NextResponse.next()
-  }
+    // Tùy chọn: Kiểm tra phiên đăng nhập
+    const { data: { session } } = await supabase.auth.getSession()
 
-  // Kiểm tra token từ NextAuth
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+    // Tùy chọn: Chuyển hướng nếu không có phiên đăng nhập
+    if (!session && request.nextUrl.pathname.startsWith('/dashboard')) {
+        return NextResponse.redirect(new URL('/login', request.url))
+    }
 
-  // Nếu không có token, chuyển hướng đến trang đăng nhập
-  if (!token) {
-    const loginUrl = new URL("/login", request.url)
-    loginUrl.searchParams.set("callbackUrl", encodeURI(request.url))
-    return NextResponse.redirect(loginUrl)
-  }
-
-  // Nếu có token, cho phép truy cập
-  return NextResponse.next()
+    return response
 }
 
-// Chỉ áp dụng middleware cho các đường dẫn cần xác thực
+// Cấu hình matcher để chỉ định các đường dẫn mà middleware sẽ được áp dụng
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public (public files)
-     * - login (login page)
-     * - register (register page)
-     * - api/auth (auth API)
-     */
-    "/((?!_next/static|_next/image|favicon.ico|public|login|register|api/auth).*)",
-  ],
+    matcher: [
+        // Áp dụng middleware cho các đường dẫn cần xác thực
+        '/dashboard/:path*',
+        '/api/:path*',
+        // Không áp dụng cho các tài nguyên tĩnh
+        '/((?!_next/static|_next/image|favicon.ico).*)',
+    ],
 }

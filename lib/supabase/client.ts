@@ -1,33 +1,24 @@
-﻿import { createBrowserClient } from "@supabase/ssr"
+﻿import { createBrowserClient } from '@supabase/ssr'
 
-let supabase: any
+let supabaseClient: ReturnType<typeof createBrowserClient> | null = null
 
-export function createClient() {
-    if (supabase) return supabase
-
-    // Kiểm tra và đảm bảo các biến môi trường tồn tại
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_NEXT_PUBLIC_SUPABASE_URL
-
-    const supabaseAnonKey =
-        process.env.SUPABASE_NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-        process.env.SUPABASE_NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-        process.env.SUPABASE_SUPABASE_NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-        console.error("Thiếu biến môi trường Supabase URL hoặc Anon Key")
-        // Trả về một client giả để tránh lỗi runtime
-        return {
-            auth: {
-                getSession: async () => ({ data: { session: null }, error: null }),
-                getUser: async () => ({ data: { user: null }, error: null }),
-            },
-            from: () => ({
-                select: () => ({ data: null, error: null }),
-            }),
-        } as any
+export const createClient = () => {
+    if (supabaseClient) {
+        return supabaseClient
     }
 
-    supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+        throw new Error('NEXT_PUBLIC_SUPABASE_URL is not defined')
+    }
 
-    return supabase
+    if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined')
+    }
+
+    supabaseClient = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    )
+
+    return supabaseClient
 }
