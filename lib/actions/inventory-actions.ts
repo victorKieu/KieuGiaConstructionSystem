@@ -91,3 +91,21 @@ export async function deleteMaterial(id: string) {
     return { success: false, error: "Đã xảy ra lỗi khi xóa vật tư" }
   }
 }
+
+export async function getWarehouses() {
+  try {
+    const supabase = createClient()
+
+    const { data, error } = await supabase.from("warehouses").select("*").order("name")
+
+    if (error) {
+      console.error("Error fetching warehouses:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error("Error in getWarehouses:", error)
+    return { success: false, error: "Đã xảy ra lỗi khi lấy dữ liệu kho" }
+  }
+}

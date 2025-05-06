@@ -1,4 +1,4 @@
-import type React from "react"
+import type * as React from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 
@@ -21,10 +21,10 @@ export function ResponsiveTable({ headers, data, keyField, className }: Responsi
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.map((row) => (
-            <TableRow key={String(row[keyField])}>
+          {data.map((row, index) => (
+            <TableRow key={row[keyField]?.toString() || index}>
               {headers.map((header) => (
-                <TableCell key={`${String(row[keyField])}-${header}`}>{row[header]}</TableCell>
+                <TableCell key={`${row[keyField]}-${header}`}>{row[header]}</TableCell>
               ))}
             </TableRow>
           ))}
