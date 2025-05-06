@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
+import * as z from "zod"
 import { Building, Landmark, User, Save, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -17,105 +17,101 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "@/components/ui/use-toast"
 import { createCustomer, updateCustomer } from "@/lib/actions/customer-actions"
 
-// Schema validation cho form khách hàng
-const customerFormSchema = z.object({
+// Schema validation cho form
+const customerSchema = z.object({
   code: z.string().optional(),
   name: z.string().min(2, {
-    message: "Tên khách hàng phải có ít nhất 2 ký tự.",
+    message: "Tên khách hàng phải có ít nhất 2 ký tự",
   }),
   type: z.enum(["company", "individual", "government"], {
-    required_error: "Vui lòng chọn loại khách hàng.",
+    required_error: "Vui lòng chọn loại khách hàng",
   }),
   status: z.enum(["active", "potential", "inactive"], {
-    required_error: "Vui lòng chọn trạng thái khách hàng.",
+    required_error: "Vui lòng chọn trạng thái",
   }),
-  phone: z.string().min(10, {
-    message: "Số điện thoại phải có ít nhất 10 ký tự.",
-  }),
-  email: z.string().email({
-    message: "Vui lòng nhập địa chỉ email hợp lệ.",
-  }),
-  address: z.string().min(5, {
-    message: "Địa chỉ phải có ít nhất 5 ký tự.",
-  }),
+  phone: z.string().optional(),
+  email: z
+    .string()
+    .email({
+      message: "Email không hợp lệ",
+    })
+    .optional()
+    .or(z.literal("")),
+  address: z.string().optional(),
   taxCode: z.string().optional(),
-  website: z.string().optional(),
+  website: z
+    .string()
+    .url({
+      message: "Website không hợp lệ",
+    })
+    .optional()
+    .or(z.literal("")),
   description: z.string().optional(),
 })
 
-type CustomerFormValues = z.infer<typeof customerFormSchema>
-
-// Props cho component CustomerForm
-interface CustomerFormProps {
-  initialData?: any
-  isEditing?: boolean
-}
-
-export function CustomerForm({ initialData, isEditing = false }: CustomerFormProps) {
+export function CustomerForm({ customer = null }) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const isEditing = !!customer
 
-  // Khởi tạo form với react-hook-form và zod validation
-  const form = useForm<CustomerFormValues>({
-    resolver: zodResolver(customerFormSchema),
-    defaultValues: initialData || {
-      code: "",
-      name: "",
-      type: "company",
-      status: "active",
-      phone: "",
-      email: "",
-      address: "",
-      taxCode: "",
-      website: "",
-      description: "",
+  // Khởi tạo form với giá trị mặc định
+  const form = useForm({
+    resolver: zodResolver(customerSchema),
+    defaultValues: {
+      code: customer?.code || "",
+      name: customer?.name || "",
+      type: customer?.type || "company",
+      status: customer?.status || "active",
+      phone: customer?.phone || "",
+      email: customer?.email || "",
+      address: customer?.address || "",
+      taxCode: customer?.taxCode || "",
+      website: customer?.website || "",
+      description: customer?.description || "",
     },
   })
 
-  // Xử lý submit form
-  async function onSubmit(data: CustomerFormValues) {
+  // Xử lý khi submit form
+  async function onSubmit(values) {
     setIsSubmitting(true)
     try {
-      if (isEditing && initialData?.id) {
-        // Cập nhật khách hàng hiện có
-        const result = await updateCustomer(initialData.id, data)
-        if (result.success) {
-          toast({
-            title: "Cập nhật thành công",
-            description: `Đã cập nhật thông tin khách hàng "${data.name}".`,
-          })
-          router.push(`/dashboard/customers/${initialData.id}`)
-          router.refresh()
-        } else {
-          toast({
-            title: "Lỗi",
-            description: result.error || "Đã xảy ra lỗi khi cập nhật khách hàng.",
-            variant: "destructive",
-          })
-        }
+      let result
+
+      if (isEditing) {
+        // Cập nhật khách hàng
+        result = await updateCustomer(customer.id, values)
       } else {
         // Tạo khách hàng mới
-        const result = await createCustomer(data)
-        if (result.success) {
-          toast({
-            title: "Tạo mới thành công",
-            description: `Đã tạo khách hàng "${data.name}" thành công.`,
-          })
-          router.push(`/dashboard/customers/${result.data.id}`)
-          router.refresh()
+        result = await createCustomer(values)
+      }
+
+      if (result.success) {
+        toast({
+          title: isEditing ? "Cập nhật thành công" : "Tạo mới thành công",
+          description: isEditing
+            ? `Đã cập nhật thông tin khách hàng "${values.name}"`
+            : `Đã tạo khách hàng mới "${values.name}"`,
+        })
+
+        // Chuyển hướng sau khi thành công
+        if (isEditing) {
+          router.push(`/dashboard/customers/${customer.id}`)
         } else {
-          toast({
-            title: "Lỗi",
-            description: result.error || "Đã xảy ra lỗi khi tạo khách hàng mới.",
-            variant: "destructive",
-          })
+          router.push("/dashboard/customers")
         }
+        router.refresh()
+      } else {
+        toast({
+          title: "Có lỗi xảy ra",
+          description: result.error || "Không thể lưu thông tin khách hàng",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("Error submitting form:", error)
       toast({
-        title: "Lỗi",
-        description: "Đã xảy ra lỗi khi xử lý yêu cầu. Vui lòng thử lại sau.",
+        title: "Có lỗi xảy ra",
+        description: "Không thể lưu thông tin khách hàng. Vui lòng thử lại sau.",
         variant: "destructive",
       })
     } finally {
@@ -123,26 +119,12 @@ export function CustomerForm({ initialData, isEditing = false }: CustomerFormPro
     }
   }
 
-  // Lấy icon cho loại khách hàng
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "company":
-        return <Building className="h-4 w-4" />
-      case "individual":
-        return <User className="h-4 w-4" />
-      case "government":
-        return <Landmark className="h-4 w-4" />
-      default:
-        return null
-    }
-  }
-
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{isEditing ? "Chỉnh sửa khách hàng" : "Thêm khách hàng mới"}</CardTitle>
+        <CardTitle>{isEditing ? "Chỉnh sửa thông tin khách hàng" : "Thêm khách hàng mới"}</CardTitle>
         <CardDescription>
-          {isEditing ? "Cập nhật thông tin khách hàng hiện có" : "Nhập thông tin để tạo khách hàng mới trong hệ thống"}
+          {isEditing ? "Cập nhật thông tin chi tiết của khách hàng" : "Nhập thông tin chi tiết để tạo khách hàng mới"}
         </CardDescription>
       </CardHeader>
       <Form {...form}>
@@ -157,14 +139,9 @@ export function CustomerForm({ initialData, isEditing = false }: CustomerFormPro
                   <FormItem>
                     <FormLabel>Mã khách hàng</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Tự động tạo nếu để trống"
-                        {...field}
-                        value={field.value || ""}
-                        disabled={isEditing}
-                      />
+                      <Input placeholder="Tự động tạo nếu để trống" {...field} disabled={isEditing} />
                     </FormControl>
-                    <FormDescription>Mã khách hàng sẽ được tạo tự động nếu bạn để trống trường này.</FormDescription>
+                    <FormDescription>Mã khách hàng sẽ được tạo tự động nếu để trống</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -176,7 +153,9 @@ export function CustomerForm({ initialData, isEditing = false }: CustomerFormPro
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tên khách hàng</FormLabel>
+                    <FormLabel>
+                      Tên khách hàng <span className="text-red-500">*</span>
+                    </FormLabel>
                     <FormControl>
                       <Input placeholder="Nhập tên khách hàng" {...field} />
                     </FormControl>
@@ -191,34 +170,44 @@ export function CustomerForm({ initialData, isEditing = false }: CustomerFormPro
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Loại khách hàng</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn loại khách hàng" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="company">
-                          <div className="flex items-center">
-                            <Building className="mr-2 h-4 w-4" />
-                            <span>Doanh nghiệp</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="individual">
-                          <div className="flex items-center">
-                            <User className="mr-2 h-4 w-4" />
-                            <span>Cá nhân</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="government">
-                          <div className="flex items-center">
-                            <Landmark className="mr-2 h-4 w-4" />
-                            <span>Cơ quan nhà nước</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>
+                      Loại khách hàng <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="company" />
+                          </FormControl>
+                          <FormLabel className="font-normal flex items-center">
+                            <Building className="mr-2 h-4 w-4 text-blue-500" />
+                            Doanh nghiệp
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="individual" />
+                          </FormControl>
+                          <FormLabel className="font-normal flex items-center">
+                            <User className="mr-2 h-4 w-4 text-green-500" />
+                            Cá nhân
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="government" />
+                          </FormControl>
+                          <FormLabel className="font-normal flex items-center">
+                            <Landmark className="mr-2 h-4 w-4 text-purple-500" />
+                            Cơ quan nhà nước
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -229,34 +218,22 @@ export function CustomerForm({ initialData, isEditing = false }: CustomerFormPro
                 control={form.control}
                 name="status"
                 render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>Trạng thái</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="active" />
-                          </FormControl>
-                          <FormLabel className="font-normal">Đang hợp tác</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="potential" />
-                          </FormControl>
-                          <FormLabel className="font-normal">Tiềm năng</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="inactive" />
-                          </FormControl>
-                          <FormLabel className="font-normal">Ngừng hợp tác</FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
+                  <FormItem>
+                    <FormLabel>
+                      Trạng thái <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn trạng thái" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">Đang hợp tác</SelectItem>
+                        <SelectItem value="potential">Tiềm năng</SelectItem>
+                        <SelectItem value="inactive">Ngừng hợp tác</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -300,7 +277,7 @@ export function CustomerForm({ initialData, isEditing = false }: CustomerFormPro
                   <FormItem>
                     <FormLabel>Mã số thuế</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nhập mã số thuế (nếu có)" {...field} value={field.value || ""} />
+                      <Input placeholder="Nhập mã số thuế" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -315,7 +292,7 @@ export function CustomerForm({ initialData, isEditing = false }: CustomerFormPro
                   <FormItem>
                     <FormLabel>Website</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nhập website (nếu có)" {...field} value={field.value || ""} />
+                      <Input placeholder="Nhập địa chỉ website" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -331,7 +308,7 @@ export function CustomerForm({ initialData, isEditing = false }: CustomerFormPro
                 <FormItem>
                   <FormLabel>Địa chỉ</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nhập địa chỉ khách hàng" {...field} />
+                    <Input placeholder="Nhập địa chỉ" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -346,12 +323,7 @@ export function CustomerForm({ initialData, isEditing = false }: CustomerFormPro
                 <FormItem>
                   <FormLabel>Mô tả</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Nhập thông tin mô tả về khách hàng (nếu có)"
-                      className="resize-none"
-                      {...field}
-                      value={field.value || ""}
-                    />
+                    <Textarea placeholder="Nhập thông tin mô tả về khách hàng" className="resize-none" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -359,14 +331,14 @@ export function CustomerForm({ initialData, isEditing = false }: CustomerFormPro
             />
           </CardContent>
           <CardFooter className="flex justify-between">
-            <Button variant="outline" type="button" onClick={() => router.back()}>
+            <Button type="button" variant="outline" onClick={() => router.back()}>
               Hủy
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang xử lý...
+                  Đang lưu...
                 </>
               ) : (
                 <>

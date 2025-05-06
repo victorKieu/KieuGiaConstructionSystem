@@ -2,41 +2,29 @@ import { notFound } from "next/navigation"
 import { CustomerForm } from "@/components/dashboard/customer-form"
 import { getCustomerById } from "@/lib/actions/customer-actions"
 
-export const dynamic = "force-dynamic"
-
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const customerResult = await getCustomerById(params.id)
-  const customer = customerResult.success ? customerResult.data : null
-
-  if (!customer) {
-    return {
-      title: "Khách hàng không tồn tại",
-      description: "Không tìm thấy thông tin khách hàng",
-    }
-  }
-
-  return {
-    title: `Chỉnh sửa ${customer.name}`,
-    description: `Chỉnh sửa thông tin khách hàng ${customer.name}`,
-  }
+export const metadata = {
+  title: "Chỉnh sửa khách hàng",
+  description: "Cập nhật thông tin khách hàng",
 }
 
-export default async function EditCustomerPage({ params }: { params: { id: string } }) {
+export default async function EditCustomerPage({ params }) {
+  // Lấy thông tin khách hàng
   const customerResult = await getCustomerById(params.id)
-  const customer = customerResult.success ? customerResult.data : null
 
-  if (!customer) {
+  // Nếu không tìm thấy khách hàng, chuyển đến trang not found
+  if (!customerResult.success) {
     notFound()
   }
 
-  return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Chỉnh sửa khách hàng</h1>
-        <p className="text-muted-foreground">Cập nhật thông tin khách hàng {customer.name}</p>
-      </div>
+  const customer = customerResult.data
 
-      <CustomerForm initialData={customer} isEditing />
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Chỉnh sửa khách hàng</h1>
+        <p className="text-muted-foreground">Cập nhật thông tin chi tiết của khách hàng</p>
+      </div>
+      <CustomerForm customer={customer} />
     </div>
   )
 }

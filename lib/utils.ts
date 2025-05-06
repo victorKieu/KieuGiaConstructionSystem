@@ -5,40 +5,20 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatDate(dateString: string | null | undefined): string {
-  if (!dateString) return "N/A"
+export function formatDate(dateString: string): string {
+  if (!dateString) return ""
 
   const date = new Date(dateString)
-  if (isNaN(date.getTime())) return "N/A"
 
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date)
-}
+  // Kiểm tra xem date có hợp lệ không
+  if (isNaN(date.getTime())) return ""
 
-export function formatDateTime(dateString: string | null | undefined): string {
-  if (!dateString) return "N/A"
+  // Format: DD/MM/YYYY HH:MM
+  const day = date.getDate().toString().padStart(2, "0")
+  const month = (date.getMonth() + 1).toString().padStart(2, "0")
+  const year = date.getFullYear()
+  const hours = date.getHours().toString().padStart(2, "0")
+  const minutes = date.getMinutes().toString().padStart(2, "0")
 
-  const date = new Date(dateString)
-  if (isNaN(date.getTime())) return "N/A"
-
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date)
-}
-
-export function formatCurrency(amount: number | null | undefined): string {
-  if (amount === null || amount === undefined) return "0 ₫"
-
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(amount)
+  return `${day}/${month}/${year} ${hours}:${minutes}`
 }
