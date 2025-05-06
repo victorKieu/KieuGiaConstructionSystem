@@ -1,46 +1,33 @@
 import { NextResponse } from "next/server"
-import { createSafeClientOrNull } from "@/lib/supabase/safe-client"
 
 export async function GET() {
-  // Tạo Supabase client an toàn
-  const supabase = createSafeClientOrNull()
+  return NextResponse.json({
+    status: "maintenance",
+    message: "API đang được bảo trì. Vui lòng thử lại sau.",
+    timestamp: new Date().toISOString(),
+  })
+}
 
-  // Nếu không thể tạo client, trả về lỗi
-  if (!supabase) {
-    return NextResponse.json(
-      {
-        status: "error",
-        message: "Không thể kết nối đến Supabase. Vui lòng kiểm tra biến môi trường.",
-      },
-      { status: 500 },
-    )
-  }
+export async function POST() {
+  return NextResponse.json({
+    status: "maintenance",
+    message: "API đang được bảo trì. Vui lòng thử lại sau.",
+    timestamp: new Date().toISOString(),
+  })
+}
 
-  try {
-    // Thực hiện truy vấn
-    const { data, error } = await supabase.from("equipment").select("*")
+export async function PUT() {
+  return NextResponse.json({
+    status: "maintenance",
+    message: "API đang được bảo trì. Vui lòng thử lại sau.",
+    timestamp: new Date().toISOString(),
+  })
+}
 
-    if (error) {
-      return NextResponse.json(
-        {
-          status: "error",
-          message: error.message,
-        },
-        { status: 500 },
-      )
-    }
-
-    return NextResponse.json({
-      status: "success",
-      data,
-    })
-  } catch (error) {
-    return NextResponse.json(
-      {
-        status: "error",
-        message: error.message,
-      },
-      { status: 500 },
-    )
-  }
+export async function DELETE() {
+  return NextResponse.json({
+    status: "maintenance",
+    message: "API đang được bảo trì. Vui lòng thử lại sau.",
+    timestamp: new Date().toISOString(),
+  })
 }
