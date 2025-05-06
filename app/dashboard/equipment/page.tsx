@@ -1,6 +1,6 @@
 import { isSupabaseReady } from "@/lib/supabase/client"
 
-export default function ProjectsPage() {
+export default function EquipmentPage() {
   // Kiểm tra xem Supabase có sẵn sàng không
   if (typeof window === "undefined" && !isSupabaseReady()) {
     return (
@@ -15,8 +15,8 @@ export default function ProjectsPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Dự án</h1>
-      {/* Nội dung trang dự án */}
+      <h1 className="text-2xl font-bold mb-4">Thiết bị</h1>
+      {/* Nội dung trang thiết bị */}
     </div>
   )
 }

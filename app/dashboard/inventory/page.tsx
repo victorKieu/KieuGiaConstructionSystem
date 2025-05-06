@@ -1,53 +1,22 @@
-import type { Metadata } from "next"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import InventoryOverview from "@/components/inventory/inventory-overview"
-import InventoryItems from "@/components/inventory/inventory-items"
-import InventoryTransactions from "@/components/inventory/inventory-transactions"
-import InventorySuppliers from "@/components/inventory/inventory-suppliers"
-import InventoryEquipment from "@/components/inventory/inventory-equipment"
-
-export const metadata: Metadata = {
-  title: "Quản lý kho | Kieu Gia Construction",
-  description: "Quản lý kho vật tư và thiết bị",
-}
+import { isSupabaseReady } from "@/lib/supabase/client"
 
 export default function InventoryPage() {
-  return (
-    <div className="flex flex-col space-y-6 p-6">
-      <div>
-        <h1 className="text-3xl font-bold">Quản lý kho</h1>
-        <p className="text-gray-500">Quản lý kho vật tư và thiết bị xây dựng</p>
-      </div>
+    // Kiểm tra xem Supabase có sẵn sàng không
+    if (typeof window === "undefined" && !isSupabaseReady()) {
+        return (
+            <div className="container mx-auto p-4">
+                <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+                    <p className="font-bold">Cảnh báo</p>
+                    <p>Không thể kết nối đến Supabase. Vui lòng kiểm tra biến môi trường.</p>
+                </div>
+            </div>
+        )
+    }
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-          <TabsTrigger value="items">Vật tư</TabsTrigger>
-          <TabsTrigger value="transactions">Nhập/Xuất kho</TabsTrigger>
-          <TabsTrigger value="suppliers">Nhà cung cấp</TabsTrigger>
-          <TabsTrigger value="equipment">Thiết bị</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="mt-6">
-          <InventoryOverview />
-        </TabsContent>
-
-        <TabsContent value="items" className="mt-6">
-          <InventoryItems />
-        </TabsContent>
-
-        <TabsContent value="transactions" className="mt-6">
-          <InventoryTransactions />
-        </TabsContent>
-
-        <TabsContent value="suppliers" className="mt-6">
-          <InventorySuppliers />
-        </TabsContent>
-
-        <TabsContent value="equipment" className="mt-6">
-          <InventoryEquipment />
-        </TabsContent>
-      </Tabs>
-    </div>
-  )
+    return (
+        <div className="container mx-auto p-4">
+            <h1 className="text-2xl font-bold mb-4">Kho hàng</h1>
+            {/* Nội dung trang kho hàng */}
+        </div>
+    )
 }
