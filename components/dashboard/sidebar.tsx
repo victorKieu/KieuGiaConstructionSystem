@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { useSidebar } from "./sidebar-context"
@@ -41,7 +41,6 @@ import { Button } from "@/components/ui/button"
 
 export function DashboardSidebar() {
   const pathname = usePathname()
-  const router = useRouter()
   const { isExpanded, setIsExpanded, isMobile, toggleSidebar, closeSidebar } = useSidebar()
   const [mounted, setMounted] = useState(false)
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null)
@@ -58,239 +57,240 @@ export function DashboardSidebar() {
     }
   }, [pathname, isMobile, closeSidebar])
 
+  // Xác định menu item active và mở submenu tương ứng
+  useEffect(() => {
+    const navItems = getNavItems()
+    const activeItem = navItems.find((item) => item.active)
+    if (activeItem && activeItem.subItems) {
+      setActiveSubmenu(activeItem.label)
+    }
+  }, [pathname])
+
   if (!mounted) {
     return null
   }
 
   const handleToggleSubmenu = (label: string) => {
-    if (activeSubmenu === label) {
-      setActiveSubmenu(null)
-    } else {
-      setActiveSubmenu(label)
-    }
+    setActiveSubmenu((prev) => (prev === label ? null : label))
   }
 
-  const navItems = [
-    {
-      icon: Home,
-      label: "Tổng quan",
-      href: "/dashboard",
-      active: pathname === "/dashboard",
-    },
-    {
-      icon: Building2,
-      label: "Dự án",
-      href: "/dashboard/projects",
-      active: pathname.startsWith("/dashboard/projects"),
-      subItems: [
-        {
-          icon: List,
-          label: "Danh sách dự án",
-          href: "/dashboard/projects",
-        },
-      ],
-    },
-    {
-      icon: Users,
-      label: "HRM",
-      href: "/dashboard/hrm",
-      active: pathname.startsWith("/dashboard/hrm"),
-      subItems: [
-        {
-          icon: List,
-          label: "Danh sách nhân viên",
-          href: "/dashboard/hrm/employees",
-        },
-        {
-          icon: Briefcase,
-          label: "Quản lý tài sản",
-          href: "/dashboard/hrm/assets",
-        },
-        {
-          icon: ClipboardCheck,
-          label: "Giám sát Chấm công",
-          href: "/dashboard/hrm/attendance-monitoring",
-        },
-        {
-          icon: Clock,
-          label: "Chấm Công",
-          href: "/dashboard/hrm/attendance",
-        },
-        {
-          icon: Calendar,
-          label: "Bảng chấm công",
-          href: "/dashboard/hrm/attendance-board",
-        },
-        {
-          icon: Calendar,
-          label: "Quỹ phép",
-          href: "/dashboard/hrm/leave-fund",
-        },
-        {
-          icon: Award,
-          label: "KPIs",
-          href: "/dashboard/hrm/kpis",
-        },
-        {
-          icon: DollarSign,
-          label: "Bảng lương",
-          href: "/dashboard/hrm/payroll",
-        },
-        {
-          icon: FileText,
-          label: "Báo cáo chấm công",
-          href: "/dashboard/hrm/attendance-report",
-        },
-        {
-          icon: LogIn,
-          label: "Báo cáo Check in/out",
-          href: "/dashboard/hrm/checkin-report",
-        },
-      ],
-    },
-    {
-      icon: HeartHandshake,
-      label: "CRM",
-      href: "/dashboard/crm",
-      active: pathname.startsWith("/dashboard/crm") || pathname.startsWith("/dashboard/customers"),
-      subItems: [
-        {
-          icon: List,
-          label: "Danh sách khách hàng",
-          href: "/dashboard/customers",
-        },
-        {
-          icon: LineChart,
-          label: "Phân tích cơ hội",
-          href: "/dashboard/crm/opportunities",
-        },
-        {
-          icon: Users,
-          label: "Chăm sóc khách hàng",
-          href: "/dashboard/crm/customer-care",
-        },
-        {
-          icon: FileContract,
-          label: "Hợp Đồng",
-          href: "/dashboard/crm/contracts",
-        },
-      ],
-    },
-    {
-      icon: Package,
-      label: "Quản lý kho",
-      href: "/dashboard/inventory",
-      active: pathname.startsWith("/dashboard/inventory"),
-      subItems: [
-        {
-          icon: ChartPie,
-          label: "Tổng quan kho",
-          href: "/dashboard/inventory",
-        },
-        {
-          icon: Database,
-          label: "Danh mục kho",
-          href: "/dashboard/inventory/materials",
-        },
-        {
-          icon: CheckSquare,
-          label: "Duyệt lệnh",
-          href: "/dashboard/inventory/approvals",
-        },
-        {
-          icon: Tool,
-          label: "Lịch bảo trì",
-          href: "/dashboard/inventory/maintenance",
-        },
-        {
-          icon: AlertTriangle,
-          label: "Biên bản hư hỏng",
-          href: "/dashboard/inventory/damage-reports",
-        },
-        {
-          icon: BarChart,
-          label: "Báo cáo",
-          href: "/dashboard/inventory/reports",
-        },
-      ],
-    },
-    {
-      icon: ShoppingCart,
-      label: "Mua hàng",
-      href: "/dashboard/procurement",
-      active: pathname.startsWith("/dashboard/procurement"),
-      subItems: [
-        {
-          icon: Building2,
-          label: "Nhà cung cấp",
-          href: "/dashboard/procurement/suppliers",
-        },
-        {
-          icon: FileText,
-          label: "Yêu cầu mua hàng",
-          href: "/dashboard/procurement/purchase-requests",
-        },
-        {
-          icon: FileContract,
-          label: "Hợp đồng",
-          href: "/dashboard/procurement/contracts",
-        },
-        {
-          icon: DollarSign,
-          label: "Quản lý giá",
-          href: "/dashboard/procurement/price-management",
-        },
-        {
-          icon: BarChart,
-          label: "Báo cáo",
-          href: "/dashboard/procurement/reports",
-        },
-      ],
-    },
-    {
-      icon: BarChart,
-      label: "Báo cáo",
-      href: "/dashboard/reports",
-      active: pathname.startsWith("/dashboard/reports"),
-    },
-    {
-      icon: Settings,
-      label: "Admin",
-      href: "/dashboard/admin",
-      active: pathname.startsWith("/dashboard/admin"),
-      subItems: [
-        {
-          icon: UserCog,
-          label: "Quản lý người dùng",
-          href: "/dashboard/admin/users",
-        },
-        {
-          icon: Shield,
-          label: "Phân quyền",
-          href: "/dashboard/admin/permissions",
-        },
-        {
-          icon: Cog,
-          label: "Thiết lập hệ thống",
-          href: "/dashboard/admin/settings",
-        },
-        {
-          icon: History,
-          label: "Nhật ký hệ thống",
-          href: "/dashboard/admin/logs",
-        },
-      ],
-    },
-  ]
+  // Tách hàm getNavItems ra để tránh tạo lại mảng mỗi khi render
+  function getNavItems() {
+    return [
+      {
+        icon: Home,
+        label: "Tổng quan",
+        href: "/dashboard",
+        active: pathname === "/dashboard",
+      },
+      {
+        icon: Building2,
+        label: "Dự án",
+        href: "/dashboard/projects",
+        active: pathname.startsWith("/dashboard/projects"),
+        subItems: [
+          {
+            icon: List,
+            label: "Danh sách dự án",
+            href: "/dashboard/projects",
+          },
+        ],
+      },
+      {
+        icon: Users,
+        label: "HRM",
+        href: "/dashboard/hrm",
+        active: pathname.startsWith("/dashboard/hrm"),
+        subItems: [
+          {
+            icon: List,
+            label: "Danh sách nhân viên",
+            href: "/dashboard/hrm/employees",
+          },
+          {
+            icon: Briefcase,
+            label: "Quản lý tài sản",
+            href: "/dashboard/hrm/assets",
+          },
+          {
+            icon: ClipboardCheck,
+            label: "Giám sát Chấm công",
+            href: "/dashboard/hrm/attendance-monitoring",
+          },
+          {
+            icon: Clock,
+            label: "Chấm Công",
+            href: "/dashboard/hrm/attendance",
+          },
+          {
+            icon: Calendar,
+            label: "Bảng chấm công",
+            href: "/dashboard/hrm/attendance-board",
+          },
+          {
+            icon: Calendar,
+            label: "Quỹ phép",
+            href: "/dashboard/hrm/leave-fund",
+          },
+          {
+            icon: Award,
+            label: "KPIs",
+            href: "/dashboard/hrm/kpis",
+          },
+          {
+            icon: DollarSign,
+            label: "Bảng lương",
+            href: "/dashboard/hrm/payroll",
+          },
+          {
+            icon: FileText,
+            label: "Báo cáo chấm công",
+            href: "/dashboard/hrm/attendance-report",
+          },
+          {
+            icon: LogIn,
+            label: "Báo cáo Check in/out",
+            href: "/dashboard/hrm/checkin-report",
+          },
+        ],
+      },
+      {
+        icon: HeartHandshake,
+        label: "CRM",
+        href: "/dashboard/crm",
+        active: pathname.startsWith("/dashboard/crm") || pathname.startsWith("/dashboard/customers"),
+        subItems: [
+          {
+            icon: List,
+            label: "Danh sách khách hàng",
+            href: "/dashboard/customers",
+          },
+          {
+            icon: LineChart,
+            label: "Phân tích cơ hội",
+            href: "/dashboard/crm/opportunities",
+          },
+          {
+            icon: Users,
+            label: "Chăm sóc khách hàng",
+            href: "/dashboard/crm/customer-care",
+          },
+          {
+            icon: FileContract,
+            label: "Hợp Đồng",
+            href: "/dashboard/crm/contracts",
+          },
+        ],
+      },
+      {
+        icon: Package,
+        label: "Quản lý kho",
+        href: "/dashboard/inventory",
+        active: pathname.startsWith("/dashboard/inventory"),
+        subItems: [
+          {
+            icon: ChartPie,
+            label: "Tổng quan kho",
+            href: "/dashboard/inventory",
+          },
+          {
+            icon: Database,
+            label: "Danh mục kho",
+            href: "/dashboard/inventory/materials",
+          },
+          {
+            icon: CheckSquare,
+            label: "Duyệt lệnh",
+            href: "/dashboard/inventory/approvals",
+          },
+          {
+            icon: Tool,
+            label: "Lịch bảo trì",
+            href: "/dashboard/inventory/maintenance",
+          },
+          {
+            icon: AlertTriangle,
+            label: "Biên bản hư hỏng",
+            href: "/dashboard/inventory/damage-reports",
+          },
+          {
+            icon: BarChart,
+            label: "Báo cáo",
+            href: "/dashboard/inventory/reports",
+          },
+        ],
+      },
+      {
+        icon: ShoppingCart,
+        label: "Mua hàng",
+        href: "/dashboard/procurement",
+        active: pathname.startsWith("/dashboard/procurement"),
+        subItems: [
+          {
+            icon: Building2,
+            label: "Nhà cung cấp",
+            href: "/dashboard/procurement/suppliers",
+          },
+          {
+            icon: FileText,
+            label: "Yêu cầu mua hàng",
+            href: "/dashboard/procurement/purchase-requests",
+          },
+          {
+            icon: FileContract,
+            label: "Hợp đồng",
+            href: "/dashboard/procurement/contracts",
+          },
+          {
+            icon: DollarSign,
+            label: "Quản lý giá",
+            href: "/dashboard/procurement/price-management",
+          },
+          {
+            icon: BarChart,
+            label: "Báo cáo",
+            href: "/dashboard/procurement/reports",
+          },
+        ],
+      },
+      {
+        icon: BarChart,
+        label: "Báo cáo",
+        href: "/dashboard/reports",
+        active: pathname.startsWith("/dashboard/reports"),
+      },
+      {
+        icon: Settings,
+        label: "Admin",
+        href: "/dashboard/admin",
+        active: pathname.startsWith("/dashboard/admin"),
+        subItems: [
+          {
+            icon: UserCog,
+            label: "Quản lý người dùng",
+            href: "/dashboard/admin/users",
+          },
+          {
+            icon: Shield,
+            label: "Phân quyền",
+            href: "/dashboard/admin/permissions",
+          },
+          {
+            icon: Cog,
+            label: "Thiết lập hệ thống",
+            href: "/dashboard/admin/settings",
+          },
+          {
+            icon: History,
+            label: "Nhật ký hệ thống",
+            href: "/dashboard/admin/logs",
+          },
+        ],
+      },
+    ]
+  }
 
-  const activeItem = navItems.find((item) => item.active)
-  useEffect(() => {
-    if (activeItem && activeItem.subItems) {
-      setActiveSubmenu(activeItem.label)
-    } else {
-      setActiveSubmenu(null)
-    }
-  }, [pathname, activeItem])
+  const navItems = getNavItems()
 
   return (
     <>

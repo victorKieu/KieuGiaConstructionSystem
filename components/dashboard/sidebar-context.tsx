@@ -1,12 +1,11 @@
 "use client"
 
 import type React from "react"
-
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect, useCallback } from "react"
 
 type SidebarContextType = {
   isExpanded: boolean
-  setIsExpanded: (value: boolean) => void
+  setIsExpanded: React.Dispatch<React.SetStateAction<boolean>>
   isMobile: boolean
   toggleSidebar: () => void
   closeSidebar: () => void
@@ -18,38 +17,36 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isExpanded, setIsExpanded] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
 
-  // Kiểm tra kích thước màn hình khi component được mount
+  // Kiểm tra kích thước màn hình và cập nhật trạng thái
   useEffect(() => {
-    const checkScreenSize = () => {
-      const mobile = window.innerWidth < 768
-      setIsMobile(mobile)
-      // Trên mobile, mặc định sidebar sẽ thu gọn
-      if (mobile && isExpanded) {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+      if (window.innerWidth < 768) {
         setIsExpanded(false)
+      } else {
+        setIsExpanded(true)
       }
     }
 
-    // Kiểm tra kích thước ban đầu
-    checkScreenSize()
+    // Kiểm tra khi component mount
+    checkMobile()
 
-    // Thêm event listener để kiểm tra khi resize
-    window.addEventListener("resize", checkScreenSize)
+    // Thêm event listener
+    window.addEventListener("resize", checkMobile)
 
     // Cleanup
-    return () => window.removeEventListener("resize", checkScreenSize)
-  }, [isExpanded])
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
 
   // Hàm toggle sidebar
-  const toggleSidebar = () => {
-    setIsExpanded(!isExpanded)
-  }
+  const toggleSidebar = useCallback(() => {
+    setIsExpanded((prev) => !prev)
+  }, [])
 
-  // Hàm đóng sidebar (hữu ích cho mobile)
-  const closeSidebar = () => {
-    if (isMobile) {
-      setIsExpanded(false)
-    }
-  }
+  // Hàm đóng sidebar
+  const closeSidebar = useCallback(() => {
+    setIsExpanded(false)
+  }, [])
 
   return (
     <SidebarContext.Provider value={{ isExpanded, setIsExpanded, isMobile, toggleSidebar, closeSidebar }}>
