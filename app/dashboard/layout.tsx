@@ -2,6 +2,7 @@ import type React from "react"
 import { isSupabaseReady } from "@/lib/supabase/client"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { DashboardHeader } from "@/components/dashboard/header"
+import { SidebarProvider } from "@/components/dashboard/sidebar-context"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   // Kiểm tra xem Supabase có sẵn sàng không
@@ -17,12 +18,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <DashboardHeader />
-      <div className="flex flex-1 overflow-hidden">
+    <SidebarProvider>
+      <div className="flex h-screen overflow-hidden">
         <DashboardSidebar />
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">{children}</main>
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <DashboardHeader />
+          <main className="flex-1 overflow-y-auto p-6 bg-gray-50">{children}</main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   )
 }
