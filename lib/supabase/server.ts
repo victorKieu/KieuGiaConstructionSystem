@@ -1,54 +1,40 @@
-﻿import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+﻿import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
-export async function middleware(request: NextRequest) {
-    let response = NextResponse.next({
-        request: {
-            headers: request.headers,
-        },
-    })
+export const createClient = async () => {
+    const cookieStore = await cookies()
 
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+        throw new Error('NEXT_PUBLIC_SUPABASE_URL is not defined')
+    }
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined')
+    }
+
+    return createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
         {
             cookies: {
                 get(name: string) {
-                    return request.cookies.get(name)?.value
+                    return cookieStore.get(name)?.value
                 },
                 set(name: string, value: string, options: CookieOptions) {
-                    response.cookies.set({
-                        name,
-                        value,
-                        ...options,
-                    })
+                    try {
+                        cookieStore.set({ name, value, ...options })
+                    } catch (error) {
+                        // Xử lý lỗi khi không thể set cookie trong môi trường SSR
+                    }
                 },
                 remove(name: string, options: CookieOptions) {
-                    response.cookies.set({
-                        name,
-                        value: '',
-                        ...options,
-                    })
+                    try {
+                        cookieStore.set({ name, value: '', ...options })
+                    } catch (error) {
+                        // Xử lý lỗi khi không thể remove cookie trong môi trường SSR
+                    }
                 },
             },
         }
     )
-
-    // Tùy chọn: Kiểm tra phiên đăng nhập
-    const { data: { session } } = await supabase.auth.getSession()
-
-    // Tùy chọn: Chuyển hướng nếu không có phiên đăng nhập
-    if (!session && request.nextUrl.pathname.startsWith('/dashboard')) {
-        return NextResponse.redirect(new URL('/login', request.url))
-    }
-
-    return response
 }
-
-export const config = {
-    matcher: [
-        // Áp dụng middleware cho các đường dẫn cần xác thực
-        '/dashboard/:path*',
-        '/api/:path*',
-// Không áp dụn
