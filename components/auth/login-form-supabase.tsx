@@ -1,120 +1,89 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import Link from "next/link"
-
-import { Button } from "@/components/ui/button"
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 
-const formSchema = z.object({
-    email: z.string().email({
-        message: "Vui lòng nhập email hợp lệ.",
-    }),
-    password: z.string().min(6, {
-        message: "Mật khẩu phải có ít nhất 6 ký tự.",
-    }),
-})
-
-export function LoginForm() {
+export default function LoginFormSupabase() {
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [error, setError] = useState<string | null>(null)
+    const [loading, setLoading] = useState(false)
     const router = useRouter()
-    const [isLoading, setIsLoading] = useState(false)
-    const supabase = createClient()
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            email: "",
-            password: "",
-        },
-    })
-
-    async function onSubmit(values: z.infer<typeof formSchema>) {
-        setIsLoading(true)
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setLoading(true)
+        setError(null)
 
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email: values.email,
-                password: values.password,
+            const supabase = createClient()
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
             })
 
             if (error) {
-                toast.error(error.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.")
-                return
-            }
-
-            if (data.session) {
-                toast.success("Đăng nhập thành công!")
+                setError(error.message)
+            } else {
                 router.push("/dashboard")
                 router.refresh()
             }
-        } catch (error) {
-            toast.error("Đã xảy ra lỗi khi đăng nhập.")
+        } catch (err) {
+            setError("Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại sau.")
+            console.error(err)
         } finally {
-            setIsLoading(false)
+            setLoading(false)
         }
     }
 
     return (
-        <div className="w-full max-w-md space-y-6">
-            <div className="space-y-2 text-center">
-                <h1 className="text-3xl font-bold">Đăng nhập</h1>
-                <p className="text-gray-500">Nhập thông tin đăng nhập của bạn</p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+                    <p>{error}</p>
+                </div>
+            )}
+
+            <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    Email
+                </label>
+                <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
             </div>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Email</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="your@email.com" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Mật khẩu</FormLabel>
-                                <FormControl>
-                                    <Input type="password" placeholder="••••••••" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
-                    </Button>
-                </form>
-            </Form>
-            <div className="text-center text-sm">
-                <p>
-                    Chưa có tài khoản?{" "}
-                    <Link href="/register" className="text-blue-600 hover:underline">
-                        Đăng ký
-                    </Link>
-                </p>
+
+            <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                    Mật khẩu
+                </label>
+                <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
             </div>
-        </div>
+
+            <div>
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                >
+                    {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+                </button>
+            </div>
+        </form>
     )
 }
