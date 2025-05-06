@@ -16,7 +16,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen">
       {/* Form đăng nhập */}
       <div className="flex-1 flex flex-col items-center justify-center p-4 bg-white">
         <div className="w-full max-w-md">
@@ -26,7 +26,7 @@ export default function LoginPage() {
 
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-800">Kieu Gia Construction</h1>
-            <p className="text-gray-600">Đăng Nhập Hệ Thống</p>
+            <p className="text-gray-600 mt-1">Đăng Nhập Hệ Thống</p>
           </div>
 
           <LoginForm />
@@ -38,7 +38,7 @@ export default function LoginPage() {
       </div>
 
       {/* Sidebar thông tin */}
-      <div className="hidden lg:flex lg:flex-col lg:w-1/3 bg-gray-800 text-white p-10">
+      <div className="hidden lg:flex lg:flex-col lg:w-1/2 bg-gray-800 text-white p-10">
         <div className="flex-1 flex flex-col justify-center">
           <h2 className="text-3xl font-bold mb-4">Kieu Gia Construction</h2>
           <p className="text-gray-300 mb-10">Hệ thống quản lý toàn diện cho công ty xây dựng hàng đầu Việt Nam</p>

@@ -1,10 +1,9 @@
 import { isSupabaseReady } from "@/lib/supabase/client"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, Package, Truck, Users, TrendingUp, AlertTriangle } from "lucide-react"
+import { Card } from "@/components/ui/card"
 import { getProjects } from "@/lib/actions/projects"
-import { getCustomers } from "@/lib/actions/customers"
 import { getMaterials } from "@/lib/actions/inventory"
-import { getEmployees } from "@/lib/actions/employees"
+import { getCustomers } from "@/lib/actions/customers"
+import Link from "next/link"
 
 export default async function DashboardPage() {
   // Kiểm tra xem Supabase có sẵn sàng không
@@ -23,153 +22,210 @@ export default async function DashboardPage() {
   let projects = []
   let customers = []
   let materials = []
-  let employees = []
+  const recentActivities = 24
 
   try {
-    ;[projects, customers, materials, employees] = await Promise.all([
-      getProjects(),
-      getCustomers(),
-      getMaterials(),
-      getEmployees(),
-    ])
+    ;[projects, customers, materials] = await Promise.all([getProjects(), getCustomers(), getMaterials()])
   } catch (error) {
     console.error("Error fetching dashboard data:", error)
   }
 
-  // Dữ liệu mẫu cho tiến độ dự án
-  const projectProgress = [
-    {
-      name: "Chung cư Kiều Gia",
-      progress: 75,
-      color: "bg-green-500",
-    },
-    {
-      name: "Biệt thự Vinhomes",
-      progress: 45,
-      color: "bg-blue-500",
-    },
-    {
-      name: "Nhà phố Thủ Đức",
-      progress: 90,
-      color: "bg-purple-500",
-    },
-  ]
-
-  // Dữ liệu mẫu cho hoạt động gần đây
-  const recentActivities = [
-    {
-      icon: <TrendingUp className="h-5 w-5 text-green-500" />,
-      title: "Hoàn thành giai đoạn 1",
-      description: "Dự án Chung cư Kiều Gia đã hoàn thành giai đoạn 1 đúng tiến độ",
-      time: "2 giờ trước",
-    },
-    {
-      icon: <AlertTriangle className="h-5 w-5 text-amber-500" />,
-      title: "Thiếu vật liệu",
-      description: "Kho hàng báo cáo thiếu xi măng cho dự án Nhà phố Thủ Đức",
-      time: "5 giờ trước",
-    },
-    {
-      icon: <Users className="h-5 w-5 text-blue-500" />,
-      title: "Nhân viên mới",
-      description: "Nguyễn Văn A đã tham gia vào đội ngũ kỹ sư",
-      time: "1 ngày trước",
-    },
-  ]
-
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Tổng quan</h1>
+      <div>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="text-gray-600">Tổng quan về hoạt động của công ty</p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Dự án</CardTitle>
-            <Building2 className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{projects.length || 12}</div>
-            <p className="text-xs text-gray-500">4 dự án đang hoạt động</p>
-          </CardContent>
+        <Card className="p-4 border rounded-md shadow-sm">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Tổng số dự án</p>
+              <h3 className="text-3xl font-bold mt-1">0</h3>
+              <p className="text-xs text-gray-500 mt-1">0 đang thực hiện, 0 đã hoàn thành</p>
+            </div>
+            <div className="text-gray-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/projects"
+            className="text-sm text-blue-600 hover:underline mt-4 inline-flex items-center"
+          >
+            Xem chi tiết
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 ml-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Kho hàng</CardTitle>
-            <Package className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{materials.length || 243}</div>
-            <p className="text-xs text-gray-500">18 mặt hàng sắp hết</p>
-          </CardContent>
+        <Card className="p-4 border rounded-md shadow-sm">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Vật tư tồn kho</p>
+              <h3 className="text-3xl font-bold mt-1">0</h3>
+              <p className="text-xs text-gray-500 mt-1">0 vật tư sắp hết hàng</p>
+            </div>
+            <div className="text-gray-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                />
+              </svg>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/inventory"
+            className="text-sm text-blue-600 hover:underline mt-4 inline-flex items-center"
+          >
+            Xem chi tiết
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 ml-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Thiết bị</CardTitle>
-            <Truck className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">56</div>
-            <p className="text-xs text-gray-500">8 thiết bị đang được sử dụng</p>
-          </CardContent>
+        <Card className="p-4 border rounded-md shadow-sm">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Khách hàng</p>
+              <h3 className="text-3xl font-bold mt-1">0</h3>
+              <p className="text-xs text-gray-500 mt-1">Tổng số khách hàng đã đăng ký</p>
+            </div>
+            <div className="text-gray-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                />
+              </svg>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/customers"
+            className="text-sm text-blue-600 hover:underline mt-4 inline-flex items-center"
+          >
+            Xem chi tiết
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 ml-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Nhân viên</CardTitle>
-            <Users className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{employees.length || 32}</div>
-            <p className="text-xs text-gray-500">5 nhân viên mới trong tháng</p>
-          </CardContent>
+        <Card className="p-4 border rounded-md shadow-sm">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Hoạt động gần đây</p>
+              <h3 className="text-3xl font-bold mt-1">24</h3>
+              <p className="text-xs text-gray-500 mt-1">Hoạt động trong 24 giờ qua</p>
+            </div>
+            <div className="text-gray-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/activities"
+            className="text-sm text-blue-600 hover:underline mt-4 inline-flex items-center"
+          >
+            Xem chi tiết
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 ml-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Tiến độ dự án</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {projectProgress.map((project) => (
-                <div key={project.name}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm">{project.name}</span>
-                    <span className="text-sm font-medium">{project.progress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`${project.color} h-2 rounded-full`}
-                      style={{ width: `${project.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
+        <Card className="p-4 border rounded-md shadow-sm">
+          <div className="mb-4">
+            <h2 className="text-lg font-bold">Tiến độ dự án</h2>
+            <p className="text-sm text-gray-600">Theo dõi tiến độ các dự án đang thực hiện</p>
+          </div>
+          <div className="p-4 text-center text-gray-500">
+            <p>Chưa có dự án nào đang thực hiện</p>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Thông báo gần đây</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
-                <div key={index} className="flex items-start">
-                  <div className="mr-4 mt-1">{activity.icon}</div>
-                  <div>
-                    <p className="text-sm font-medium">{activity.title}</p>
-                    <p className="text-xs text-gray-500">{activity.description}</p>
-                    <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
+        <Card className="p-4 border rounded-md shadow-sm">
+          <div className="mb-4">
+            <h2 className="text-lg font-bold">Vật tư sắp hết hàng</h2>
+            <p className="text-sm text-gray-600">Danh sách vật tư cần nhập thêm</p>
+          </div>
+          <div className="p-4 text-center text-gray-500">
+            <p>Không có vật tư nào sắp hết hàng</p>
+          </div>
+          <div className="mt-4">
+            <h3 className="text-md font-semibold">Danh Sách Nhà Cung Cấp</h3>
+            <p className="text-sm text-gray-600">Quản lý thông tin nhà cung cấp</p>
+          </div>
         </Card>
       </div>
     </div>
