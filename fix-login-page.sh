@@ -1,3 +1,10 @@
+#!/bin/bash
+# Script để sửa lỗi trong app/login/page.tsx
+
+echo "Sửa lỗi trong app/login/page.tsx..."
+
+# Tạo nội dung mới cho app/login/page.tsx
+cat > "app/login/page.tsx" << 'EOF'
 import LoginFormSupabase from "@/components/auth/login-form-supabase"
 import { isSupabaseReady } from "@/lib/supabase/client"
 
@@ -30,3 +37,6 @@ export default function LoginPage() {
     </div>
   )
 }
+EOF
+
+echo "Hoàn thành!"
