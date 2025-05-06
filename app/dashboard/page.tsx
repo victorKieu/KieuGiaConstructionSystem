@@ -11,6 +11,8 @@ import { getProjects } from "@/lib/actions/project-actions"
 import { getMaterials } from "@/lib/actions/inventory-actions"
 import { getCustomers } from "@/lib/actions/customer-actions"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = {
   title: "Dashboard",
   description: "Tổng quan về hoạt động của công ty",

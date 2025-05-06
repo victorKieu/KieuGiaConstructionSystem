@@ -4,8 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { Button } from "@/components/ui/button"
 import { Download, FileText, ShoppingCart, TrendingDown, Users } from "lucide-react"
-import { BarChart, LineChart } from "@/components/ui/charts"
 import { MainLayout } from "@/components/layout/main-layout"
+
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Tổng quan Mua hàng",
@@ -90,8 +91,9 @@ export default function ProcurementDashboardPage() {
                 </CardHeader>
                 <CardContent className="pl-2">
                   <div className="h-[300px]">
-                    <BarChart
-                      data={[
+                    {/* Thay thế BarChart bằng div để tránh lỗi valueFormatter */}
+                    <div className="flex h-full items-end gap-2 pb-6">
+                      {[
                         { name: "T1", cost: 1200 },
                         { name: "T2", cost: 1350 },
                         { name: "T3", cost: 1450 },
@@ -99,12 +101,16 @@ export default function ProcurementDashboardPage() {
                         { name: "T5", cost: 1800 },
                         { name: "T6", cost: 2100 },
                         { name: "T7", cost: 2350 },
-                      ]}
-                      categories={["cost"]}
-                      index="name"
-                      valueFormatter={(value) => `${value} triệu`}
-                      colors={["#2563eb"]}
-                    />
+                      ].map((item) => (
+                        <div key={item.name} className="flex flex-1 flex-col items-center">
+                          <div
+                            className="w-full bg-blue-500 rounded-t-sm"
+                            style={{ height: `${(item.cost / 2350) * 100}%` }}
+                          />
+                          <div className="mt-2 text-xs font-medium">{item.name}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -184,20 +190,53 @@ export default function ProcurementDashboardPage() {
                 </CardHeader>
                 <CardContent className="pl-2">
                   <div className="h-[300px]">
-                    <LineChart
-                      data={[
-                        { name: "T2", xi_mang: 100, thep: 100, cat: 100 },
-                        { name: "T3", xi_mang: 102, thep: 105, cat: 101 },
-                        { name: "T4", xi_mang: 105, thep: 110, cat: 103 },
-                        { name: "T5", xi_mang: 108, thep: 115, cat: 102 },
-                        { name: "T6", xi_mang: 110, thep: 120, cat: 104 },
-                        { name: "T7", xi_mang: 112, thep: 125, cat: 105 },
-                      ]}
-                      categories={["xi_mang", "thep", "cat"]}
-                      index="name"
-                      colors={["#3b82f6", "#ef4444", "#10b981"]}
-                      valueFormatter={(value) => `${value}%`}
-                    />
+                    {/* Thay thế LineChart bằng div để tránh lỗi valueFormatter */}
+                    <div className="flex h-full flex-col justify-between">
+                      <div className="grid grid-cols-6 gap-4 h-full">
+                        {[
+                          { name: "T2", xi_mang: 100, thep: 100, cat: 100 },
+                          { name: "T3", xi_mang: 102, thep: 105, cat: 101 },
+                          { name: "T4", xi_mang: 105, thep: 110, cat: 103 },
+                          { name: "T5", xi_mang: 108, thep: 115, cat: 102 },
+                          { name: "T6", xi_mang: 110, thep: 120, cat: 104 },
+                          { name: "T7", xi_mang: 112, thep: 125, cat: 105 },
+                        ].map((month, index, array) => (
+                          <div key={month.name} className="relative h-full">
+                            {index > 0 && (
+                              <>
+                                <div
+                                  className="absolute bottom-0 w-full border-t border-dashed border-gray-200"
+                                  style={{ bottom: `${(month.xi_mang - 100) * 4}%` }}
+                                />
+                                <div
+                                  className="absolute bottom-0 w-full border-t border-dashed border-gray-200"
+                                  style={{ bottom: `${(month.thep - 100) * 4}%` }}
+                                />
+                                <div
+                                  className="absolute bottom-0 w-full border-t border-dashed border-gray-200"
+                                  style={{ bottom: `${(month.cat - 100) * 4}%` }}
+                                />
+                              </>
+                            )}
+                            <div className="absolute bottom-0 text-xs font-medium">{month.name}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex justify-center gap-4 mt-8">
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
+                          <span className="text-xs">Xi măng</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+                          <span className="text-xs">Thép</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+                          <span className="text-xs">Cát</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
