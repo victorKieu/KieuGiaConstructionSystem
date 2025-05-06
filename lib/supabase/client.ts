@@ -1,24 +1,36 @@
-﻿import { createBrowserClient } from '@supabase/ssr'
+﻿import { createClient } from "@supabase/supabase-js"
 
-let supabaseClient: ReturnType<typeof createBrowserClient> | null = null
+// Kiểm tra xem có đang trong quá trình build không
+const isBuildProcess = process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_SUPABASE_URL
 
-export const createClient = () => {
-    if (supabaseClient) {
-        return supabaseClient
-    }
+// Tạo một client giả cho quá trình build
+const mockClient = {
+    from: () => ({
+        select: () => ({
+            eq: () => ({
+                single: () => Promise.resolve({ data: null, error: null }),
+                data: null,
+                error: null,
+            }),
+            data: null,
+            error: null,
+        }),
+        insert: () => ({ data: null, error: null }),
+        update: () => ({ data: null, error: null }),
+        delete: () => ({ data: null, error: null }),
+    }),
+    auth: {
+        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+        signOut: () => Promise.resolve({ error: null }),
+    },
+}
 
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-        throw new Error('NEXT_PUBLIC_SUPABASE_URL is not defined')
-    }
+// Tạo client thực hoặc client giả tùy thuộc vào môi trường
+export const supabase = isBuildProcess
+    ? mockClient
+    : createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || "", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "")
 
-    if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined')
-    }
-
-    supabaseClient = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    )
-
-    return supabaseClient
+// Hàm kiểm tra xem Supabase có sẵn sàng không
+export function isSupabaseReady() {
+    return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 }

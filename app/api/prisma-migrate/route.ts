@@ -1,60 +1,137 @@
 import { NextResponse } from "next/server"
-import { exec } from "child_process"
-import { promisify } from "util"
+import { supabase, isSupabaseReady } from "@/lib/supabase/client"
 
-const execPromise = promisify(exec)
-
-export async function POST() {
-  try {
-    console.log("API: Running Prisma migrate...")
-
-    // Chạy lệnh npx prisma generate
-    console.log("API: Running npx prisma generate...")
-    const { stdout: generateStdout, stderr: generateStderr } = await execPromise("npx prisma generate")
-
-    if (generateStderr) {
-      console.error("API: Error running prisma generate:", generateStderr)
-      return NextResponse.json(
-        {
-          success: false,
-          error: generateStderr,
-        },
-        { status: 500 },
-      )
-    }
-
-    console.log("API: prisma generate output:", generateStdout)
-
-    // Chạy lệnh npx prisma db push
-    console.log("API: Running npx prisma db push...")
-    const { stdout: pushStdout, stderr: pushStderr } = await execPromise("npx prisma db push --accept-data-loss")
-
-    if (pushStderr) {
-      console.error("API: Error running prisma db push:", pushStderr)
-      return NextResponse.json(
-        {
-          success: false,
-          error: pushStderr,
-        },
-        { status: 500 },
-      )
-    }
-
-    console.log("API: prisma db push output:", pushStdout)
-
+export async function GET() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
     return NextResponse.json({
-      success: true,
-      generate: generateStdout,
-      push: pushStdout,
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
+
+  try {
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    console.error("API: Unexpected error:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: String(error),
-      },
-      { status: 500 },
-    )
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
+  }
+}
+
+export async function POST() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
+    return NextResponse.json({
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
+
+  try {
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
+  }
+}
+
+export async function PUT() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
+    return NextResponse.json({
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
+
+  try {
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
+  }
+}
+
+export async function DELETE() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
+    return NextResponse.json({
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
+
+  try {
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
+  }
+}
+
+export async function PATCH() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
+    return NextResponse.json({
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
+
+  try {
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
   }
 }

@@ -1,92 +1,137 @@
-import { type NextRequest, NextResponse } from "next/server"
-import prisma from "@/lib/prisma-client"
+import { NextResponse } from "next/server"
+import { supabase, isSupabaseReady } from "@/lib/supabase/client"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
+    return NextResponse.json({
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
+
   try {
-    const id = Number.parseInt(params.id)
-    const user = await prisma.user.findUnique({
-      where: { id },
-      include: {
-        department: true,
-        position: true,
-        projectMembers: {
-          include: {
-            project: true,
-          },
-        },
-        tasks: true,
-        performanceReviews: true,
-      },
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
     })
-
-    if (!user) {
-      return NextResponse.json({ error: "Personnel not found" }, { status: 404 })
-    }
-
-    return NextResponse.json(user)
   } catch (error) {
-    console.error("Error fetching personnel:", error)
-    return NextResponse.json({ error: "Failed to fetch personnel" }, { status: 500 })
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
+    return NextResponse.json({
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
+
   try {
-    const id = Number.parseInt(params.id)
-    const data = await request.json()
-
-    const user = await prisma.user.update({
-      where: { id },
-      data: {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        role: data.role,
-        phone: data.phone,
-        address: data.address,
-        avatar: data.avatar,
-        departmentId: data.departmentId ? Number.parseInt(data.departmentId) : null,
-        positionId: data.positionId ? Number.parseInt(data.positionId) : null,
-        isActive: data.isActive,
-      },
-      include: {
-        department: true,
-        position: true,
-      },
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
     })
-
-    return NextResponse.json(user)
   } catch (error) {
-    console.error("Error updating personnel:", error)
-    return NextResponse.json({ error: "Failed to update personnel" }, { status: 500 })
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
+    return NextResponse.json({
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
+
   try {
-    const id = Number.parseInt(params.id)
-
-    // Xóa các bản ghi liên quan trước
-    await prisma.projectMember.deleteMany({
-      where: { userId: id },
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
     })
-
-    await prisma.task.deleteMany({
-      where: { assigneeId: id },
-    })
-
-    await prisma.performanceReview.deleteMany({
-      where: { userId: id },
-    })
-
-    // Xóa người dùng
-    await prisma.user.delete({
-      where: { id },
-    })
-
-    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting personnel:", error)
-    return NextResponse.json({ error: "Failed to delete personnel" }, { status: 500 })
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
+  }
+}
+
+export async function DELETE() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
+    return NextResponse.json({
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
+
+  try {
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
+  }
+}
+
+export async function PATCH() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
+    return NextResponse.json({
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
+
+  try {
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
   }
 }

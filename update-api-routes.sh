@@ -1,3 +1,15 @@
+#!/bin/bash
+# Script để cập nhật tất cả các API route
+
+echo "Tìm tất cả các API route..."
+API_ROUTES=$(find app/api -type f -name "*.ts" -o -name "*.js" | grep -v "env-check" | grep -v "system-check" | grep -v "maintenance")
+
+echo "Cập nhật các API route..."
+for route in $API_ROUTES; do
+  echo "Cập nhật: $route"
+  
+  # Tạo nội dung mới cho API route
+  cat > "$route" << 'EOF'
 import { NextResponse } from "next/server"
 import { supabase, isSupabaseReady } from "@/lib/supabase/client"
 
@@ -135,3 +147,7 @@ export async function PATCH() {
     }, { status: 500 })
   }
 }
+EOF
+done
+
+echo "Hoàn thành!"

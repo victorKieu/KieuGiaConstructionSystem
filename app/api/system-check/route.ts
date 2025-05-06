@@ -1,4 +1,5 @@
 ﻿import { NextResponse } from "next/server"
+import { isSupabaseReady } from "@/lib/supabase/client"
 
 export async function GET() {
   // Kiểm tra các thành phần hệ thống
@@ -13,6 +14,8 @@ export async function GET() {
     // Thông tin Vercel
     vercel: process.env.VERCEL ? "Đang chạy trên Vercel" : "Không chạy trên Vercel",
     vercelEnv: process.env.VERCEL_ENV || "Không xác định",
+    // Thông tin Supabase
+    supabaseReady: isSupabaseReady() ? "Sẵn sàng" : "Không sẵn sàng",
     // Thông tin thời gian
     timestamp: new Date().toISOString(),
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

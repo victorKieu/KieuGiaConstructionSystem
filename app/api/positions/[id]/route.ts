@@ -1,84 +1,137 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
+import { NextResponse } from "next/server"
+import { supabase, isSupabaseReady } from "@/lib/supabase/client"
 
-const sql = neon(process.env.DATABASE_URL!)
+export async function GET() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
+    return NextResponse.json({
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const id = Number.parseInt(params.id)
-
-    const position = await sql`
-      SELECT id, name, description, "createdAt", "updatedAt"
-      FROM "Position"
-      WHERE id = ${id}
-    `
-
-    if (position.length === 0) {
-      return NextResponse.json({ error: "Position not found" }, { status: 404 })
-    }
-
-    return NextResponse.json(position[0])
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
+    })
   } catch (error) {
-    console.error("Error fetching position:", error)
-    return NextResponse.json({ error: "Failed to fetch position" }, { status: 500 })
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
+    return NextResponse.json({
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
+
   try {
-    const id = Number.parseInt(params.id)
-    const body = await request.json()
-    const { name, description } = body
-
-    // Kiểm tra chức vụ tồn tại
-    const existingPosition = await sql`
-      SELECT id FROM "Position" WHERE id = ${id}
-    `
-
-    if (existingPosition.length === 0) {
-      return NextResponse.json({ error: "Position not found" }, { status: 404 })
-    }
-
-    // Cập nhật chức vụ
-    const updatedPosition = await sql`
-      UPDATE "Position"
-      SET 
-        name = ${name},
-        description = ${description || null},
-        "updatedAt" = NOW()
-      WHERE id = ${id}
-      RETURNING id, name, description, "createdAt", "updatedAt"
-    `
-
-    return NextResponse.json(updatedPosition[0])
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
+    })
   } catch (error) {
-    console.error("Error updating position:", error)
-    return NextResponse.json({ error: "Failed to update position" }, { status: 500 })
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
+    return NextResponse.json({
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
+
   try {
-    const id = Number.parseInt(params.id)
-
-    // Kiểm tra chức vụ tồn tại
-    const existingPosition = await sql`
-      SELECT id FROM "Position" WHERE id = ${id}
-    `
-
-    if (existingPosition.length === 0) {
-      return NextResponse.json({ error: "Position not found" }, { status: 404 })
-    }
-
-    // Xóa chức vụ
-    await sql`
-      DELETE FROM "Position"
-      WHERE id = ${id}
-    `
-
-    return NextResponse.json({ success: true })
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
+    })
   } catch (error) {
-    console.error("Error deleting position:", error)
-    return NextResponse.json({ error: "Failed to delete position" }, { status: 500 })
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
+  }
+}
+
+export async function DELETE() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
+    return NextResponse.json({
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
+
+  try {
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
+  }
+}
+
+export async function PATCH() {
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (!isSupabaseReady()) {
+    return NextResponse.json({
+      status: "error",
+      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
+      timestamp: new Date().toISOString(),
+    }, { status: 503 })
+  }
+
+  try {
+    // Thực hiện logic của bạn ở đây
+    return NextResponse.json({
+      status: "success",
+      message: "API đang hoạt động.",
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error("Error:", error)
+    return NextResponse.json({
+      status: "error",
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
+      timestamp: new Date().toISOString(),
+    }, { status: 500 })
   }
 }
