@@ -1,25 +1,30 @@
 "use client"
 
 import type React from "react"
+
 import { createContext, useContext, useState, useEffect } from "react"
 
 type SidebarContextType = {
-  isOpen: boolean
-  isHovering: boolean
-  toggle: () => void
-  setIsHovering: (value: boolean) => void
+  isExpanded: boolean
+  setIsExpanded: (value: boolean) => void
+  isMobile: boolean
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const [isOpen, setIsOpen] = useState(true)
-  const [isHovering, setIsHovering] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
 
   // Kiểm tra kích thước màn hình khi component được mount
   useEffect(() => {
     const checkScreenSize = () => {
-      setIsOpen(window.innerWidth >= 1024) // Mặc định mở rộng trên màn hình lớn
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      // Trên mobile, mặc định sidebar sẽ thu gọn
+      if (mobile) {
+        setIsExpanded(false)
+      }
     }
 
     // Kiểm tra kích thước ban đầu
@@ -32,17 +37,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("resize", checkScreenSize)
   }, [])
 
-  const toggle = () => {
-    setIsOpen(!isOpen)
-    // Reset hovering state when toggling
-    if (isOpen) {
-      setIsHovering(false)
-    }
-  }
-
-  return (
-    <SidebarContext.Provider value={{ isOpen, isHovering, toggle, setIsHovering }}>{children}</SidebarContext.Provider>
-  )
+  return <SidebarContext.Provider value={{ isExpanded, setIsExpanded, isMobile }}>{children}</SidebarContext.Provider>
 }
 
 export function useSidebar() {
