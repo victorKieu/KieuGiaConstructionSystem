@@ -214,6 +214,29 @@ export function DashboardSidebar() {
       active: pathname.startsWith("/dashboard/procurement"),
       subItems: [
         {
+          icon: ChartPie,
+          label: "Tổng quan",
+          href: "/dashboard/procurement",
+        },
+        {
+          icon: FileText,
+          label: "Đơn hàng",
+          href: "/dashboard/procurement/orders",
+        },
+        {
+          icon: Building2,
+          label: "Nhà cung cấp",
+          href: "/dashboard/procurement/suppliers",
+        },
+      ],
+    },
+    {
+      icon: ShoppingCart,
+      label: "Mua hàng",
+      href: "/dashboard/procurement",
+      active: pathname.startsWith("/dashboard/procurement"),
+      subItems: [
+        {
           icon: Building2,
           label: "Nhà cung cấp",
           href: "/dashboard/procurement/suppliers",

@@ -1,5 +1,4 @@
-import { DashboardHeader } from "@/components/dashboard/dashboard-header"
-import { DashboardShell } from "@/components/dashboard/dashboard-shell"
+import type { Metadata } from "next"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ResponsiveTable } from "@/components/ui/responsive-table"
@@ -35,6 +34,11 @@ import {
   Pie,
   Cell,
 } from "recharts"
+
+export const metadata: Metadata = {
+  title: "HRM Dashboard | Kieu Gia Construction",
+  description: "Tổng quan về quản lý nhân sự",
+}
 
 export default function HRMDashboard() {
   // Dữ liệu mẫu cho dashboard
@@ -310,8 +314,13 @@ export default function HRMDashboard() {
   ]
 
   return (
-    <DashboardShell>
-      <DashboardHeader heading="HRM Dashboard" text="Tổng quan về quản lý nhân sự" />
+    <div className="flex flex-1 flex-col space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex flex-col items-start gap-2 md:flex-row md:items-center md:justify-between">
+        <div className="grid gap-1">
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">HRM Dashboard</h1>
+          <p className="text-muted-foreground">Tổng quan về quản lý nhân sự</p>
+        </div>
+      </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
@@ -688,8 +697,6 @@ export default function HRMDashboard() {
                     { name: "1-2 năm", value: 35 },
                     { name: "3-5 năm", value: 42 },
                     { name: "6-10 năm", value: 15 },
-                    { name: ">  value: 42 },
-                    { name: "6-10 năm", value: 15 },
                     { name: "> 10 năm", value: 4 },
                   ]}
                   margin={{
@@ -707,7 +714,7 @@ export default function HRMDashboard() {
                   <Bar dataKey="value" fill="#8884d8" name="Số nhân viên" />
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>\
+            </CardContent>
           </Card>
 
           <Card>
@@ -925,6 +932,6 @@ export default function HRMDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
-    </DashboardShell>
+    </div>
   )
 }
