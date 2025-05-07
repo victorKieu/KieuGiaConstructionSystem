@@ -128,7 +128,7 @@ export async function deleteInventoryItem(id: string) {
   }
 }
 
-// Thêm các hàm mới để hỗ trợ trang overview
+// Thêm các hàm bị thiếu
 export async function getMaterials() {
   try {
     const supabase = createServerSupabaseClient()
@@ -143,10 +143,10 @@ export async function getMaterials() {
       return { error: error.message }
     }
 
-    return { data }
+    return { data: data || [] }
   } catch (error) {
     console.error("Error in getMaterials:", error)
-    return { error: "Failed to fetch materials" }
+    return { error: "Failed to fetch materials", data: [] }
   }
 }
 
@@ -160,7 +160,7 @@ export async function getWarehouses() {
       return { error: error.message }
     }
 
-    return { data }
+    return { data: data || [] }
   } catch (error) {
     console.error("Error in getWarehouses:", error)
     return { error: "Failed to fetch warehouses", data: [] }
