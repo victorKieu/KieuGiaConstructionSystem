@@ -1,66 +1,92 @@
-import Image from "next/image"
-import LoginForm from "@/components/auth/login-form"
-import { isSupabaseReady } from "@/lib/supabase/client"
+"use client"
+
+import type React from "react"
+
+import { useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function LoginPage() {
-  // Kiểm tra xem Supabase có sẵn sàng không
-  if (typeof window === "undefined" && !isSupabaseReady()) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-          <p className="font-bold">Cảnh báo</p>
-          <p>Không thể kết nối đến Supabase. Vui lòng kiểm tra biến môi trường.</p>
-        </div>
-      </div>
-    )
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Giả lập đăng nhập thành công
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      router.push("/dashboard")
+    } catch (err: any) {
+      setError(err.message || "Đăng nhập thất bại. Vui lòng thử lại.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Form đăng nhập */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4 bg-white">
-        <div className="w-full max-w-md">
-          <div className="flex justify-center mb-6">
-            <Image src="/logo-kieu-gia.png" alt="Kieu Gia Logo" width={150} height={150} className="mb-4" />
-          </div>
-
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-800">Kieu Gia Construction</h1>
-            <p className="text-gray-600 mt-1">Đăng Nhập Hệ Thống</p>
-          </div>
-
-          <LoginForm />
-
-          <div className="text-center mt-8 text-gray-600 text-sm">
-            <p>Nâng Tầm Cuộc Sống, Giá Trị Tương Lai</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Sidebar thông tin */}
-      <div className="hidden lg:flex lg:flex-col lg:w-1/2 bg-gray-800 text-white p-10">
-        <div className="flex-1 flex flex-col justify-center">
-          <h2 className="text-3xl font-bold mb-4">Kieu Gia Construction</h2>
-          <p className="text-gray-300 mb-10">Hệ thống quản lý toàn diện cho công ty xây dựng hàng đầu Việt Nam</p>
-
-          <div className="space-y-8">
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Tầm nhìn:</h3>
-              <p className="text-gray-300">
-                Trở thành công ty tư vấn và xây dựng hàng đầu tại Việt Nam, nổi bật với chất lượng công trình và dịch vụ
-                khách hàng xuất sắc.
-              </p>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md p-4">
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">Đăng nhập</CardTitle>
+            <CardDescription className="text-center">Nhập thông tin đăng nhập để truy cập vào hệ thống</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {error && <div className="p-3 mb-4 text-sm text-red-500 bg-red-100 rounded">{error}</div>}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="your.email@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Mật khẩu</Label>
+                  <Link href="/forgot-password" className="text-sm text-blue-500 hover:text-blue-700">
+                    Quên mật khẩu?
+                  </Link>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
+            <div className="text-sm text-center text-gray-500">
+              Chưa có tài khoản?{" "}
+              <Link href="/register" className="text-blue-500 hover:text-blue-700">
+                Đăng ký
+              </Link>
             </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Sứ mệnh:</h3>
-              <p className="text-gray-300">
-                Đem đến giải pháp xây dựng tối ưu, an toàn và bền vững cho khách hàng, góp phần phát triển hạ tầng và đô
-                thị Việt Nam.
-              </p>
-            </div>
-          </div>
-        </div>
+            <Button variant="outline" className="w-full" asChild>
+              <Link href="/">Về trang chủ</Link>
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   )

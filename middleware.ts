@@ -12,6 +12,7 @@ export function middleware(request: NextRequest) {
       "/api/debug",
       "/api/debug-runtime",
       "/api/health",
+      "/api/contact",
     ]
 
     // Kiểm tra nếu request đến API route và không nằm trong danh sách cho phép
