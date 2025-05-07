@@ -182,6 +182,7 @@ export async function getCustomerProjects(customerId: string) {
   }
 }
 
+// Thay đổi hàm getSalesChannels thành async nếu nó cũng là Server Action
 export async function getSalesChannels() {
   return [
     { value: "direct", label: "Bán hàng trực tiếp" },
@@ -210,7 +211,8 @@ export async function getCustomerCountByType(type: string): Promise<number> {
   }
 }
 
-export function generateCustomerCode(type: string, count: number): string {
+// Thay đổi hàm generateCustomerCode thành async
+export async function generateCustomerCode(type: string, count: number): Promise<string> {
   const prefix = type === "company" ? "DN" : type === "individual" ? "CN" : "NH"
   const paddedCount = String(count + 1).padStart(4, "0")
   return `${prefix}-${paddedCount}`

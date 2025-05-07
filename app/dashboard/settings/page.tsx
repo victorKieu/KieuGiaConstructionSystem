@@ -44,11 +44,8 @@ export default function SettingsPage() {
                     <Input id="name" placeholder="Nhập họ và tên" defaultValue="Nguyễn Văn A" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email  />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>\
-                    <Input id="email" type="email" placeholder="Nhập email" defaultValue="nguyenvana@example.com" />om" />
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" placeholder="Nhập email" defaultValue="nguyenvana@example.com" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
