@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react"
 
 type SidebarContextType = {
   isOpen: boolean
@@ -24,9 +24,10 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     // Khôi phục trạng thái ghim từ localStorage
     const savedPinState = localStorage.getItem("sidebarPinned")
     if (savedPinState) {
-      setIsPinned(savedPinState === "true")
+      const isPinnedValue = savedPinState === "true"
+      setIsPinned(isPinnedValue)
       // Nếu đã ghim, mở sidebar
-      if (savedPinState === "true") {
+      if (isPinnedValue) {
         setIsOpen(true)
       }
     }
@@ -39,30 +40,40 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isPinned, isMounted])
 
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen)
-  }
+  const toggleSidebar = useCallback(() => {
+    setIsOpen((prev) => !prev)
+  }, [])
 
-  const closeSidebar = () => {
+  const closeSidebar = useCallback(() => {
     // Chỉ đóng sidebar nếu không được ghim
     if (!isPinned) {
       setIsOpen(false)
     }
-  }
+  }, [isPinned])
 
-  const togglePin = () => {
-    setIsPinned(!isPinned)
-    // Nếu ghim, đảm bảo sidebar được mở
-    if (!isPinned) {
-      setIsOpen(true)
-    }
-  }
+  const togglePin = useCallback(() => {
+    setIsPinned((prev) => {
+      const newValue = !prev
+      // Nếu ghim, đảm bảo sidebar được mở
+      if (newValue) {
+        setIsOpen(true)
+      }
+      return newValue
+    })
+  }, [])
 
-  return (
-    <SidebarContext.Provider value={{ isOpen, isPinned, toggleSidebar, closeSidebar, togglePin }}>
-      {children}
-    </SidebarContext.Provider>
+  const contextValue = useMemo<SidebarContextType>(
+    () => ({
+      isOpen,
+      isPinned,
+      toggleSidebar,
+      closeSidebar,
+      togglePin,
+    }),
+    [isOpen, isPinned, toggleSidebar, closeSidebar, togglePin],
   )
+
+  return <SidebarContext.Provider value={contextValue}>{children}</SidebarContext.Provider>
 }
 
 export function useSidebar() {

@@ -39,93 +39,96 @@ type MenuItem = {
   submenu?: SubMenuItem[]
 }
 
-// Danh sách các mục menu
-const navItems: MenuItem[] = [
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: Home,
-  },
-  {
-    title: "Dự án",
-    href: "/dashboard/projects",
-    icon: Briefcase,
-  },
-  {
-    title: "Khách hàng",
-    href: "/dashboard/customers",
-    icon: Users,
-  },
-  {
-    title: "Kho",
-    icon: Package,
-    submenu: [
-      {
-        title: "Tổng quan",
-        href: "/dashboard/inventory/overview",
-      },
-      {
-        title: "Vật tư",
-        href: "/dashboard/inventory",
-      },
-      {
-        title: "Thiết bị",
-        href: "/dashboard/equipment",
-      },
-    ],
-  },
-  {
-    title: "Nhân sự",
-    icon: UserCircle,
-    href: "/dashboard/hrm",
-  },
-  {
-    title: "Mua hàng",
-    icon: Truck,
-    submenu: [
-      {
-        title: "Nhà cung cấp",
-        href: "/dashboard/procurement/suppliers",
-      },
-      {
-        title: "Yêu cầu mua hàng",
-        href: "/dashboard/procurement/purchase-requests",
-      },
-      {
-        title: "Hợp đồng",
-        href: "/dashboard/procurement/contracts",
-      },
-      {
-        title: "Quản lý giá",
-        href: "/dashboard/procurement/price-management",
-      },
-      {
-        title: "Báo cáo",
-        href: "/dashboard/procurement/reports",
-      },
-    ],
-  },
-  {
-    title: "Báo cáo",
-    href: "/dashboard/reports",
-    icon: BarChart3,
-  },
-  {
-    title: "Tài liệu",
-    href: "/dashboard/documents",
-    icon: FileText,
-  },
-  {
-    title: "Cài đặt",
-    href: "/dashboard/settings",
-    icon: Settings,
-  },
-]
+// Tách hàm getNavItems ra khỏi component để tránh lỗi React hooks
+const getNavItems = (): MenuItem[] => {
+  return [
+    {
+      title: "Dashboard",
+      href: "/dashboard",
+      icon: Home,
+    },
+    {
+      title: "Dự án",
+      href: "/dashboard/projects",
+      icon: Briefcase,
+    },
+    {
+      title: "Khách hàng",
+      href: "/dashboard/customers",
+      icon: Users,
+    },
+    {
+      title: "Kho",
+      icon: Package,
+      submenu: [
+        {
+          title: "Tổng quan",
+          href: "/dashboard/inventory/overview",
+        },
+        {
+          title: "Vật tư",
+          href: "/dashboard/inventory",
+        },
+        {
+          title: "Thiết bị",
+          href: "/dashboard/equipment",
+        },
+      ],
+    },
+    {
+      title: "Nhân sự",
+      icon: UserCircle,
+      href: "/dashboard/hrm",
+    },
+    {
+      title: "Mua hàng",
+      icon: Truck,
+      submenu: [
+        {
+          title: "Nhà cung cấp",
+          href: "/dashboard/procurement/suppliers",
+        },
+        {
+          title: "Yêu cầu mua hàng",
+          href: "/dashboard/procurement/purchase-requests",
+        },
+        {
+          title: "Hợp đồng",
+          href: "/dashboard/procurement/contracts",
+        },
+        {
+          title: "Quản lý giá",
+          href: "/dashboard/procurement/price-management",
+        },
+        {
+          title: "Báo cáo",
+          href: "/dashboard/procurement/reports",
+        },
+      ],
+    },
+    {
+      title: "Báo cáo",
+      href: "/dashboard/reports",
+      icon: BarChart3,
+    },
+    {
+      title: "Tài liệu",
+      href: "/dashboard/documents",
+      icon: FileText,
+    },
+    {
+      title: "Cài đặt",
+      href: "/dashboard/settings",
+      icon: Settings,
+    },
+  ]
+}
 
 export function DashboardSidebar() {
   const pathname = usePathname()
   const { isOpen, isPinned, toggleSidebar, togglePin } = useSidebar()
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
+  const navItems = getNavItems()
 
   // Kiểm tra xem pathname có match với href không
   const isActive = (href: string) => {
@@ -142,7 +145,7 @@ export function DashboardSidebar() {
         }
       }
     })
-  }, [pathname])
+  }, [pathname, navItems])
 
   // Toggle submenu
   const toggleSubmenu = (title: string) => {
