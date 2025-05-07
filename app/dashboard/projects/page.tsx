@@ -36,7 +36,7 @@ export default async function ProjectsPage() {
           <p className="text-muted-foreground">Quản lý thông tin dự án xây dựng và theo dõi tiến độ</p>
         </div>
         <Button asChild>
-          <Link href="/dashboard/projects/new">
+          <Link href="/dashboard/projects/create">
             <Plus className="mr-2 h-4 w-4" /> Thêm dự án
           </Link>
         </Button>

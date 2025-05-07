@@ -6,7 +6,10 @@ import { revalidatePath } from "next/cache"
 // Lấy danh sách dự án
 export async function getProjects() {
   try {
-    const { data, error } = await supabase.from("projects").select("*").order("created_at", { ascending: false })
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*, customers(name)")
+      .order("created_at", { ascending: false })
 
     if (error) {
       console.error("Error fetching projects:", error)
@@ -23,7 +26,7 @@ export async function getProjects() {
 // Lấy chi tiết dự án theo ID
 export async function getProjectById(id: string) {
   try {
-    const { data, error } = await supabase.from("projects").select("*").eq("id", id).single()
+    const { data, error } = await supabase.from("projects").select("*, customers(name)").eq("id", id).single()
 
     if (error) {
       console.error("Error fetching project:", error)
@@ -47,7 +50,7 @@ export async function updateProject(id: string, projectData: any) {
         code: projectData.code,
         start_date: projectData.startDate.toISOString(),
         end_date: projectData.endDate.toISOString(),
-        customer: projectData.customer,
+        customer_id: projectData.customer,
         project_type: projectData.projectType,
         location: projectData.location,
         description: projectData.description,
@@ -83,7 +86,7 @@ export async function createProject(projectData: any) {
           code: projectData.code,
           start_date: projectData.startDate.toISOString(),
           end_date: projectData.endDate.toISOString(),
-          customer: projectData.customer,
+          customer_id: projectData.customer,
           project_type: projectData.projectType,
           location: projectData.location,
           description: projectData.description,
@@ -128,5 +131,63 @@ export async function deleteProject(id: string) {
   } catch (error) {
     console.error("Error in deleteProject:", error)
     return { success: false, error: "Đã xảy ra lỗi khi xóa dự án" }
+  }
+}
+
+// Lấy danh sách khách hàng cho dropdown
+export async function getCustomers() {
+  try {
+    const { data, error } = await supabase.from("customers").select("id, name").order("name", { ascending: true })
+
+    if (error) {
+      console.error("Error fetching customers:", error)
+      return { success: false, error: error.message, data: [] }
+    }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error("Error in getCustomers:", error)
+    return { success: false, error: "Đã xảy ra lỗi khi lấy danh sách khách hàng", data: [] }
+  }
+}
+
+// Lấy tiến độ dự án
+export async function getProjectProgress(id: string) {
+  try {
+    const { data, error } = await supabase
+      .from("project_milestones")
+      .select("*")
+      .eq("project_id", id)
+      .order("due_date", { ascending: true })
+
+    if (error) {
+      console.error("Error fetching project milestones:", error)
+      return { success: false, error: error.message, data: [] }
+    }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error("Error in getProjectProgress:", error)
+    return { success: false, error: "Đã xảy ra lỗi khi lấy tiến độ dự án", data: [] }
+  }
+}
+
+// Lấy thành viên dự án
+export async function getProjectMembers(id: string) {
+  try {
+    const { data, error } = await supabase
+      .from("project_team")
+      .select("*, employees(id, name, position)")
+      .eq("project_id", id)
+
+    if (error) {
+      console.error("Error fetching project members:", error)
+      return { success: false, error: error.message, data: [] }
+    }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error("Error in getProjectMembers:", error)
+    return { success: false, error: "Đã xảy ra lỗi khi lấy thành viên dự án", data: [] }
   }
 }

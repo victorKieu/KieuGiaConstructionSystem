@@ -36,7 +36,6 @@ import {
   AlertTriangle,
   PieChartIcon as ChartPie,
   X,
-  Heart,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
@@ -355,20 +354,6 @@ export function DashboardSidebar() {
                 </ul>
               </nav>
             </div>
-
-            {/* Pink Button */}
-            <div className="p-4 border-t">
-              <Button
-                className="w-full bg-pink-500 hover:bg-pink-600 text-white"
-                onClick={() => {
-                  alert("Chức năng đặc biệt đã được kích hoạt!")
-                  setIsMobileOpen(false)
-                }}
-              >
-                <Heart className="mr-2 h-4 w-4" />
-                Chức năng đặc biệt
-              </Button>
-            </div>
           </div>
         </SheetContent>
       </Sheet>
@@ -406,9 +391,7 @@ export function DashboardSidebar() {
         </div>
       </div>
 
-      <div className="overflow-y-auto h-[calc(100vh-64px-60px)]">
-        {" "}
-        {/* Adjusted height to account for pink button */}
+      <div className="overflow-y-auto h-[calc(100vh-64px)]">
         <nav className="p-2">
           <ul className="space-y-1">
             {navItems.map((item) => (
@@ -455,21 +438,6 @@ export function DashboardSidebar() {
             ))}
           </ul>
         </nav>
-      </div>
-
-      {/* Pink Button */}
-      <div className="border-t p-2">
-        <Button
-          className={cn(
-            "w-full bg-pink-500 hover:bg-pink-600 text-white transition-all",
-            isExpanded ? "justify-start" : "justify-center px-0",
-          )}
-        >
-          <Heart className="h-5 w-5 flex-shrink-0" />
-          <span className={cn("ml-3 transition-opacity duration-300", isExpanded ? "opacity-100" : "opacity-0 hidden")}>
-            Chức năng đặc biệt
-          </span>
-        </Button>
       </div>
     </div>
   )

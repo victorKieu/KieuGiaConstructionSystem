@@ -45,9 +45,9 @@ export function ProjectList({ projects }: ProjectListProps) {
   // Lọc dự án theo từ khóa tìm kiếm
   const filteredProjects = projects.filter(
     (project) =>
-      project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.location.toLowerCase().includes(searchTerm.toLowerCase()),
+      project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.location?.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   // Xử lý xóa dự án
@@ -104,6 +104,7 @@ export function ProjectList({ projects }: ProjectListProps) {
   // Hàm định dạng ngày tháng
   const formatDate = (dateString: string) => {
     try {
+      if (!dateString) return "Không xác định"
       const date = new Date(dateString)
       return formatDistanceToNow(date, { addSuffix: true, locale: vi })
     } catch (error) {
@@ -117,7 +118,7 @@ export function ProjectList({ projects }: ProjectListProps) {
         <h3 className="text-lg font-medium">Chưa có dự án nào</h3>
         <p className="text-muted-foreground mt-1">Bắt đầu bằng cách thêm dự án mới.</p>
         <Button className="mt-4" asChild>
-          <Link href="/dashboard/projects/new">
+          <Link href="/dashboard/projects/create">
             <Plus className="mr-2 h-4 w-4" /> Thêm dự án mới
           </Link>
         </Button>
@@ -208,9 +209,9 @@ export function ProjectList({ projects }: ProjectListProps) {
                     <div className="flex items-center text-sm">
                       <Calendar className="h-4 w-4 mr-2 text-gray-500" />
                       <span>
-                        {project.startDate
-                          ? `${new Date(project.startDate).toLocaleDateString()} - ${new Date(
-                              project.endDate,
+                        {project.start_date
+                          ? `${new Date(project.start_date).toLocaleDateString()} - ${new Date(
+                              project.end_date,
                             ).toLocaleDateString()}`
                           : "Chưa cập nhật"}
                       </span>
@@ -218,7 +219,7 @@ export function ProjectList({ projects }: ProjectListProps) {
 
                     <div className="flex items-center text-sm">
                       <Users className="h-4 w-4 mr-2 text-gray-500" />
-                      <span>{project.teamCount || 0} thành viên</span>
+                      <span>{project.team_count || 0} thành viên</span>
                     </div>
                   </div>
 
@@ -241,7 +242,7 @@ export function ProjectList({ projects }: ProjectListProps) {
               <CardFooter className="p-4 pt-0 border-t mt-4">
                 <div className="flex justify-between items-center w-full">
                   <span className="text-xs text-gray-500">
-                    Cập nhật {project.updatedAt ? formatDate(project.updatedAt) : "chưa xác định"}
+                    Cập nhật {project.updated_at ? formatDate(project.updated_at) : "chưa xác định"}
                   </span>
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/dashboard/projects/${project.id}`}>Xem chi tiết</Link>
