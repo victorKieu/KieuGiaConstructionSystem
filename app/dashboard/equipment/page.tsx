@@ -1,152 +1,138 @@
-import { isSupabaseReady } from "@/lib/supabase/client"
+"use client"
+
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Plus, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Search, Plus, Filter } from "lucide-react"
+import Link from "next/link"
 
 export default function EquipmentPage() {
-  // Kiểm tra xem Supabase có sẵn sàng không
-  if (typeof window === "undefined" && !isSupabaseReady()) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-          <p className="font-bold">Cảnh báo</p>
-          <p>Không thể kết nối đến Supabase. Vui lòng kiểm tra biến môi trường.</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Dữ liệu mẫu cho thiết bị
-  const equipmentItems = [
+  const [equipment, setEquipment] = useState([
     {
-      id: 1,
+      id: "1",
       name: "Máy xúc Komatsu PC200",
-      category: "Máy đào",
-      status: "available",
-      location: "Dự án Chung cư Kiều Gia",
-      lastMaintenance: "2023-10-15",
-      nextMaintenance: "2024-01-15",
-      operator: "Nguyễn Văn A",
+      status: "Đang hoạt động",
+      location: "Công trường A",
+      lastMaintenance: "15/04/2023",
     },
     {
-      id: 2,
+      id: "2",
       name: "Máy ủi Caterpillar D6",
-      category: "Máy ủi",
-      status: "in-use",
-      location: "Dự án Biệt thự Vinhomes",
-      lastMaintenance: "2023-09-20",
-      nextMaintenance: "2023-12-20",
-      operator: "Trần Văn B",
+      status: "Bảo trì",
+      location: "Kho thiết bị",
+      lastMaintenance: "02/03/2023",
     },
     {
-      id: 3,
-      name: "Xe tải Hino 15 tấn",
-      category: "Xe tải",
-      status: "maintenance",
-      location: "Xưởng sửa chữa",
-      lastMaintenance: "2023-11-10",
-      nextMaintenance: "2024-02-10",
-      operator: "Lê Văn C",
+      id: "3",
+      name: "Xe tải Howo 15 tấn",
+      status: "Đang hoạt động",
+      location: "Công trường B",
+      lastMaintenance: "10/05/2023",
     },
     {
-      id: 4,
+      id: "4",
       name: "Máy trộn bê tông 350L",
-      category: "Máy trộn",
-      status: "available",
-      location: "Kho thiết bị",
-      lastMaintenance: "2023-10-05",
-      nextMaintenance: "2024-01-05",
-      operator: "Phạm Văn D",
+      status: "Đang hoạt động",
+      location: "Công trường A",
+      lastMaintenance: "20/04/2023",
     },
     {
-      id: 5,
-      name: "Cẩu tháp Potain MC85",
-      category: "Cẩu",
-      status: "in-use",
-      location: "Dự án Nhà phố Thủ Đức",
-      lastMaintenance: "2023-08-15",
-      nextMaintenance: "2023-11-15",
-      operator: "Hoàng Văn E",
-    },
-    {
-      id: 6,
+      id: "5",
       name: "Máy phát điện 100KVA",
-      category: "Máy phát điện",
-      status: "available",
+      status: "Không hoạt động",
       location: "Kho thiết bị",
-      lastMaintenance: "2023-09-10",
-      nextMaintenance: "2023-12-10",
-      operator: "Không có",
+      lastMaintenance: "05/02/2023",
     },
-  ]
+  ])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  // Hàm hiển thị trạng thái thiết bị
-  const getStatusBadge = (status: string) => {
+  const filteredEquipment = equipment.filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case "available":
-        return <Badge className="bg-green-500">Sẵn sàng</Badge>
-      case "in-use":
-        return <Badge className="bg-blue-500">Đang sử dụng</Badge>
-      case "maintenance":
-        return <Badge className="bg-amber-500">Bảo trì</Badge>
-      case "repair":
-        return <Badge className="bg-red-500">Sửa chữa</Badge>
+      case "Đang hoạt động":
+        return "bg-green-100 text-green-800"
+      case "Bảo trì":
+        return "bg-yellow-100 text-yellow-800"
+      case "Không hoạt động":
+        return "bg-red-100 text-red-800"
       default:
-        return <Badge className="bg-gray-500">Không xác định</Badge>
+        return "bg-gray-100 text-gray-800"
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Thiết bị</h1>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Thêm thiết bị
-        </Button>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-          <Input type="search" placeholder="Tìm kiếm thiết bị..." className="pl-8 bg-white" />
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Thiết bị</h1>
+          <p className="text-muted-foreground">Quản lý thiết bị và máy móc xây dựng</p>
         </div>
-        <Button variant="outline">
-          <Filter className="h-4 w-4 mr-2" />
-          Lọc
+        <Button>
+          <Plus className="mr-2 h-4 w-4" /> Thêm thiết bị
         </Button>
       </div>
 
-      <div className="bg-white rounded-md shadow">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Tên thiết bị</TableHead>
-              <TableHead>Danh mục</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead>Vị trí</TableHead>
-              <TableHead>Bảo trì gần nhất</TableHead>
-              <TableHead>Bảo trì tiếp theo</TableHead>
-              <TableHead>Người vận hành</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {equipmentItems.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell className="font-medium">{item.name}</TableCell>
-                <TableCell>{item.category}</TableCell>
-                <TableCell>{getStatusBadge(item.status)}</TableCell>
-                <TableCell>{item.location}</TableCell>
-                <TableCell>{new Date(item.lastMaintenance).toLocaleDateString()}</TableCell>
-                <TableCell>{new Date(item.nextMaintenance).toLocaleDateString()}</TableCell>
-                <TableCell>{item.operator}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Tìm kiếm thiết bị..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Danh sách thiết bị</CardTitle>
+          <CardDescription>Tổng số: {filteredEquipment.length} thiết bị</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <div className="grid grid-cols-5 border-b bg-muted/50 px-4 py-3 text-sm font-medium">
+              <div>Tên thiết bị</div>
+              <div>Trạng thái</div>
+              <div>Vị trí</div>
+              <div>Bảo trì gần nhất</div>
+              <div className="text-right">Thao tác</div>
+            </div>
+            <div className="divide-y">
+              {loading ? (
+                <div className="px-4 py-3 text-center">Đang tải dữ liệu...</div>
+              ) : filteredEquipment.length === 0 ? (
+                <div className="px-4 py-3 text-center">Không tìm thấy thiết bị nào</div>
+              ) : (
+                filteredEquipment.map((item) => (
+                  <div key={item.id} className="grid grid-cols-5 items-center px-4 py-3">
+                    <div className="font-medium">{item.name}</div>
+                    <div>
+                      <span className={`inline-block rounded-full px-2 py-1 text-xs ${getStatusColor(item.status)}`}>
+                        {item.status}
+                      </span>
+                    </div>
+                    <div>{item.location}</div>
+                    <div>{item.lastMaintenance}</div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/dashboard/equipment/${item.id}`}>Chi tiết</Link>
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        Sửa
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

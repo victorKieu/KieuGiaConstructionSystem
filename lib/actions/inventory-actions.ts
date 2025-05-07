@@ -127,3 +127,42 @@ export async function deleteInventoryItem(id: string) {
     return { error: "Failed to delete inventory item" }
   }
 }
+
+// Thêm các hàm mới để hỗ trợ trang overview
+export async function getMaterials() {
+  try {
+    const supabase = createServerSupabaseClient()
+    const { data, error } = await supabase
+      .from("inventory")
+      .select("*")
+      .eq("category", "material")
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching materials:", error)
+      return { error: error.message }
+    }
+
+    return { data }
+  } catch (error) {
+    console.error("Error in getMaterials:", error)
+    return { error: "Failed to fetch materials" }
+  }
+}
+
+export async function getWarehouses() {
+  try {
+    const supabase = createServerSupabaseClient()
+    const { data, error } = await supabase.from("warehouses").select("*").order("name", { ascending: true })
+
+    if (error) {
+      console.error("Error fetching warehouses:", error)
+      return { error: error.message }
+    }
+
+    return { data }
+  } catch (error) {
+    console.error("Error in getWarehouses:", error)
+    return { error: "Failed to fetch warehouses", data: [] }
+  }
+}
