@@ -9,10 +9,26 @@ export async function getProjects() {
     const { data, error } = await supabase
       .from("projects")
       .select(`
-        *,
-        customers(id, name),
-        project_tasks(id),
-        project_budgets(id, planned_amount, actual_amount)
+        id,
+        code,
+        name,
+        description,
+        location,
+        start_date,
+        end_date,
+        budget,
+        status,
+        progress,
+        project_type,
+        construction_type,
+        project_manager,
+        complexity,
+        priority,
+        risk_level,
+        customer_id,
+        created_at,
+        updated_at,
+        customers(id, name)
       `)
       .order("created_at", { ascending: false })
 
@@ -21,23 +37,7 @@ export async function getProjects() {
       return { success: false, error: error.message, data: [] }
     }
 
-    // Tính toán số lượng công việc cho mỗi dự án
-    const projectsWithStats = data.map((project) => {
-      return {
-        ...project,
-        task_count: project.project_tasks ? project.project_tasks.length : 0,
-        budget:
-          project.project_budgets && project.project_budgets.length > 0
-            ? project.project_budgets.reduce((sum, budget) => sum + (budget.planned_amount || 0), 0)
-            : 0,
-        actual_cost:
-          project.project_budgets && project.project_budgets.length > 0
-            ? project.project_budgets.reduce((sum, budget) => sum + (budget.actual_amount || 0), 0)
-            : 0,
-      }
-    })
-
-    return { success: true, data: projectsWithStats }
+    return { success: true, data }
   } catch (error) {
     console.error("Error in getProjects:", error)
     return { success: false, error: "Đã xảy ra lỗi khi lấy danh sách dự án", data: [] }
@@ -50,7 +50,25 @@ export async function getProjectById(id: string) {
     const { data, error } = await supabase
       .from("projects")
       .select(`
-        *,
+        id,
+        code,
+        name,
+        description,
+        location,
+        start_date,
+        end_date,
+        budget,
+        status,
+        progress,
+        project_type,
+        construction_type,
+        project_manager,
+        complexity,
+        priority,
+        risk_level,
+        customer_id,
+        created_at,
+        updated_at,
         customers(id, name)
       `)
       .eq("id", id)
@@ -76,18 +94,20 @@ export async function updateProject(id: string, projectData: any) {
       .update({
         name: projectData.name,
         code: projectData.code,
-        category: projectData.category,
-        start_date: projectData.startDate.toISOString(),
-        end_date: projectData.endDate.toISOString(),
-        customer_id: projectData.customer,
-        project_type: projectData.projectType,
-        location: projectData.location,
-        geo_code: projectData.geoCode,
         description: projectData.description,
+        location: projectData.location,
+        start_date: projectData.start_date,
+        end_date: projectData.end_date,
         budget: projectData.budget,
-        contact_name: projectData.contactName,
-        contact_phone: projectData.contactPhone,
-        contact_email: projectData.contactEmail,
+        status: projectData.status,
+        progress: projectData.progress,
+        project_type: projectData.project_type,
+        construction_type: projectData.construction_type,
+        project_manager: projectData.project_manager,
+        complexity: projectData.complexity,
+        priority: projectData.priority,
+        risk_level: projectData.risk_level,
+        customer_id: projectData.customer_id,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
@@ -111,27 +131,63 @@ export async function updateProject(id: string, projectData: any) {
 // Tạo dự án mới
 export async function createProject(projectData: any) {
   try {
+    // Tạo mã dự án tự động dựa trên loại dự án
+    const currentYear = new Date().getFullYear().toString().slice(-2)
+    let prefix = "KG"
+
+    switch (projectData.construction_type) {
+      case "residential":
+        prefix = "KGR"
+        break
+      case "commercial":
+        prefix = "KGC"
+        break
+      case "industrial":
+        prefix = "KGI"
+        break
+      case "infrastructure":
+        prefix = "KGF"
+        break
+      default:
+        prefix = "KGO"
+    }
+
+    // Lấy số dự án hiện tại để tạo mã mới
+    const { data: existingProjects, error: countError } = await supabase
+      .from("projects")
+      .select("code")
+      .ilike("code", `${prefix}${currentYear}%`)
+
+    if (countError) {
+      console.error("Error counting projects:", countError)
+      return { success: false, error: countError.message }
+    }
+
+    const projectCount = existingProjects ? existingProjects.length + 1 : 1
+    const sequenceNumber = projectCount.toString().padStart(3, "0")
+
+    const projectCode = `${prefix}${currentYear}${sequenceNumber}`
+
     const { data, error } = await supabase
       .from("projects")
       .insert([
         {
           name: projectData.name,
-          code: projectData.code,
-          category: projectData.category,
-          start_date: projectData.startDate.toISOString(),
-          end_date: projectData.endDate.toISOString(),
-          customer_id: projectData.customer,
-          project_type: projectData.projectType,
-          location: projectData.location,
-          geo_code: projectData.geoCode,
+          code: projectCode,
           description: projectData.description,
+          location: projectData.location,
+          start_date: projectData.start_date,
+          end_date: projectData.end_date,
           budget: projectData.budget,
-          contact_name: projectData.contactName,
-          contact_phone: projectData.contactPhone,
-          contact_email: projectData.contactEmail,
           status: "planning", // Trạng thái mặc định khi tạo dự án mới
-          health_status: "normal", // Tình trạng mặc định khi tạo dự án mới
           progress: 0, // Tiến độ mặc định khi tạo dự án mới
+          project_type: projectData.project_type,
+          construction_type: projectData.construction_type,
+          project_manager: projectData.project_manager,
+          complexity: projectData.complexity,
+          priority: projectData.priority,
+          risk_level: projectData.risk_level,
+          customer_id: projectData.customer_id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
@@ -203,16 +259,16 @@ export async function getProjectStatusStats() {
     // Chuyển đổi dữ liệu thành định dạng phù hợp
     const statusMap = {
       planning: "Kế hoạch",
-      "in-progress": "Đang làm",
-      "on-hold": "Tạm dừng",
+      in_progress: "Đang làm",
+      on_hold: "Tạm dừng",
       completed: "Hoàn thành",
       cancelled: "Đã hủy",
     }
 
     const statusColors = {
       planning: "#3498db",
-      "in-progress": "#2ecc71",
-      "on-hold": "#f39c12",
+      in_progress: "#2ecc71",
+      on_hold: "#f39c12",
       completed: "#1abc9c",
       cancelled: "#e74c3c",
     }
@@ -230,46 +286,44 @@ export async function getProjectStatusStats() {
   }
 }
 
-// Lấy thống kê tình trạng dự án
-export async function getProjectHealthStats() {
+// Lấy thống kê loại dự án
+export async function getProjectTypeStats() {
   try {
     const { data, error } = await supabase
       .from("projects")
-      .select("health_status, count")
-      .order("health_status")
-      .group("health_status")
+      .select("project_type, count")
+      .order("project_type")
+      .group("project_type")
 
     if (error) {
-      console.error("Error fetching project health stats:", error)
+      console.error("Error fetching project type stats:", error)
       return { success: false, error: error.message, data: [] }
     }
 
     // Chuyển đổi dữ liệu thành định dạng phù hợp
-    const healthMap = {
-      normal: "Bình thường",
-      accelerated: "Tăng tốc",
-      delayed: "Lùi ý",
-      "at-risk": "Rủi ro",
-      critical: "Chậm trễ",
+    const typeMap = {
+      residential: "Nhà ở",
+      commercial: "Thương mại",
+      industrial: "Công nghiệp",
+      infrastructure: "Hạ tầng",
     }
 
-    const healthColors = {
-      normal: "#3498db",
-      accelerated: "#2ecc71",
-      delayed: "#f39c12",
-      "at-risk": "#e74c3c",
-      critical: "#9b59b6",
+    const typeColors = {
+      residential: "#3498db",
+      commercial: "#2ecc71",
+      industrial: "#f39c12",
+      infrastructure: "#9b59b6",
     }
 
     const formattedData = data.map((item) => ({
-      status: healthMap[item.health_status] || item.health_status,
+      status: typeMap[item.project_type] || item.project_type,
       count: item.count,
-      color: healthColors[item.health_status] || "#95a5a6",
+      color: typeColors[item.project_type] || "#95a5a6",
     }))
 
     return { success: true, data: formattedData }
   } catch (error) {
-    console.error("Error in getProjectHealthStats:", error)
-    return { success: false, error: "Đã xảy ra lỗi khi lấy thống kê tình trạng dự án", data: [] }
+    console.error("Error in getProjectTypeStats:", error)
+    return { success: false, error: "Đã xảy ra lỗi khi lấy thống kê loại dự án", data: [] }
   }
 }

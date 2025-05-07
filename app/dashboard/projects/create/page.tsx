@@ -1,649 +1,537 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
-
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { format } from "date-fns"
+import { CalendarIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { DatePicker } from "@/components/date-picker"
+import { Calendar } from "@/components/ui/calendar"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "@/components/ui/use-toast"
 import { createProject, getCustomers } from "@/lib/actions/project-actions"
-import { Loader2 } from "lucide-react"
 
-// Định nghĩa schema validation cho form
-const projectFormSchema = z.object({
-  name: z.string().min(3, { message: "Tên dự án phải có ít nhất 3 ký tự" }),
-  code: z.string().optional(),
-  category: z.enum(["construction", "repair", "design", "supervision", "other"], {
-    required_error: "Vui lòng chọn hạng mục dự án",
+// Schema cho form tạo dự án
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Tên dự án phải có ít nhất 2 ký tự",
   }),
-  startDate: z.date({ required_error: "Vui lòng chọn ngày bắt đầu" }),
-  endDate: z.date({ required_error: "Vui lòng chọn ngày kết thúc" }),
-  customer: z.string({ required_error: "Vui lòng chọn khách hàng" }),
-  projectType: z.string({ required_error: "Vui lòng chọn loại dự án" }),
-  location: z.string().min(3, { message: "Địa điểm phải có ít nhất 3 ký tự" }),
-  geoCode: z.string().optional(),
   description: z.string().optional(),
-  budget: z.coerce.number().min(0, { message: "Ngân sách không được âm" }),
-  contactName: z.string().optional(),
-  contactPhone: z.string().optional(),
-  contactEmail: z.string().email({ message: "Email không hợp lệ" }).optional().or(z.literal("")),
+  location: z.string().min(2, {
+    message: "Địa điểm dự án phải có ít nhất 2 ký tự",
+  }),
+  geoCode: z.string().optional(),
+  start_date: z.date({
+    required_error: "Vui lòng chọn ngày bắt đầu",
+  }),
+  end_date: z.date({
+    required_error: "Vui lòng chọn ngày kết thúc",
+  }),
+  budget: z.string().optional(),
+  customer_id: z.string({
+    required_error: "Vui lòng chọn khách hàng",
+  }),
+  project_type: z.string().optional(),
+  construction_type: z.string({
+    required_error: "Vui lòng chọn hạng mục",
+  }),
+  project_manager: z.string().optional(),
+  complexity: z.string().optional(),
+  priority: z.string().optional(),
+  risk_level: z.string().optional(),
+  contact_name: z.string().optional(),
+  contact_phone: z.string().optional(),
+  contact_email: z.string().email({ message: "Email không hợp lệ" }).optional().or(z.literal("")),
 })
-
-type ProjectFormValues = z.infer<typeof projectFormSchema>
 
 export default function CreateProjectPage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState("basic")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [customers, setCustomers] = useState<any[]>([])
-  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true)
-  const [generatedCode, setGeneratedCode] = useState("")
+  const [customers, setCustomers] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Khởi tạo form với React Hook Form và Zod validation
-  const form = useForm<ProjectFormValues>({
-    resolver: zodResolver(projectFormSchema),
+  // Khởi tạo form
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      code: "",
-      category: "construction",
-      startDate: new Date(),
-      endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
+      description: "",
       location: "",
       geoCode: "",
-      description: "",
-      budget: 0,
-      contactName: "",
-      contactPhone: "",
-      contactEmail: "",
+      start_date: new Date(),
+      end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)),
+      budget: "",
+      project_type: "",
+      construction_type: "xay-moi",
+      project_manager: "",
+      complexity: "medium",
+      priority: "normal",
+      risk_level: "low",
+      contact_name: "",
+      contact_phone: "",
+      contact_email: "",
     },
   })
 
   // Lấy danh sách khách hàng khi component được mount
-  useEffect(() => {
-    async function fetchCustomers() {
-      try {
-        setIsLoadingCustomers(true)
-        const result = await getCustomers()
-        if (result.success) {
-          setCustomers(result.data)
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Lỗi",
-            description: "Không thể tải danh sách khách hàng. Vui lòng thử lại sau.",
-          })
-        }
-      } catch (error) {
-        console.error("Error fetching customers:", error)
+  useState(() => {
+    const fetchCustomers = async () => {
+      const result = await getCustomers()
+      if (result.success) {
+        setCustomers(result.data)
+      } else {
         toast({
           variant: "destructive",
           title: "Lỗi",
-          description: "Đã xảy ra lỗi khi tải danh sách khách hàng. Vui lòng thử lại sau.",
+          description: "Không thể lấy danh sách khách hàng. Vui lòng thử lại sau.",
         })
-      } finally {
-        setIsLoadingCustomers(false)
       }
     }
 
     fetchCustomers()
   }, [])
 
-  // Tạo mã dự án tự động dựa trên hạng mục
-  useEffect(() => {
-    const category = form.watch("category")
-    if (!category) return
-
-    const currentYear = new Date().getFullYear().toString().slice(-2)
-    let prefix = "KG"
-
-    switch (category) {
-      case "construction":
-        prefix += "B" // Building
-        break
-      case "repair":
-        prefix += "F" // Fixing
-        break
-      case "design":
-        prefix += "D" // Design
-        break
-      case "supervision":
-        prefix += "S" // Supervision
-        break
-      default:
-        prefix += "O" // Other
-    }
-
-    // Tạo số ngẫu nhiên 3 chữ số (hoặc 4 cho thiết kế)
-    const randomDigits =
-      category === "design" ? Math.floor(1000 + Math.random() * 9000) : Math.floor(100 + Math.random() * 900)
-
-    const code = `${prefix}-${currentYear}-${randomDigits}`
-    setGeneratedCode(code)
-    form.setValue("code", code)
-  }, [form.watch("category")])
-
   // Xử lý khi submit form
-  const onSubmit = async (data: ProjectFormValues) => {
-    try {
-      setIsSubmitting(true)
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true)
 
-      // Gọi server action để tạo dự án mới
-      const result = await createProject(data)
+    try {
+      // Chuyển đổi budget từ string sang number
+      const budgetValue = values.budget ? Number.parseFloat(values.budget.replace(/[^\d.-]/g, "")) : 0
+
+      const projectData = {
+        ...values,
+        budget: budgetValue,
+      }
+
+      const result = await createProject(projectData)
 
       if (result.success) {
         toast({
           title: "Thành công",
-          description: "Dự án mới đã được tạo thành công.",
+          description: "Dự án đã được tạo thành công",
         })
-
-        // Chuyển hướng đến trang danh sách dự án sau khi tạo thành công
         router.push("/dashboard/projects")
       } else {
         toast({
           variant: "destructive",
-          title: "Tạo dự án thất bại",
-          description: result.error || "Không thể tạo dự án mới. Vui lòng thử lại sau.",
+          title: "Lỗi",
+          description: result.error || "Không thể tạo dự án. Vui lòng thử lại sau.",
         })
       }
     } catch (error) {
-      console.error("Lỗi khi tạo dự án:", error)
+      console.error("Error creating project:", error)
       toast({
         variant: "destructive",
-        title: "Tạo dự án thất bại",
-        description: "Đã xảy ra lỗi khi tạo dự án mới. Vui lòng thử lại sau.",
+        title: "Lỗi",
+        description: "Đã xảy ra lỗi khi tạo dự án. Vui lòng thử lại sau.",
       })
     } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  // Xử lý chuyển tab
-  const handleTabChange = (value: string) => {
-    setActiveTab(value)
-  }
-
-  // Xử lý nút "Lưu & Tiếp tục"
-  const handleContinue = () => {
-    if (activeTab === "basic") {
-      // Kiểm tra validation cho tab hiện tại trước khi chuyển
-      form
-        .trigger([
-          "name",
-          "code",
-          "category",
-          "startDate",
-          "endDate",
-          "customer",
-          "projectType",
-          "location",
-          "geoCode",
-          "description",
-          "budget",
-          "contactName",
-          "contactPhone",
-          "contactEmail",
-        ])
-        .then((isValid) => {
-          if (isValid) {
-            setActiveTab("quantity")
-          }
-        })
-    } else if (activeTab === "quantity") {
-      setActiveTab("estimate")
-    } else if (activeTab === "estimate") {
-      setActiveTab("quote")
+      setIsLoading(false)
     }
   }
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Tạo dự án mới</h1>
-        <p className="text-gray-600">Nhập thông tin dự án mới</p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Tạo dự án mới</h1>
+          <p className="text-muted-foreground">Nhập thông tin để tạo dự án mới</p>
+        </div>
       </div>
+
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full">
-              <TabsTrigger value="basic">Thông tin cơ bản</TabsTrigger>
-              <TabsTrigger value="quantity">Khối lượng</TabsTrigger>
-              <TabsTrigger value="estimate">Dự toán</TabsTrigger>
-              <TabsTrigger value="quote">Báo giá</TabsTrigger>
-            </TabsList>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Thông tin cơ bản</CardTitle>
+              <CardDescription>Nhập thông tin cơ bản của dự án</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tên dự án</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập tên dự án" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <TabsContent value="basic">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Thông tin dự án</CardTitle>
-                  <CardDescription>Nhập thông tin cơ bản của dự án mới</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Thông tin cơ bản */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Thông tin cơ bản</h3>
+                <FormField
+                  control={form.control}
+                  name="customer_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Khách hàng</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn khách hàng" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {customers.map((customer: any) => (
+                            <SelectItem key={customer.id} value={customer.id}>
+                              {customer.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tên dự án</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Nhập tên dự án" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="construction_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hạng mục</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn hạng mục" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="xay-moi">Xây mới</SelectItem>
+                          <SelectItem value="sua-chua">Sửa chữa</SelectItem>
+                          <SelectItem value="thiet-ke">Thiết kế</SelectItem>
+                          <SelectItem value="giam-sat">Giám sát</SelectItem>
+                          <SelectItem value="khac">Khác</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Mã dự án sẽ được tạo tự động dựa trên hạng mục</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                      <FormField
-                        control={form.control}
-                        name="category"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Hạng mục</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Chọn hạng mục dự án" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="construction">Xây mới</SelectItem>
-                                <SelectItem value="repair">Sửa chữa</SelectItem>
-                                <SelectItem value="design">Thiết kế</SelectItem>
-                                <SelectItem value="supervision">Giám sát</SelectItem>
-                                <SelectItem value="other">Khác</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                <FormField
+                  control={form.control}
+                  name="project_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Loại dự án</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn loại dự án" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="residential">Nhà ở</SelectItem>
+                          <SelectItem value="commercial">Thương mại</SelectItem>
+                          <SelectItem value="industrial">Công nghiệp</SelectItem>
+                          <SelectItem value="infrastructure">Hạ tầng</SelectItem>
+                          <SelectItem value="other">Khác</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="code"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Mã dự án</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Mã dự án tự động"
-                                {...field}
-                                value={generatedCode || field.value}
-                                disabled
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="projectType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Loại dự án</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Chọn loại dự án" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="residential">Nhà ở</SelectItem>
-                                <SelectItem value="commercial">Thương mại</SelectItem>
-                                <SelectItem value="industrial">Công nghiệp</SelectItem>
-                                <SelectItem value="infrastructure">Hạ tầng</SelectItem>
-                                <SelectItem value="public">Công trình công cộng</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="startDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Ngày bắt đầu</FormLabel>
-                            <FormControl>
-                              <DatePicker date={field.value} setDate={field.onChange} placeholder="Chọn ngày bắt đầu" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="endDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Ngày kết thúc</FormLabel>
-                            <FormControl>
-                              <DatePicker
-                                date={field.value}
-                                setDate={field.onChange}
-                                placeholder="Chọn ngày kết thúc"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="customer"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Khách hàng</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Chọn khách hàng" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {isLoadingCustomers ? (
-                                <div className="flex items-center justify-center p-2">
-                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                  <span>Đang tải...</span>
-                                </div>
-                              ) : customers.length > 0 ? (
-                                customers.map((customer) => (
-                                  <SelectItem key={customer.id} value={customer.id}>
-                                    {customer.name}
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                <div className="p-2 text-center text-sm">Không có dữ liệu khách hàng</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="start_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Ngày bắt đầu</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground",
                               )}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="location"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Địa điểm</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Nhập địa điểm dự án" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="geoCode"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>GEO code</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Nhập mã GEO" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="budget"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ngân sách dự kiến (VNĐ)</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="Nhập ngân sách dự kiến" {...field} />
+                            >
+                              {field.value ? format(field.value, "dd/MM/yyyy") : <span>Chọn ngày</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Mô tả dự án</FormLabel>
+                <FormField
+                  control={form.control}
+                  name="end_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Ngày kết thúc</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
                           <FormControl>
-                            <Textarea placeholder="Nhập mô tả dự án" rows={4} {...field} />
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground",
+                              )}
+                            >
+                              {field.value ? format(field.value, "dd/MM/yyyy") : <span>Chọn ngày</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                  {/* Thông tin liên hệ */}
-                  <div className="space-y-4 pt-4 border-t">
-                    <h3 className="text-lg font-medium">Thông tin liên hệ</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Địa điểm</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập địa điểm dự án" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="contactName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Người liên hệ</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Nhập tên người liên hệ" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                <FormField
+                  control={form.control}
+                  name="geoCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mã GEO</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập mã GEO" {...field} />
+                      </FormControl>
+                      <FormDescription>Mã tọa độ địa lý của dự án</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                      <FormField
-                        control={form.control}
-                        name="contactPhone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Điện thoại</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Nhập số điện thoại liên hệ" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+              <FormField
+                control={form.control}
+                name="budget"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ngân sách</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nhập ngân sách dự án" {...field} />
+                    </FormControl>
+                    <FormDescription>Ngân sách dự kiến cho dự án (VNĐ)</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                    <FormField
-                      control={form.control}
-                      name="contactEmail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Nhập email liên hệ" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button variant="outline" type="button" onClick={() => router.push("/dashboard/projects")}>
-                    Hủy
-                  </Button>
-                  <Button type="button" onClick={handleContinue}>
-                    Lưu & Tiếp tục
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mô tả</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Nhập mô tả dự án" className="resize-none" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
 
-            <TabsContent value="quantity">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Khối lượng</CardTitle>
-                  <CardDescription>Nhập thông tin khối lượng công việc</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between border-b pb-4">
-                    <div>
-                      <h3 className="font-medium">Tải lên bản vẽ</h3>
-                      <p className="text-sm text-muted-foreground">Tải lên bản vẽ để tính toán khối lượng</p>
-                    </div>
-                    <Button variant="outline">Tải lên bản vẽ</Button>
-                  </div>
-                  <div className="flex items-center justify-between border-b pb-4">
-                    <div>
-                      <h3 className="font-medium">Nhập khối lượng thủ công</h3>
-                      <p className="text-sm text-muted-foreground">Nhập khối lượng công việc thủ công</p>
-                    </div>
-                    <Button variant="outline">Thêm mục</Button>
-                  </div>
-                  <div className="h-[300px] flex items-center justify-center border rounded-md">
-                    <p className="text-muted-foreground">Bảng khối lượng sẽ hiển thị ở đây</p>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button variant="outline" type="button" onClick={() => setActiveTab("basic")}>
-                    Quay lại
-                  </Button>
-                  <Button type="button" onClick={handleContinue}>
-                    Lưu & Tiếp tục
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
+          <Card>
+            <CardHeader>
+              <CardTitle>Thông tin liên hệ</CardTitle>
+              <CardDescription>Thông tin người liên hệ của dự án</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="contact_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Người liên hệ</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập tên người liên hệ" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <TabsContent value="estimate">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Dự toán</CardTitle>
-                  <CardDescription>Nhập thông tin dự toán chi phí</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between border-b pb-4">
-                    <div>
-                      <h3 className="font-medium">Giá vật liệu</h3>
-                      <p className="text-sm text-muted-foreground">Cập nhật giá vật liệu xây dựng</p>
-                    </div>
-                    <Button variant="outline">Cập nhật giá</Button>
-                  </div>
-                  <div className="flex items-center justify-between border-b pb-4">
-                    <div>
-                      <h3 className="font-medium">Chi phí nhân công</h3>
-                      <p className="text-sm text-muted-foreground">Cập nhật chi phí nhân công</p>
-                    </div>
-                    <Button variant="outline">Cập nhật chi phí</Button>
-                  </div>
-                  <div className="flex items-center justify-between border-b pb-4">
-                    <div>
-                      <h3 className="font-medium">Chi phí thiết bị</h3>
-                      <p className="text-sm text-muted-foreground">Cập nhật chi phí thiết bị</p>
-                    </div>
-                    <Button variant="outline">Cập nhật chi phí</Button>
-                  </div>
-                  <div className="flex items-center justify-between border-b pb-4">
-                    <div>
-                      <h3 className="font-medium">Chi phí gián tiếp</h3>
-                      <p className="text-sm text-muted-foreground">Cập nhật chi phí gián tiếp</p>
-                    </div>
-                    <Button variant="outline">Cập nhật chi phí</Button>
-                  </div>
-                  <div className="h-[300px] flex items-center justify-center border rounded-md">
-                    <p className="text-muted-foreground">Bảng dự toán sẽ hiển thị ở đây</p>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button variant="outline" type="button" onClick={() => setActiveTab("quantity")}>
-                    Quay lại
-                  </Button>
-                  <Button type="button" onClick={handleContinue}>
-                    Lưu & Tiếp tục
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
+                <FormField
+                  control={form.control}
+                  name="contact_phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Số điện thoại</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập số điện thoại" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-            <TabsContent value="quote">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Báo giá</CardTitle>
-                  <CardDescription>Nhập thông tin báo giá</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="quote-number">Số báo giá</Label>
-                      <Input id="quote-number" placeholder="Nhập số báo giá" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="quote-date">Ngày báo giá</Label>
-                      <DatePicker placeholder="Chọn ngày báo giá" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="payment-terms">Điều khoản thanh toán</Label>
-                    <Textarea id="payment-terms" placeholder="Nhập điều khoản thanh toán" rows={3} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="validity">Hiệu lực báo giá</Label>
-                    <Input id="validity" placeholder="Nhập thời hạn hiệu lực báo giá" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Ghi chú</Label>
-                    <Textarea id="notes" placeholder="Nhập ghi chú bổ sung" rows={3} />
-                  </div>
-                  <div className="h-[300px] flex items-center justify-center border rounded-md">
-                    <p className="text-muted-foreground">Xem trước báo giá sẽ hiển thị ở đây</p>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button variant="outline" type="button" onClick={() => setActiveTab("estimate")}>
-                    Quay lại
-                  </Button>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" type="button">
-                      Xuất PDF
-                    </Button>
-                    <Button variant="outline" type="button">
-                      Gửi email
-                    </Button>
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? "Đang xử lý..." : "Tạo dự án"}
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-          </Tabs>
+              <FormField
+                control={form.control}
+                name="contact_email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nhập email liên hệ" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Thông tin quản lý</CardTitle>
+              <CardDescription>Thông tin quản lý dự án</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="project_manager"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quản lý dự án</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nhập tên quản lý dự án" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="complexity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Độ phức tạp</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn độ phức tạp" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="low">Thấp</SelectItem>
+                          <SelectItem value="medium">Trung bình</SelectItem>
+                          <SelectItem value="high">Cao</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mức độ ưu tiên</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn mức độ ưu tiên" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="low">Thấp</SelectItem>
+                          <SelectItem value="normal">Thường</SelectItem>
+                          <SelectItem value="high">Cao</SelectItem>
+                          <SelectItem value="urgent">Khẩn cấp</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="risk_level"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mức độ rủi ro</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn mức độ rủi ro" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="low">Thấp</SelectItem>
+                          <SelectItem value="medium">Trung bình</SelectItem>
+                          <SelectItem value="high">Cao</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/dashboard/projects")}
+              disabled={isLoading}
+            >
+              Hủy
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Đang xử lý..." : "Tạo dự án"}
+            </Button>
+          </div>
         </form>
       </Form>
     </div>

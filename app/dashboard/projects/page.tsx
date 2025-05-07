@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { getProjects, getProjectStatusStats, getProjectHealthStats } from "@/lib/actions/project-actions"
+import { getProjects, getProjectStatusStats, getProjectTypeStats } from "@/lib/actions/project-actions"
 import { ProjectList } from "@/components/dashboard/project-list"
 import { ProjectListSkeleton } from "@/components/dashboard/project-skeleton"
 import { ProjectStatusChart } from "@/components/dashboard/project-status-chart"
@@ -27,15 +27,15 @@ export default async function ProjectsPage() {
   }
 
   // Lấy danh sách dự án và thống kê từ cơ sở dữ liệu
-  const [projectsResult, statusStatsResult, healthStatsResult] = await Promise.all([
+  const [projectsResult, statusStatsResult, typeStatsResult] = await Promise.all([
     getProjects(),
     getProjectStatusStats(),
-    getProjectHealthStats(),
+    getProjectTypeStats(),
   ])
 
   const projects = projectsResult.success ? projectsResult.data : []
   const statusStats = statusStatsResult.success ? statusStatsResult.data : []
-  const healthStats = healthStatsResult.success ? healthStatsResult.data : []
+  const typeStats = typeStatsResult.success ? typeStatsResult.data : []
 
   return (
     <div>
@@ -53,7 +53,7 @@ export default async function ProjectsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <ProjectStatusChart data={statusStats} title="Trạng thái dự án" />
-        <ProjectStatusChart data={healthStats} title="Tình trạng dự án" />
+        <ProjectStatusChart data={typeStats} title="Loại dự án" />
       </div>
 
       <Suspense fallback={<ProjectListSkeleton />}>

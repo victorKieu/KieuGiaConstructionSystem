@@ -15,7 +15,7 @@ import {
   Search,
   Briefcase,
   DollarSign,
-  CreditCard,
+  MapPin,
 } from "lucide-react"
 import { format } from "date-fns"
 
@@ -60,7 +60,8 @@ export function ProjectList({ projects }: ProjectListProps) {
     (project) =>
       project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       project.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.location?.toLowerCase().includes(searchTerm.toLowerCase()),
+      project.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.customers?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   // Xử lý xóa dự án
@@ -101,11 +102,11 @@ export function ProjectList({ projects }: ProjectListProps) {
     switch (status) {
       case "completed":
         return <Badge className="bg-green-500">Hoàn thành</Badge>
-      case "in-progress":
+      case "in_progress":
         return <Badge className="bg-blue-500">Đang thực hiện</Badge>
       case "planning":
         return <Badge className="bg-amber-500">Kế hoạch</Badge>
-      case "on-hold":
+      case "on_hold":
         return <Badge className="bg-orange-500">Tạm dừng</Badge>
       case "cancelled":
         return <Badge className="bg-red-500">Đã hủy</Badge>
@@ -114,21 +115,19 @@ export function ProjectList({ projects }: ProjectListProps) {
     }
   }
 
-  // Hàm hiển thị tình trạng sức khỏe dự án
-  const getHealthBadge = (health: string) => {
-    switch (health) {
-      case "normal":
-        return <Badge className="bg-blue-500">Bình thường</Badge>
-      case "accelerated":
-        return <Badge className="bg-green-500">Tăng tốc</Badge>
-      case "delayed":
-        return <Badge className="bg-yellow-500">Lùi ý</Badge>
-      case "at-risk":
-        return <Badge className="bg-orange-500">Rủi ro</Badge>
-      case "critical":
-        return <Badge className="bg-red-500">Chậm trễ</Badge>
+  // Hàm hiển thị loại dự án
+  const getProjectTypeBadge = (type: string) => {
+    switch (type) {
+      case "residential":
+        return <Badge className="bg-blue-500">Nhà ở</Badge>
+      case "commercial":
+        return <Badge className="bg-green-500">Thương mại</Badge>
+      case "industrial":
+        return <Badge className="bg-yellow-500">Công nghiệp</Badge>
+      case "infrastructure":
+        return <Badge className="bg-purple-500">Hạ tầng</Badge>
       default:
-        return <Badge className="bg-gray-500">Không xác định</Badge>
+        return <Badge className="bg-gray-500">Khác</Badge>
     }
   }
 
@@ -187,17 +186,20 @@ export function ProjectList({ projects }: ProjectListProps) {
             <Card
               key={project.id}
               className="overflow-hidden border-l-4"
-              style={{ borderLeftColor: project.health_status === "critical" ? "#e74c3c" : "#3498db" }}
+              style={{ borderLeftColor: project.priority === "high" ? "#e74c3c" : "#3498db" }}
             >
               <CardContent className="p-0">
                 <div className="p-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="flex items-center">
+                      <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-lg">{project.name}</h3>
-                        {project.health_status && getHealthBadge(project.health_status)}
+                        {project.project_type && getProjectTypeBadge(project.project_type)}
                       </div>
                       <p className="text-sm text-muted-foreground">Mã dự án: {project.code}</p>
+                      {project.customers && (
+                        <p className="text-sm text-muted-foreground">Khách hàng: {project.customers.name}</p>
+                      )}
                     </div>
                     <div className="flex items-center">
                       {getStatusBadge(project.status)}
@@ -261,51 +263,44 @@ export function ProjectList({ projects }: ProjectListProps) {
 
                       <div className="space-y-3">
                         <ProgressBar
-                          label="Tiến độ kế hoạch"
-                          value={project.planned_progress || 0}
+                          label="Tiến độ"
+                          value={project.progress || 0}
                           color="#3498db"
-                          description={`${project.planned_progress || 0}%`}
+                          description={`${project.progress || 0}%`}
                         />
 
-                        <ProgressBar
-                          label="Tiến độ thực tế"
-                          value={project.actual_progress || 0}
-                          color="#f39c12"
-                          description={`${project.actual_progress || 0}%`}
-                        />
+                        {project.location && (
+                          <div className="text-sm flex items-center">
+                            <MapPin className="h-4 w-4 mr-2 text-gray-500" />
+                            <span>{project.location}</span>
+                          </div>
+                        )}
 
-                        <ProgressBar
-                          label="KPI tiến độ"
-                          value={project.kpi_progress || 0}
-                          color="#2ecc71"
-                          description={`${project.kpi_progress || 0}% - ${project.kpi_progress >= 80 ? "Đạt" : "Chưa đạt"} mục tiêu`}
-                        />
+                        {project.project_manager && (
+                          <div className="text-sm">
+                            <span className="font-medium">Quản lý dự án:</span> {project.project_manager}
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-gray-100 p-3 rounded-lg flex flex-col items-center justify-center">
                         <Briefcase className="h-5 w-5 text-blue-500 mb-1" />
-                        <p className="text-xs text-gray-500">Công việc</p>
-                        <p className="font-semibold">{project.task_count || 0}</p>
+                        <p className="text-xs text-gray-500">Độ phức tạp</p>
+                        <p className="font-semibold">{project.complexity || "Thấp"}</p>
                       </div>
 
                       <div className="bg-gray-100 p-3 rounded-lg flex flex-col items-center justify-center">
                         <Users className="h-5 w-5 text-green-500 mb-1" />
-                        <p className="text-xs text-gray-500">Nhân sự</p>
-                        <p className="font-semibold">{project.team_count || 0}</p>
+                        <p className="text-xs text-gray-500">Mức độ ưu tiên</p>
+                        <p className="font-semibold">{project.priority || "Thường"}</p>
                       </div>
 
-                      <div className="bg-gray-100 p-3 rounded-lg flex flex-col items-center justify-center">
+                      <div className="bg-gray-100 p-3 rounded-lg flex flex-col items-center justify-center col-span-2">
                         <DollarSign className="h-5 w-5 text-amber-500 mb-1" />
                         <p className="text-xs text-gray-500">Ngân sách</p>
                         <p className="font-semibold">{formatCurrency(project.budget || 0)}</p>
-                      </div>
-
-                      <div className="bg-gray-100 p-3 rounded-lg flex flex-col items-center justify-center">
-                        <CreditCard className="h-5 w-5 text-purple-500 mb-1" />
-                        <p className="text-xs text-gray-500">Chi phí</p>
-                        <p className="font-semibold">{formatCurrency(project.actual_cost || 0)}</p>
                       </div>
                     </div>
                   </div>
