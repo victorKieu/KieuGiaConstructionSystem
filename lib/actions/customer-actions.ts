@@ -1,148 +1,164 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { supabase } from "@/lib/supabase/client"
 import { revalidatePath } from "next/cache"
 
-export type CustomerFormData = {
-  id?: string
-  name: string
-  email: string
-  phone: string
-  address: string
-  tax_code?: string
-  representative?: string
-  position?: string
-  notes?: string
-}
-
+// Lấy danh sách khách hàng
 export async function getCustomers() {
-  const supabase = createClient()
-
   try {
-    const { data, error } = await supabase.from("customers").select("*").order("created_at", { ascending: false })
+    const { data, error } = await supabase.from("customers").select("*").order("createdAt", { ascending: false })
 
     if (error) {
       console.error("Error fetching customers:", error)
-      return { error: error.message }
+      return { success: false, error: error.message, data: [] }
     }
 
-    return { data }
+    return { success: true, data }
   } catch (error) {
-    console.error("Exception fetching customers:", error)
-    return { error: "Failed to fetch customers" }
+    console.error("Error in getCustomers:", error)
+    return { success: false, error: "Đã xảy ra lỗi khi lấy danh sách khách hàng", data: [] }
   }
 }
 
-// Cập nhật hàm getCustomerById để đảm bảo nó hoạt động đúng
+// Lấy chi tiết khách hàng theo ID
 export async function getCustomerById(id: string) {
-  const supabase = createClient()
-
   try {
-    // Lấy thông tin khách hàng
     const { data, error } = await supabase.from("customers").select("*").eq("id", id).single()
 
     if (error) {
       console.error("Error fetching customer:", error)
-      return { error: error.message }
+      return { success: false, error: error.message }
     }
 
-    if (!data) {
-      return { error: "Customer not found" }
-    }
-
-    return { data }
+    return { success: true, data }
   } catch (error) {
-    console.error("Exception fetching customer:", error)
-    return { error: "Failed to fetch customer" }
+    console.error("Error in getCustomerById:", error)
+    return { success: false, error: "Đã xảy ra lỗi khi lấy thông tin khách hàng" }
   }
 }
 
-export async function createCustomer(formData: CustomerFormData) {
-  const supabase = createClient()
-
+// Tạo khách hàng mới
+export async function createCustomer(customerData: any) {
   try {
-    // Tạo khách hàng mới
+    // Tạo mã khách hàng tự động nếu không có
+    if (!customerData.code) {
+      const prefix = customerData.type === "company" ? "DN" : customerData.type === "individual" ? "CN" : "NH"
+      const timestamp = Date.now().toString().slice(-6)
+      customerData.code = `${prefix}${timestamp}`
+    }
+
     const { data, error } = await supabase
       .from("customers")
       .insert([
         {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          tax_code: formData.tax_code || null,
-          representative: formData.representative || null,
-          position: formData.position || null,
-          notes: formData.notes || null,
+          ...customerData,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         },
       ])
       .select()
-      .single()
 
     if (error) {
       console.error("Error creating customer:", error)
-      return { error: error.message }
+      return { success: false, error: error.message }
     }
 
+    // Revalidate the customers page
     revalidatePath("/dashboard/customers")
-    return { data }
+
+    return { success: true, data: data[0] }
   } catch (error) {
-    console.error("Exception creating customer:", error)
-    return { error: "Failed to create customer" }
+    console.error("Error in createCustomer:", error)
+    return { success: false, error: "Đã xảy ra lỗi khi tạo khách hàng mới" }
   }
 }
 
-export async function updateCustomer(id: string, formData: CustomerFormData) {
-  const supabase = createClient()
-
+// Cập nhật khách hàng
+export async function updateCustomer(id: string, customerData: any) {
   try {
-    // Cập nhật thông tin khách hàng
     const { data, error } = await supabase
       .from("customers")
       .update({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        tax_code: formData.tax_code || null,
-        representative: formData.representative || null,
-        position: formData.position || null,
-        notes: formData.notes || null,
+        ...customerData,
+        updatedAt: new Date().toISOString(),
       })
       .eq("id", id)
       .select()
-      .single()
 
     if (error) {
       console.error("Error updating customer:", error)
-      return { error: error.message }
+      return { success: false, error: error.message }
     }
 
-    revalidatePath("/dashboard/customers")
+    // Revalidate the customers pages
     revalidatePath(`/dashboard/customers/${id}`)
-    return { data }
+    revalidatePath("/dashboard/customers")
+
+    return { success: true, data: data[0] }
   } catch (error) {
-    console.error("Exception updating customer:", error)
-    return { error: "Failed to update customer" }
+    console.error("Error in updateCustomer:", error)
+    return { success: false, error: "Đã xảy ra lỗi khi cập nhật khách hàng" }
   }
 }
 
+// Xóa khách hàng
 export async function deleteCustomer(id: string) {
-  const supabase = createClient()
-
   try {
-    // Xóa khách hàng
     const { error } = await supabase.from("customers").delete().eq("id", id)
 
     if (error) {
       console.error("Error deleting customer:", error)
-      return { error: error.message }
+      return { success: false, error: error.message }
     }
 
+    // Revalidate the customers page
     revalidatePath("/dashboard/customers")
+
     return { success: true }
   } catch (error) {
-    console.error("Exception deleting customer:", error)
-    return { error: "Failed to delete customer" }
+    console.error("Error in deleteCustomer:", error)
+    return { success: false, error: "Đã xảy ra lỗi khi xóa khách hàng" }
+  }
+}
+
+// Lấy danh sách liên hệ của khách hàng
+export async function getCustomerContacts(customerId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("customer_contacts")
+      .select("*")
+      .eq("customerId", customerId)
+      .order("isPrimary", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching customer contacts:", error)
+      return { success: false, error: error.message, data: [] }
+    }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error("Error in getCustomerContacts:", error)
+    return { success: false, error: "Đã xảy ra lỗi khi lấy danh sách liên hệ của khách hàng", data: [] }
+  }
+}
+
+// Lấy danh sách dự án của khách hàng
+export async function getCustomerProjects(customerId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("customerId", customerId)
+      .order("createdAt", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching customer projects:", error)
+      return { success: false, error: error.message, data: [] }
+    }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error("Error in getCustomerProjects:", error)
+    return { success: false, error: "Đã xảy ra lỗi khi lấy danh sách dự án của khách hàng", data: [] }
   }
 }

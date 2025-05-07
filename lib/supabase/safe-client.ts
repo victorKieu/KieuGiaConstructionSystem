@@ -1,4 +1,4 @@
-﻿import { createClient } from "@supabase/supabase-js"
+import { createClient } from "@supabase/supabase-js"
 
 // Kiểm tra xem có đang trong quá trình build không
 const isBuildProcess = process.env.NODE_ENV === "production" && process.env.VERCEL_ENV !== "production"

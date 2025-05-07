@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+// Catch-all route handler để chặn tất cả các API route
 export async function GET() {
   return NextResponse.json({
     status: "maintenance",
@@ -25,6 +26,14 @@ export async function PUT() {
 }
 
 export async function DELETE() {
+  return NextResponse.json({
+    status: "maintenance",
+    message: "API đang được bảo trì. Vui lòng thử lại sau.",
+    timestamp: new Date().toISOString(),
+  })
+}
+
+export async function PATCH() {
   return NextResponse.json({
     status: "maintenance",
     message: "API đang được bảo trì. Vui lòng thử lại sau.",

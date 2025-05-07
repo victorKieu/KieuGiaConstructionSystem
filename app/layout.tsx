@@ -8,6 +8,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata = {
   title: "Kieu Gia Construction Management",
   description: "Hệ thống quản lý xây dựng Kiều Gia",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

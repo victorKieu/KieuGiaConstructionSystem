@@ -1,87 +1,79 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Bell, Menu, Sun, Moon, User } from "lucide-react"
-import { useSidebar } from "./sidebar-context"
-import { useTheme } from "next-themes"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { supabase } from "@/lib/supabase/client"
+import { Sun, Moon, Bell } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 export function DashboardHeader() {
-  const { toggleSidebar } = useSidebar()
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [theme, setTheme] = useState<"light" | "dark">("light")
+  const router = useRouter()
 
-  useEffect(() => {
-    setMounted(true)
-    const fetchUser = async () => {
-      try {
-        if (!supabase) return
-
-        const { data } = await supabase.auth.getUser()
-        if (data?.user) {
-          setUser(data.user)
-        }
-      } catch (error) {
-        console.error("Error fetching user:", error)
-      }
-    }
-    fetchUser()
-  }, [])
-
-  const handleSignOut = async () => {
-    try {
-      if (!supabase) return
-
-      await supabase.auth.signOut()
-      window.location.href = "/login"
-    } catch (error) {
-      console.error("Error signing out:", error)
-    }
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light")
   }
 
-  if (!mounted) return null
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/login")
+  }
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 w-full items-center justify-between border-b bg-white px-4 dark:bg-gray-900">
-      <div className="flex items-center">
-        <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2 lg:hidden" aria-label="Toggle Menu">
-          <Menu className="h-5 w-5" />
-        </Button>
-      </div>
-
-      <div className="flex items-center space-x-4">
+    <header className="bg-amber-800 text-white py-3 px-6 h-16 flex items-center justify-between">
+      <h1 className="text-xl font-bold">CONSTRUCTION MANAGEMENT SYSTEM</h1>
+      <div className="flex items-center space-x-2">
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          aria-label="Toggle Theme"
+          onClick={toggleTheme}
+          className="text-white hover:bg-amber-700 rounded-full"
         >
-          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </Button>
-
-        <Button variant="ghost" size="icon" aria-label="Notifications">
-          <Bell className="h-5 w-5" />
+          {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User Menu">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.user_metadata?.avatar_url || ""} alt="Avatar" />
-                <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || <User />}</AvatarFallback>
-              </Avatar>
+            <Button variant="ghost" size="icon" className="relative text-white hover:bg-amber-700 rounded-full">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Hồ sơ</DropdownMenuItem>
-            <DropdownMenuItem>Cài đặt</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleSignOut}>Đăng xuất</DropdownMenuItem>
+          <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <div className="max-h-80 overflow-y-auto">
+              <DropdownMenuItem className="py-3 cursor-pointer">
+                <div>
+                  <p className="font-medium text-sm">Cập nhật dự án Chung cư Kiều Gia</p>
+                  <p className="text-xs text-gray-500 mt-1">Tiến độ dự án đã đạt 75%</p>
+                  <p className="text-xs text-gray-400 mt-1">2 giờ trước</p>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="py-3 cursor-pointer">
+                <div>
+                  <p className="font-medium text-sm">Cảnh báo tồn kho</p>
+                  <p className="text-xs text-gray-500 mt-1">Xi măng Portland sắp hết hàng</p>
+                  <p className="text-xs text-gray-400 mt-1">5 giờ trước</p>
+                </div>
+              </DropdownMenuItem>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <Avatar className="h-10 w-10 bg-white text-amber-800">
+          <AvatarFallback>KG</AvatarFallback>
+        </Avatar>
       </div>
     </header>
   )

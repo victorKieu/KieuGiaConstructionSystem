@@ -2,78 +2,42 @@
 
 import type React from "react"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useState, useEffect } from "react"
 
 type SidebarContextType = {
-  isOpen: boolean
-  isPinned: boolean
-  toggleSidebar: () => void
-  closeSidebar: () => void
-  togglePin: () => void
+  isExpanded: boolean
+  setIsExpanded: (value: boolean) => void
+  isMobile: boolean
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [isPinned, setIsPinned] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
 
+  // Kiểm tra kích thước màn hình khi component được mount
   useEffect(() => {
-    setIsMounted(true)
-    try {
-      const savedPinState = localStorage.getItem("sidebarPinned")
-      if (savedPinState) {
-        const isPinnedValue = savedPinState === "true"
-        setIsPinned(isPinnedValue)
-        if (isPinnedValue) {
-          setIsOpen(true)
-        }
+    const checkScreenSize = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      // Trên mobile, mặc định sidebar sẽ thu gọn
+      if (mobile) {
+        setIsExpanded(false)
       }
-    } catch (error) {
-      console.error("Error accessing localStorage:", error)
     }
+
+    // Kiểm tra kích thước ban đầu
+    checkScreenSize()
+
+    // Thêm event listener để kiểm tra khi resize
+    window.addEventListener("resize", checkScreenSize)
+
+    // Cleanup
+    return () => window.removeEventListener("resize", checkScreenSize)
   }, [])
 
-  useEffect(() => {
-    if (isMounted) {
-      try {
-        localStorage.setItem("sidebarPinned", isPinned.toString())
-      } catch (error) {
-        console.error("Error writing to localStorage:", error)
-      }
-    }
-  }, [isPinned, isMounted])
-
-  const toggleSidebar = () => {
-    setIsOpen((prev) => !prev)
-  }
-
-  const closeSidebar = () => {
-    if (!isPinned) {
-      setIsOpen(false)
-    }
-  }
-
-  const togglePin = () => {
-    setIsPinned((prev) => {
-      const newValue = !prev
-      if (newValue) {
-        setIsOpen(true)
-      }
-      return newValue
-    })
-  }
-
-  const value = {
-    isOpen,
-    isPinned,
-    toggleSidebar,
-    closeSidebar,
-    togglePin,
-  }
-
-  return <SidebarContext.Provider value={value}>{children}</SidebarContext.Provider>
+  return <SidebarContext.Provider value={{ isExpanded, setIsExpanded, isMobile }}>{children}</SidebarContext.Provider>
 }
 
 export function useSidebar() {
