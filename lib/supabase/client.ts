@@ -28,4 +28,6 @@ export const createClient = () => {
 }
 
 // Export supabase instance for direct use
-export const supabase = isSupabaseReady() ? createClient() : null
+export const supabase = isSupabaseReady()
+  ? createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+  : null

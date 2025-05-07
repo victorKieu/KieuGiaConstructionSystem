@@ -22,21 +22,29 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setIsMounted(true)
     // Khôi phục trạng thái ghim từ localStorage
-    const savedPinState = localStorage.getItem("sidebarPinned")
-    if (savedPinState) {
-      const isPinnedValue = savedPinState === "true"
-      setIsPinned(isPinnedValue)
-      // Nếu đã ghim, mở sidebar
-      if (isPinnedValue) {
-        setIsOpen(true)
+    try {
+      const savedPinState = localStorage.getItem("sidebarPinned")
+      if (savedPinState) {
+        const isPinnedValue = savedPinState === "true"
+        setIsPinned(isPinnedValue)
+        // Nếu đã ghim, mở sidebar
+        if (isPinnedValue) {
+          setIsOpen(true)
+        }
       }
+    } catch (error) {
+      console.error("Error accessing localStorage:", error)
     }
   }, [])
 
   // Chỉ lưu trạng thái khi component đã mount
   useEffect(() => {
     if (isMounted) {
-      localStorage.setItem("sidebarPinned", isPinned.toString())
+      try {
+        localStorage.setItem("sidebarPinned", isPinned.toString())
+      } catch (error) {
+        console.error("Error writing to localStorage:", error)
+      }
     }
   }, [isPinned, isMounted])
 
