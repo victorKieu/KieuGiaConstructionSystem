@@ -3,7 +3,7 @@ import { createBrowserClient } from "@supabase/ssr"
 // Kiểm tra xem Supabase đã sẵn sàng chưa
 export const isSupabaseReady = () => {
   return !!(
-    typeof process !== "undefined" &&
+    typeof window !== "undefined" &&
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   )
@@ -28,6 +28,4 @@ export const createClient = () => {
 }
 
 // Export supabase instance for direct use
-export const supabase = isSupabaseReady()
-  ? createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-  : null
+export const supabase = isSupabaseReady() ? createClient() : null

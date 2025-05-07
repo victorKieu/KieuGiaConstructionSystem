@@ -7,7 +7,7 @@ import { useTheme } from "next-themes"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { createClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 
 export function DashboardHeader() {
   const { toggleSidebar } = useSidebar()
@@ -19,7 +19,8 @@ export function DashboardHeader() {
     setMounted(true)
     const fetchUser = async () => {
       try {
-        const supabase = createClient()
+        if (!supabase) return
+
         const { data } = await supabase.auth.getUser()
         if (data?.user) {
           setUser(data.user)
@@ -33,7 +34,8 @@ export function DashboardHeader() {
 
   const handleSignOut = async () => {
     try {
-      const supabase = createClient()
+      if (!supabase) return
+
       await supabase.auth.signOut()
       window.location.href = "/login"
     } catch (error) {
