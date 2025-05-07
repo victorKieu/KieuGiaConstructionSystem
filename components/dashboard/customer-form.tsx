@@ -72,8 +72,8 @@ export function CustomerForm({ customer = null }: CustomerFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [generatedCode, setGeneratedCode] = useState<string>("")
+  const [salesChannels, setSalesChannels] = useState<{ value: string; label: string }[]>([])
   const isEditing = !!customer
-  const salesChannels = getSalesChannels()
 
   // Khởi tạo form với giá trị mặc định
   const form = useForm<z.infer<typeof customerSchema>>({
@@ -81,8 +81,8 @@ export function CustomerForm({ customer = null }: CustomerFormProps) {
     defaultValues: {
       code: customer?.code || "",
       name: customer?.name || "",
-      type: customer?.type || "company",
-      status: customer?.status || "active",
+      type: (customer?.type as any) || "company",
+      status: (customer?.status as any) || "active",
       phone: customer?.phone || "",
       email: customer?.email || "",
       address: customer?.address || "",
@@ -94,6 +94,15 @@ export function CustomerForm({ customer = null }: CustomerFormProps) {
       geocode: customer?.geocode || "",
     },
   })
+
+  // Lấy danh sách kênh bán hàng
+  useEffect(() => {
+    const fetchSalesChannels = async () => {
+      const channels = await getSalesChannels()
+      setSalesChannels(channels)
+    }
+    fetchSalesChannels()
+  }, [])
 
   // Theo dõi thay đổi loại khách hàng để tạo mã
   const watchType = form.watch("type")

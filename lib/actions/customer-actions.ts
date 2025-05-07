@@ -3,49 +3,23 @@
 import { supabase } from "@/lib/supabase/client"
 import { revalidatePath } from "next/cache"
 
-// Định nghĩa kiểu dữ liệu cho form khách hàng
 export type CustomerFormData = {
   id?: string
   code?: string
   name: string
-  type: "company" | "individual" | "government"
-  status: "active" | "potential" | "inactive"
-  phone?: string
-  email?: string
-  address?: string
-  tax_code?: string
-  website?: string
-  description?: string
-  birthday?: string
-  sales_channel?: string
-  geocode?: string
-}
-
-// Hàm tạo mã khách hàng tự động
-export function generateCustomerCode(type: string, count: number): string {
-  const prefix = type === "individual" ? "CN" : type === "government" ? "CQ" : "DN"
-  const paddedCount = String(count + 1).padStart(5, "0")
-  return `${prefix}${paddedCount}`
-}
-
-// Lấy số lượng khách hàng theo loại để tạo mã
-export async function getCustomerCountByType(type: string): Promise<number> {
-  try {
-    const { count, error } = await supabase
-      .from("customers")
-      .select("*", { count: "exact", head: true })
-      .eq("type", type)
-
-    if (error) {
-      console.error("Error counting customers:", error)
-      return 0
-    }
-
-    return count || 0
-  } catch (error) {
-    console.error("Error in getCustomerCountByType:", error)
-    return 0
-  }
+  type: string
+  status?: string
+  phone?: string | null
+  email?: string | null
+  address?: string | null
+  tax_code?: string | null
+  website?: string | null
+  description?: string | null
+  birthday?: string | null
+  sales_channel?: string | null
+  geocode?: string | null
+  created_at?: string
+  updated_at?: string
 }
 
 // Lấy danh sách khách hàng
@@ -87,27 +61,16 @@ export async function createCustomer(customerData: CustomerFormData) {
   try {
     // Tạo mã khách hàng tự động nếu không có
     if (!customerData.code) {
-      const count = await getCustomerCountByType(customerData.type)
-      customerData.code = generateCustomerCode(customerData.type, count)
+      const prefix = customerData.type === "company" ? "DN" : customerData.type === "individual" ? "CN" : "NH"
+      const timestamp = Date.now().toString().slice(-6)
+      customerData.code = `${prefix}${timestamp}`
     }
 
     const { data, error } = await supabase
       .from("customers")
       .insert([
         {
-          code: customerData.code,
-          name: customerData.name,
-          type: customerData.type,
-          status: customerData.status || "active",
-          phone: customerData.phone || null,
-          email: customerData.email || null,
-          address: customerData.address || null,
-          tax_code: customerData.tax_code || null,
-          website: customerData.website || null,
-          description: customerData.description || null,
-          birthday: customerData.birthday || null,
-          sales_channel: customerData.sales_channel || null,
-          geocode: customerData.geocode || null,
+          ...customerData,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
@@ -135,18 +98,7 @@ export async function updateCustomer(id: string, customerData: CustomerFormData)
     const { data, error } = await supabase
       .from("customers")
       .update({
-        name: customerData.name,
-        type: customerData.type,
-        status: customerData.status,
-        phone: customerData.phone || null,
-        email: customerData.email || null,
-        address: customerData.address || null,
-        tax_code: customerData.tax_code || null,
-        website: customerData.website || null,
-        description: customerData.description || null,
-        birthday: customerData.birthday || null,
-        sales_channel: customerData.sales_channel || null,
-        geocode: customerData.geocode || null,
+        ...customerData,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
@@ -230,15 +182,36 @@ export async function getCustomerProjects(customerId: string) {
   }
 }
 
-// Lấy danh sách kênh bán hàng
-export function getSalesChannels() {
+export async function getSalesChannels() {
   return [
-    { value: "sales_staff", label: "Nhân viên kinh doanh" },
-    { value: "online_marketing", label: "Marketing online" },
-    { value: "affiliate", label: "Cộng tác viên" },
-    { value: "referral", label: "Giới thiệu" },
-    { value: "exhibition", label: "Hội chợ/Triển lãm" },
-    { value: "direct", label: "Trực tiếp" },
+    { value: "direct", label: "Bán hàng trực tiếp" },
+    { value: "online", label: "Bán hàng trực tuyến" },
+    { value: "agent", label: "Đại lý" },
     { value: "other", label: "Khác" },
   ]
+}
+
+export async function getCustomerCountByType(type: string): Promise<number> {
+  try {
+    const { count, error } = await supabase
+      .from("customers")
+      .select("*", { count: "exact", head: true })
+      .eq("type", type)
+
+    if (error) {
+      console.error("Error fetching customer count:", error)
+      return 0
+    }
+
+    return count || 0
+  } catch (error) {
+    console.error("Error in getCustomerCountByType:", error)
+    return 0
+  }
+}
+
+export function generateCustomerCode(type: string, count: number): string {
+  const prefix = type === "company" ? "DN" : type === "individual" ? "CN" : "NH"
+  const paddedCount = String(count + 1).padStart(4, "0")
+  return `${prefix}-${paddedCount}`
 }
