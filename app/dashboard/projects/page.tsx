@@ -2,8 +2,10 @@ import { Suspense } from "react"
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { getProjects } from "@/lib/actions/project-actions"
+import { getProjects, getProjectStatusStats, getProjectHealthStats } from "@/lib/actions/project-actions"
 import { ProjectList } from "@/components/dashboard/project-list"
+import { ProjectListSkeleton } from "@/components/dashboard/project-skeleton"
+import { ProjectStatusChart } from "@/components/dashboard/project-status-chart"
 import { isSupabaseReady } from "@/lib/supabase/client"
 
 export const metadata = {
@@ -24,9 +26,16 @@ export default async function ProjectsPage() {
     )
   }
 
-  // Lấy danh sách dự án từ cơ sở dữ liệu
-  const projectsResult = await getProjects()
+  // Lấy danh sách dự án và thống kê từ cơ sở dữ liệu
+  const [projectsResult, statusStatsResult, healthStatsResult] = await Promise.all([
+    getProjects(),
+    getProjectStatusStats(),
+    getProjectHealthStats(),
+  ])
+
   const projects = projectsResult.success ? projectsResult.data : []
+  const statusStats = statusStatsResult.success ? statusStatsResult.data : []
+  const healthStats = healthStatsResult.success ? healthStatsResult.data : []
 
   return (
     <div>
@@ -42,7 +51,12 @@ export default async function ProjectsPage() {
         </Button>
       </div>
 
-      <Suspense fallback={<div>Đang tải...</div>}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <ProjectStatusChart data={statusStats} title="Trạng thái dự án" />
+        <ProjectStatusChart data={healthStats} title="Tình trạng dự án" />
+      </div>
+
+      <Suspense fallback={<ProjectListSkeleton />}>
         <ProjectList projects={projects} />
       </Suspense>
     </div>

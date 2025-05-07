@@ -3,12 +3,24 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Calendar, Edit, MoreHorizontal, Trash2, Eye, FileText, Users, MapPin, Plus, Search } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
-import { vi } from "date-fns/locale"
+import {
+  Calendar,
+  Edit,
+  MoreHorizontal,
+  Trash2,
+  Eye,
+  FileText,
+  Users,
+  Plus,
+  Search,
+  Briefcase,
+  DollarSign,
+  CreditCard,
+} from "lucide-react"
+import { format } from "date-fns"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
@@ -31,6 +43,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { deleteProject } from "@/lib/actions/project-actions"
 import { toast } from "@/components/ui/use-toast"
+import { ProgressBar } from "./project-progress-bar"
 
 interface ProjectListProps {
   projects: any[]
@@ -91,7 +104,7 @@ export function ProjectList({ projects }: ProjectListProps) {
       case "in-progress":
         return <Badge className="bg-blue-500">Đang thực hiện</Badge>
       case "planning":
-        return <Badge className="bg-amber-500">Lên kế hoạch</Badge>
+        return <Badge className="bg-amber-500">Kế hoạch</Badge>
       case "on-hold":
         return <Badge className="bg-orange-500">Tạm dừng</Badge>
       case "cancelled":
@@ -101,15 +114,37 @@ export function ProjectList({ projects }: ProjectListProps) {
     }
   }
 
+  // Hàm hiển thị tình trạng sức khỏe dự án
+  const getHealthBadge = (health: string) => {
+    switch (health) {
+      case "normal":
+        return <Badge className="bg-blue-500">Bình thường</Badge>
+      case "accelerated":
+        return <Badge className="bg-green-500">Tăng tốc</Badge>
+      case "delayed":
+        return <Badge className="bg-yellow-500">Lùi ý</Badge>
+      case "at-risk":
+        return <Badge className="bg-orange-500">Rủi ro</Badge>
+      case "critical":
+        return <Badge className="bg-red-500">Chậm trễ</Badge>
+      default:
+        return <Badge className="bg-gray-500">Không xác định</Badge>
+    }
+  }
+
   // Hàm định dạng ngày tháng
-  const formatDate = (dateString: string) => {
+  const formatDateDisplay = (dateString: string) => {
     try {
       if (!dateString) return "Không xác định"
-      const date = new Date(dateString)
-      return formatDistanceToNow(date, { addSuffix: true, locale: vi })
+      return format(new Date(dateString), "dd/MM/yyyy")
     } catch (error) {
       return "Không xác định"
     }
+  }
+
+  // Hàm định dạng số tiền
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("vi-VN").format(amount || 0)
   }
 
   if (projects.length === 0) {
@@ -147,15 +182,22 @@ export function ProjectList({ projects }: ProjectListProps) {
           <p className="text-muted-foreground mt-1">Thử tìm kiếm với từ khóa khác.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-4">
           {filteredProjects.map((project) => (
-            <Card key={project.id} className="overflow-hidden">
+            <Card
+              key={project.id}
+              className="overflow-hidden border-l-4"
+              style={{ borderLeftColor: project.health_status === "critical" ? "#e74c3c" : "#3498db" }}
+            >
               <CardContent className="p-0">
                 <div className="p-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-semibold text-lg line-clamp-1">{project.name}</h3>
-                      <p className="text-sm text-muted-foreground">Mã: {project.code}</p>
+                      <div className="flex items-center">
+                        <h3 className="font-semibold text-lg">{project.name}</h3>
+                        {project.health_status && getHealthBadge(project.health_status)}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Mã dự án: {project.code}</p>
                     </div>
                     <div className="flex items-center">
                       {getStatusBadge(project.status)}
@@ -198,57 +240,77 @@ export function ProjectList({ projects }: ProjectListProps) {
                     </div>
                   </div>
 
-                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">{project.description || "Không có mô tả"}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div className="col-span-2">
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <p className="text-sm font-medium mb-1">Ngày bắt đầu</p>
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                            <span className="text-sm">{formatDateDisplay(project.start_date)}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium mb-1">Ngày kết thúc</p>
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                            <span className="text-sm">{formatDateDisplay(project.end_date)}</span>
+                          </div>
+                        </div>
+                      </div>
 
-                  <div className="mt-4 space-y-2">
-                    <div className="flex items-center text-sm">
-                      <MapPin className="h-4 w-4 mr-2 text-gray-500" />
-                      <span className="line-clamp-1">{project.location || "Chưa cập nhật"}</span>
+                      <div className="space-y-3">
+                        <ProgressBar
+                          label="Tiến độ kế hoạch"
+                          value={project.planned_progress || 0}
+                          color="#3498db"
+                          description={`${project.planned_progress || 0}%`}
+                        />
+
+                        <ProgressBar
+                          label="Tiến độ thực tế"
+                          value={project.actual_progress || 0}
+                          color="#f39c12"
+                          description={`${project.actual_progress || 0}%`}
+                        />
+
+                        <ProgressBar
+                          label="KPI tiến độ"
+                          value={project.kpi_progress || 0}
+                          color="#2ecc71"
+                          description={`${project.kpi_progress || 0}% - ${project.kpi_progress >= 80 ? "Đạt" : "Chưa đạt"} mục tiêu`}
+                        />
+                      </div>
                     </div>
 
-                    <div className="flex items-center text-sm">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                      <span>
-                        {project.start_date
-                          ? `${new Date(project.start_date).toLocaleDateString()} - ${new Date(
-                              project.end_date,
-                            ).toLocaleDateString()}`
-                          : "Chưa cập nhật"}
-                      </span>
-                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-gray-100 p-3 rounded-lg flex flex-col items-center justify-center">
+                        <Briefcase className="h-5 w-5 text-blue-500 mb-1" />
+                        <p className="text-xs text-gray-500">Công việc</p>
+                        <p className="font-semibold">{project.task_count || 0}</p>
+                      </div>
 
-                    <div className="flex items-center text-sm">
-                      <Users className="h-4 w-4 mr-2 text-gray-500" />
-                      <span>{project.team_count || 0} thành viên</span>
+                      <div className="bg-gray-100 p-3 rounded-lg flex flex-col items-center justify-center">
+                        <Users className="h-5 w-5 text-green-500 mb-1" />
+                        <p className="text-xs text-gray-500">Nhân sự</p>
+                        <p className="font-semibold">{project.team_count || 0}</p>
+                      </div>
+
+                      <div className="bg-gray-100 p-3 rounded-lg flex flex-col items-center justify-center">
+                        <DollarSign className="h-5 w-5 text-amber-500 mb-1" />
+                        <p className="text-xs text-gray-500">Ngân sách</p>
+                        <p className="font-semibold">{formatCurrency(project.budget || 0)}</p>
+                      </div>
+
+                      <div className="bg-gray-100 p-3 rounded-lg flex flex-col items-center justify-center">
+                        <CreditCard className="h-5 w-5 text-purple-500 mb-1" />
+                        <p className="text-xs text-gray-500">Chi phí</p>
+                        <p className="font-semibold">{formatCurrency(project.actual_cost || 0)}</p>
+                      </div>
                     </div>
                   </div>
-
-                  {project.status === "in-progress" && (
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-500">Tiến độ</span>
-                        <span className="text-xs font-medium">{project.progress || 0}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-500 h-2 rounded-full"
-                          style={{ width: `${project.progress || 0}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </CardContent>
-              <CardFooter className="p-4 pt-0 border-t mt-4">
-                <div className="flex justify-between items-center w-full">
-                  <span className="text-xs text-gray-500">
-                    Cập nhật {project.updated_at ? formatDate(project.updated_at) : "chưa xác định"}
-                  </span>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/dashboard/projects/${project.id}`}>Xem chi tiết</Link>
-                  </Button>
-                </div>
-              </CardFooter>
             </Card>
           ))}
         </div>

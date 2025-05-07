@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -18,19 +18,25 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { toast } from "@/components/ui/use-toast"
 import { createProject, getCustomers } from "@/lib/actions/project-actions"
 import { Loader2 } from "lucide-react"
-import { useEffect } from "react"
 
 // Định nghĩa schema validation cho form
 const projectFormSchema = z.object({
   name: z.string().min(3, { message: "Tên dự án phải có ít nhất 3 ký tự" }),
-  code: z.string().min(2, { message: "Mã dự án phải có ít nhất 2 ký tự" }),
+  code: z.string().optional(),
+  category: z.enum(["construction", "repair", "design", "supervision", "other"], {
+    required_error: "Vui lòng chọn hạng mục dự án",
+  }),
   startDate: z.date({ required_error: "Vui lòng chọn ngày bắt đầu" }),
   endDate: z.date({ required_error: "Vui lòng chọn ngày kết thúc" }),
   customer: z.string({ required_error: "Vui lòng chọn khách hàng" }),
   projectType: z.string({ required_error: "Vui lòng chọn loại dự án" }),
   location: z.string().min(3, { message: "Địa điểm phải có ít nhất 3 ký tự" }),
+  geoCode: z.string().optional(),
   description: z.string().optional(),
   budget: z.coerce.number().min(0, { message: "Ngân sách không được âm" }),
+  contactName: z.string().optional(),
+  contactPhone: z.string().optional(),
+  contactEmail: z.string().email({ message: "Email không hợp lệ" }).optional().or(z.literal("")),
 })
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>
@@ -41,6 +47,7 @@ export default function CreateProjectPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [customers, setCustomers] = useState<any[]>([])
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true)
+  const [generatedCode, setGeneratedCode] = useState("")
 
   // Khởi tạo form với React Hook Form và Zod validation
   const form = useForm<ProjectFormValues>({
@@ -48,11 +55,16 @@ export default function CreateProjectPage() {
     defaultValues: {
       name: "",
       code: "",
+      category: "construction",
       startDate: new Date(),
       endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
       location: "",
+      geoCode: "",
       description: "",
       budget: 0,
+      contactName: "",
+      contactPhone: "",
+      contactEmail: "",
     },
   })
 
@@ -85,6 +97,40 @@ export default function CreateProjectPage() {
 
     fetchCustomers()
   }, [])
+
+  // Tạo mã dự án tự động dựa trên hạng mục
+  useEffect(() => {
+    const category = form.watch("category")
+    if (!category) return
+
+    const currentYear = new Date().getFullYear().toString().slice(-2)
+    let prefix = "KG"
+
+    switch (category) {
+      case "construction":
+        prefix += "B" // Building
+        break
+      case "repair":
+        prefix += "F" // Fixing
+        break
+      case "design":
+        prefix += "D" // Design
+        break
+      case "supervision":
+        prefix += "S" // Supervision
+        break
+      default:
+        prefix += "O" // Other
+    }
+
+    // Tạo số ngẫu nhiên 3 chữ số (hoặc 4 cho thiết kế)
+    const randomDigits =
+      category === "design" ? Math.floor(1000 + Math.random() * 9000) : Math.floor(100 + Math.random() * 900)
+
+    const code = `${prefix}-${currentYear}-${randomDigits}`
+    setGeneratedCode(code)
+    form.setValue("code", code)
+  }, [form.watch("category")])
 
   // Xử lý khi submit form
   const onSubmit = async (data: ProjectFormValues) => {
@@ -134,13 +180,18 @@ export default function CreateProjectPage() {
         .trigger([
           "name",
           "code",
+          "category",
           "startDate",
           "endDate",
           "customer",
           "projectType",
           "location",
+          "geoCode",
           "description",
           "budget",
+          "contactName",
+          "contactPhone",
+          "contactEmail",
         ])
         .then((isValid) => {
           if (isValid) {
@@ -176,68 +227,132 @@ export default function CreateProjectPage() {
                   <CardTitle>Thông tin dự án</CardTitle>
                   <CardDescription>Nhập thông tin cơ bản của dự án mới</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tên dự án</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Nhập tên dự án" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <CardContent className="space-y-6">
+                  {/* Thông tin cơ bản */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Thông tin cơ bản</h3>
 
-                    <FormField
-                      control={form.control}
-                      name="code"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Mã dự án</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Nhập mã dự án" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tên dự án</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nhập tên dự án" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="startDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ngày bắt đầu</FormLabel>
-                          <FormControl>
-                            <DatePicker date={field.value} setDate={field.onChange} placeholder="Chọn ngày bắt đầu" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                      <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Hạng mục</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Chọn hạng mục dự án" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="construction">Xây mới</SelectItem>
+                                <SelectItem value="repair">Sửa chữa</SelectItem>
+                                <SelectItem value="design">Thiết kế</SelectItem>
+                                <SelectItem value="supervision">Giám sát</SelectItem>
+                                <SelectItem value="other">Khác</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-                    <FormField
-                      control={form.control}
-                      name="endDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ngày kết thúc</FormLabel>
-                          <FormControl>
-                            <DatePicker date={field.value} setDate={field.onChange} placeholder="Chọn ngày kết thúc" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="code"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Mã dự án</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Mã dự án tự động"
+                                {...field}
+                                value={generatedCode || field.value}
+                                disabled
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="projectType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Loại dự án</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Chọn loại dự án" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="residential">Nhà ở</SelectItem>
+                                <SelectItem value="commercial">Thương mại</SelectItem>
+                                <SelectItem value="industrial">Công nghiệp</SelectItem>
+                                <SelectItem value="infrastructure">Hạ tầng</SelectItem>
+                                <SelectItem value="public">Công trình công cộng</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="startDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ngày bắt đầu</FormLabel>
+                            <FormControl>
+                              <DatePicker date={field.value} setDate={field.onChange} placeholder="Chọn ngày bắt đầu" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="endDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ngày kết thúc</FormLabel>
+                            <FormControl>
+                              <DatePicker
+                                date={field.value}
+                                setDate={field.onChange}
+                                placeholder="Chọn ngày kết thúc"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
                     <FormField
                       control={form.control}
                       name="customer"
@@ -272,73 +387,113 @@ export default function CreateProjectPage() {
                       )}
                     />
 
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="location"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Địa điểm</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nhập địa điểm dự án" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="geoCode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>GEO code</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nhập mã GEO" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
                     <FormField
                       control={form.control}
-                      name="projectType"
+                      name="budget"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Loại dự án</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Chọn loại dự án" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="residential">Nhà ở</SelectItem>
-                              <SelectItem value="commercial">Thương mại</SelectItem>
-                              <SelectItem value="industrial">Công nghiệp</SelectItem>
-                              <SelectItem value="infrastructure">Hạ tầng</SelectItem>
-                              <SelectItem value="public">Công trình công cộng</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>Ngân sách dự kiến (VNĐ)</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="Nhập ngân sách dự kiến" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Mô tả dự án</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Nhập mô tả dự án" rows={4} {...field} />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Địa điểm</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nhập địa điểm dự án" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* Thông tin liên hệ */}
+                  <div className="space-y-4 pt-4 border-t">
+                    <h3 className="text-lg font-medium">Thông tin liên hệ</h3>
 
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Mô tả dự án</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Nhập mô tả dự án" rows={4} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="contactName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Người liên hệ</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nhập tên người liên hệ" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  <FormField
-                    control={form.control}
-                    name="budget"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ngân sách dự kiến (VNĐ)</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="Nhập ngân sách dự kiến" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                      <FormField
+                        control={form.control}
+                        name="contactPhone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Điện thoại</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nhập số điện thoại liên hệ" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="contactEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nhập email liên hệ" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button variant="outline" type="button" onClick={() => router.push("/dashboard/projects")}>
