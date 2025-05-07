@@ -33,6 +33,7 @@ export async function getCustomers() {
   }
 }
 
+// Cập nhật hàm getCustomerById để đảm bảo nó hoạt động đúng
 export async function getCustomerById(id: string) {
   const supabase = createClient()
 

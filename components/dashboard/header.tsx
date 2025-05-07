@@ -18,19 +18,27 @@ export function DashboardHeader() {
   useEffect(() => {
     setMounted(true)
     const fetchUser = async () => {
-      const supabase = createClient()
-      const { data } = await supabase.auth.getUser()
-      if (data?.user) {
-        setUser(data.user)
+      try {
+        const supabase = createClient()
+        const { data } = await supabase.auth.getUser()
+        if (data?.user) {
+          setUser(data.user)
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error)
       }
     }
     fetchUser()
   }, [])
 
   const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    window.location.href = "/login"
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      window.location.href = "/login"
+    } catch (error) {
+      console.error("Error signing out:", error)
+    }
   }
 
   if (!mounted) return null
