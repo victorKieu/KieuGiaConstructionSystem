@@ -1,20 +1,89 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Cấu hình hiện tại của bạn
+  // Cấu hình Next.js
+  reactStrictMode: true,
+  swcMinify: true,
+  
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
   },
+
+  // Tắt tính năng tạo trang tĩnh
+  output: 'standalone',
+  
+  // Cấu hình image domains
   images: {
+    domains: ['localhost', 'via.placeholder.com'],
     unoptimized: true,
   },
   
-  // Vô hiệu hóa static generation cho toàn bộ dự án
-  output: 'standalone',
+  // Cấu hình experimental
   experimental: {
-    // Các cấu hình experimental khác nếu có
+    // Tắt tính năng tạo trang tĩnh
+    appDir: true,
+    serverComponentsExternalPackages: ['@prisma/client'],
+  },
+  
+  // Cấu hình webpack
+  webpack: (config) => {
+    config.experiments = {
+      ...config.experiments,
+      topLevelAwait: true,
+    }
+    return config
+  },
+  
+  // Cấu hình headers
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+        ],
+      },
+    ]
+  },
+  
+  // Cấu hình redirects
+  async redirects() {
+    return []
+  },
+  
+  // Cấu hình rewrites
+  async rewrites() {
+    return {
+      beforeFiles: [
+        // Chuyển hướng tất cả các API route không được cho phép đến route status
+        {
+          source: '/api/:path*',
+          has: [
+            {
+              type: 'header',
+              key: 'x-vercel-skip-middleware',
+              value: 'true',
+            },
+          ],
+          destination: '/api/status',
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    }
   },
 }
 

@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache"
 // Lấy danh sách dự án
 export async function getProjects() {
   try {
-    const { data, error } = await supabase.from("projects").select("*").order("createdAt", { ascending: false })
+    const { data, error } = await supabase.from("projects").select("*").order("created_at", { ascending: false })
 
     if (error) {
       console.error("Error fetching projects:", error)
@@ -45,14 +45,14 @@ export async function updateProject(id: string, projectData: any) {
       .update({
         name: projectData.name,
         code: projectData.code,
-        startDate: projectData.startDate.toISOString(),
-        endDate: projectData.endDate.toISOString(),
+        start_date: projectData.startDate.toISOString(),
+        end_date: projectData.endDate.toISOString(),
         customer: projectData.customer,
-        projectType: projectData.projectType,
+        project_type: projectData.projectType,
         location: projectData.location,
         description: projectData.description,
         budget: projectData.budget,
-        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .eq("id", id)
 
@@ -81,17 +81,17 @@ export async function createProject(projectData: any) {
         {
           name: projectData.name,
           code: projectData.code,
-          startDate: projectData.startDate.toISOString(),
-          endDate: projectData.endDate.toISOString(),
+          start_date: projectData.startDate.toISOString(),
+          end_date: projectData.endDate.toISOString(),
           customer: projectData.customer,
-          projectType: projectData.projectType,
+          project_type: projectData.projectType,
           location: projectData.location,
           description: projectData.description,
           budget: projectData.budget,
           status: "planning", // Trạng thái mặc định khi tạo dự án mới
           progress: 0, // Tiến độ mặc định khi tạo dự án mới
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         },
       ])
       .select()

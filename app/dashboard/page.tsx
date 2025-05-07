@@ -37,7 +37,7 @@ export default async function DashboardPage() {
   const completedProjects = projects.filter((p) => p.status === "completed").length
   const totalMaterials = materials.length
   const totalCustomers = customers.length
-  const lowStockMaterials = materials.filter((m) => (m.totalStock || 0) < (m.minStock || 0)).length
+  const lowStockMaterials = materials.filter((m) => (m.total_stock || 0) < (m.min_stock || 0)).length
 
   return (
     <div>
@@ -144,7 +144,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <Suspense fallback={<div>Đang tải...</div>}>
-              <InventoryList materials={materials.filter((m) => (m.totalStock || 0) < (m.minStock || 0))} />
+              <InventoryList materials={materials.filter((m) => (m.total_stock || 0) < (m.min_stock || 0))} />
             </Suspense>
           </CardContent>
           <CardFooter>

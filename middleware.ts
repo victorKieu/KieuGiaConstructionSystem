@@ -2,25 +2,28 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
-  // Kiểm tra nếu request là đến API route (ngoại trừ auth và các route cụ thể khác)
-  if (
-    request.nextUrl.pathname.startsWith("/api/") &&
-    !request.nextUrl.pathname.startsWith("/api/auth/") &&
-    !request.nextUrl.pathname.startsWith("/api/maintenance/") &&
-    !request.nextUrl.pathname.startsWith("/api/env-check/") &&
-    !request.nextUrl.pathname.startsWith("/api/system-check/")
-  ) {
-    // Trả về response bảo trì
-    return NextResponse.json(
-      {
-        status: "maintenance",
-        message: "API đang được bảo trì. Vui lòng thử lại sau.",
-        timestamp: new Date().toISOString(),
-      },
-      { status: 503 },
-    )
+  // Danh sách các API route được cho phép
+  const allowedPaths = ["/api/auth", "/api/status", "/api/env-check", "/api/system-check"]
+
+  // Kiểm tra nếu request đến API route và không nằm trong danh sách cho phép
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    // Kiểm tra xem path có nằm trong danh sách cho phép không
+    const isAllowed = allowedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
+
+    if (!isAllowed) {
+      // Trả về phản hồi bảo trì
+      return NextResponse.json(
+        {
+          status: "maintenance",
+          message: "API đang được bảo trì. Vui lòng thử lại sau.",
+          timestamp: new Date().toISOString(),
+        },
+        { status: 503 },
+      )
+    }
   }
 
+  // Cho phép request đi tiếp
   return NextResponse.next()
 }
 
