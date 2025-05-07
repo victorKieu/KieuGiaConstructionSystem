@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { useState, useEffect } from "react"
+import { useTheme } from "next-themes"
+import { Bell, Menu, Moon, Sun, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Sun, Moon, Bell } from "lucide-react"
+import { useSidebar } from "./sidebar-context"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,64 +16,68 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 export function DashboardHeader() {
-  const [theme, setTheme] = useState<"light" | "dark">("light")
-  const router = useRouter()
+  const { theme, setTheme } = useTheme()
+  const { isMobile, toggleMobileMenu } = useSidebar()
+  const [mounted, setMounted] = useState(false)
 
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light")
-  }
+  // Đảm bảo component chỉ render ở client-side
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
-  const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/login")
+  if (!mounted) {
+    return null
   }
 
   return (
-    <header className="bg-amber-800 text-white py-3 px-6 h-16 flex items-center justify-between">
-      <h1 className="text-xl font-bold">CONSTRUCTION MANAGEMENT SYSTEM</h1>
+    <header className="h-16 border-b bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+      <div className="flex items-center">
+        {isMobile && (
+          <Button variant="ghost" size="icon" onClick={toggleMobileMenu} className="mr-2">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle menu</span>
+          </Button>
+        )}
+        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Kiều Gia Construction</h1>
+      </div>
+
       <div className="flex items-center space-x-2">
         <Button
           variant="ghost"
           size="icon"
-          onClick={toggleTheme}
-          className="text-white hover:bg-amber-700 rounded-full"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="text-gray-500 dark:text-gray-400"
         >
-          {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+
+        <Button variant="ghost" size="icon" className="text-gray-500 dark:text-gray-400 relative">
+          <Bell className="h-5 w-5" />
+          <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+          <span className="sr-only">Notifications</span>
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative text-white hover:bg-amber-700 rounded-full">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-amber-100 text-amber-800">KG</AvatarFallback>
+              </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <div className="max-h-80 overflow-y-auto">
-              <DropdownMenuItem className="py-3 cursor-pointer">
-                <div>
-                  <p className="font-medium text-sm">Cập nhật dự án Chung cư Kiều Gia</p>
-                  <p className="text-xs text-gray-500 mt-1">Tiến độ dự án đã đạt 75%</p>
-                  <p className="text-xs text-gray-400 mt-1">2 giờ trước</p>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="py-3 cursor-pointer">
-                <div>
-                  <p className="font-medium text-sm">Cảnh báo tồn kho</p>
-                  <p className="text-xs text-gray-500 mt-1">Xi măng Portland sắp hết hàng</p>
-                  <p className="text-xs text-gray-400 mt-1">5 giờ trước</p>
-                </div>
-              </DropdownMenuItem>
-            </div>
+            <DropdownMenuItem>
+              <User className="mr-2 h-4 w-4" />
+              <span>Hồ sơ</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>Cài đặt</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>Đăng xuất</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        <Avatar className="h-10 w-10 bg-white text-amber-800">
-          <AvatarFallback>KG</AvatarFallback>
-        </Avatar>
       </div>
     </header>
   )

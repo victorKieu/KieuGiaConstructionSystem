@@ -8,6 +8,9 @@ type SidebarContextType = {
   isExpanded: boolean
   setIsExpanded: (value: boolean) => void
   isMobile: boolean
+  isMobileOpen: boolean
+  setIsMobileOpen: (value: boolean) => void
+  toggleMobileMenu: () => void
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
@@ -15,6 +18,7 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isExpanded, setIsExpanded] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
 
   // Kiểm tra kích thước màn hình khi component được mount
   useEffect(() => {
@@ -37,7 +41,24 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("resize", checkScreenSize)
   }, [])
 
-  return <SidebarContext.Provider value={{ isExpanded, setIsExpanded, isMobile }}>{children}</SidebarContext.Provider>
+  const toggleMobileMenu = () => {
+    setIsMobileOpen(!isMobileOpen)
+  }
+
+  return (
+    <SidebarContext.Provider
+      value={{
+        isExpanded,
+        setIsExpanded,
+        isMobile,
+        isMobileOpen,
+        setIsMobileOpen,
+        toggleMobileMenu,
+      }}
+    >
+      {children}
+    </SidebarContext.Provider>
+  )
 }
 
 export function useSidebar() {
