@@ -1,37 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Cấu hình cơ bản
+  reactStrictMode: true,
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["localhost:3000"]
+    }
+  },
+  images: {
+    domains: ['localhost'],
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
   },
-  
-  // Tắt tính năng tạo trang tĩnh
-  output: 'standalone',
-  
-  // Cấu hình image domains
   images: {
-    domains: ['localhost', 'via.placeholder.com'],
     unoptimized: true,
   },
-  
-  // Cấu hình experimental
-  experimental: {
-    serverActions: {
-      allowedOrigins: ["localhost:3000"]
-    }
-  },
-  
-  // Cấu hình webpack
-  webpack: (config) => {
-    config.experiments = {
-      ...config.experiments,
-      topLevelAwait: true,
-    }
-    return config
-  },
-}
+};
 
-export default nextConfig
+export default nextConfig;
