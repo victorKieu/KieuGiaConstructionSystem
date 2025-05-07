@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+// Sử dụng route này thay vì catch-all route để tránh xung đột
 export async function GET() {
   return NextResponse.json({
     status: "maintenance",
