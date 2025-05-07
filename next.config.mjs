@@ -2,7 +2,6 @@
 const nextConfig = {
   // Cấu hình Next.js
   reactStrictMode: true,
-  swcMinify: true,
   
   eslint: {
     ignoreDuringBuilds: true,
@@ -22,10 +21,12 @@ const nextConfig = {
   
   // Cấu hình experimental
   experimental: {
-    // Tắt tính năng tạo trang tĩnh
-    appDir: true,
-    serverComponentsExternalPackages: ['@prisma/client'],
+    // Các cấu hình experimental hợp lệ với Next.js 15
+    serverActions: true,
   },
+  
+  // Cấu hình external packages
+  serverExternalPackages: ['@prisma/client'],
   
   // Cấu hình webpack
   webpack: (config) => {

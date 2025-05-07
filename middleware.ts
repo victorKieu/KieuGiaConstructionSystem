@@ -11,15 +11,8 @@ export function middleware(request: NextRequest) {
     const isAllowed = allowedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
 
     if (!isAllowed) {
-      // Trả về phản hồi bảo trì
-      return NextResponse.json(
-        {
-          status: "maintenance",
-          message: "API đang được bảo trì. Vui lòng thử lại sau.",
-          timestamp: new Date().toISOString(),
-        },
-        { status: 503 },
-      )
+      // Chuyển hướng đến route status
+      return NextResponse.rewrite(new URL("/api/status", request.url))
     }
   }
 
@@ -29,5 +22,5 @@ export function middleware(request: NextRequest) {
 
 // Chỉ áp dụng middleware cho các route API
 export const config = {
-  matcher: "/api/:path*",
+  matcher: ["/api/:path*"],
 }
