@@ -214,34 +214,55 @@ export interface Database {
       customers: {
         Row: {
           id: string
+          code: string
           name: string
-          address: string | null
-          phone: string | null
-          email: string | null
           type: string
           status: string
+          phone: string | null
+          email: string | null
+          address: string | null
+          tax_code: string | null
+          website: string | null
+          description: string | null
+          birthday: string | null
+          sales_channel: string | null
+          geocode: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
+          code?: string
           name: string
-          address?: string | null
+          type: string
+          status?: string
           phone?: string | null
           email?: string | null
-          type?: string
-          status?: string
+          address?: string | null
+          tax_code?: string | null
+          website?: string | null
+          description?: string | null
+          birthday?: string | null
+          sales_channel?: string | null
+          geocode?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
+          code?: string
           name?: string
-          address?: string | null
-          phone?: string | null
-          email?: string | null
           type?: string
           status?: string
+          phone?: string | null
+          email?: string | null
+          address?: string | null
+          tax_code?: string | null
+          website?: string | null
+          description?: string | null
+          birthday?: string | null
+          sales_channel?: string | null
+          geocode?: string | null
           created_at?: string
           updated_at?: string
         }
