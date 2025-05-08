@@ -8,15 +8,12 @@ export const metadata = {
 }
 
 export default async function EditCustomerPage({ params }) {
-  // Lấy thông tin khách hàng
-  const customerResult = await getCustomerById(params.id)
+  const { id } = params
+  const result = await getCustomerById(id)
 
-  // Nếu không tìm thấy khách hàng, chuyển đến trang not found
-  if (!customerResult.success) {
+  if (!result.success || !result.data) {
     notFound()
   }
-
-  const customer = customerResult.data
 
   return (
     <div className="space-y-6">
@@ -24,7 +21,7 @@ export default async function EditCustomerPage({ params }) {
         <h1 className="text-2xl font-bold tracking-tight">Chỉnh sửa khách hàng</h1>
         <p className="text-muted-foreground">Cập nhật thông tin chi tiết của khách hàng</p>
       </div>
-      <CustomerForm customer={customer} />
+      <CustomerForm customer={result.data} />
     </div>
   )
 }

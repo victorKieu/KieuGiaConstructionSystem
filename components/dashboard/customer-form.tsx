@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { Building, Landmark, User, Save, Loader2, MapPin, Calendar } from "lucide-react"
+import { Building, Landmark, User, Save, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -15,19 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "@/components/ui/use-toast"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar as CalendarComponent } from "@/components/ui/calendar"
-import { format } from "date-fns"
-import { vi } from "date-fns/locale"
-import { cn } from "@/lib/utils"
-import {
-  type CustomerFormData,
-  createCustomer,
-  updateCustomer,
-  getSalesChannels,
-  getCustomerCountByType,
-  generateCustomerCode,
-} from "@/lib/actions/customer-actions"
+import { createCustomer, updateCustomer } from "@/lib/actions/customer-actions"
 
 // Schema validation cho form
 const customerSchema = z.object({
@@ -50,7 +38,7 @@ const customerSchema = z.object({
     .optional()
     .or(z.literal("")),
   address: z.string().optional(),
-  tax_code: z.string().optional(),
+  taxCode: z.string().optional(),
   website: z
     .string()
     .url({
@@ -59,79 +47,42 @@ const customerSchema = z.object({
     .optional()
     .or(z.literal("")),
   description: z.string().optional(),
-  birthday: z.string().optional(),
-  sales_channel: z.string().optional(),
-  geocode: z.string().optional(),
 })
 
-type CustomerFormProps = {
-  customer?: CustomerFormData | null
-}
-
-export function CustomerForm({ customer = null }: CustomerFormProps) {
+export function CustomerForm({ customer = null }) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [generatedCode, setGeneratedCode] = useState<string>("")
-  const [salesChannels, setSalesChannels] = useState<{ value: string; label: string }[]>([])
   const isEditing = !!customer
 
   // Khởi tạo form với giá trị mặc định
-  const form = useForm<z.infer<typeof customerSchema>>({
+  const form = useForm({
     resolver: zodResolver(customerSchema),
     defaultValues: {
       code: customer?.code || "",
       name: customer?.name || "",
-      type: (customer?.type as any) || "company",
-      status: (customer?.status as any) || "active",
+      type: customer?.type || "company",
+      status: customer?.status || "active",
       phone: customer?.phone || "",
       email: customer?.email || "",
       address: customer?.address || "",
-      tax_code: customer?.tax_code || "",
+      taxCode: customer?.taxCode || "",
       website: customer?.website || "",
       description: customer?.description || "",
-      birthday: customer?.birthday || "",
-      sales_channel: customer?.sales_channel || "",
-      geocode: customer?.geocode || "",
     },
   })
 
-  // Lấy danh sách kênh bán hàng
-  useEffect(() => {
-    const fetchSalesChannels = async () => {
-      const channels = await getSalesChannels()
-      setSalesChannels(channels)
-    }
-    fetchSalesChannels()
-  }, [])
-
-  // Theo dõi thay đổi loại khách hàng để tạo mã
-  const watchType = form.watch("type")
-
-  // Tạo mã khách hàng khi thay đổi loại
-  useEffect(() => {
-    if (!isEditing && watchType) {
-      const generateCode = async () => {
-        const count = await getCustomerCountByType(watchType)
-        const code = generateCustomerCode(watchType, count)
-        setGeneratedCode(code)
-        form.setValue("code", code)
-      }
-      generateCode()
-    }
-  }, [watchType, isEditing, form])
-
   // Xử lý khi submit form
-  async function onSubmit(values: z.infer<typeof customerSchema>) {
+  async function onSubmit(values) {
     setIsSubmitting(true)
     try {
       let result
 
-      if (isEditing && customer?.id) {
+      if (isEditing) {
         // Cập nhật khách hàng
-        result = await updateCustomer(customer.id, values as CustomerFormData)
+        result = await updateCustomer(customer.id, values)
       } else {
         // Tạo khách hàng mới
-        result = await createCustomer(values as CustomerFormData)
+        result = await createCustomer(values)
       }
 
       if (result.success) {
@@ -143,7 +94,11 @@ export function CustomerForm({ customer = null }: CustomerFormProps) {
         })
 
         // Chuyển hướng sau khi thành công
-        router.push("/dashboard/customers")
+        if (isEditing) {
+          router.push(`/dashboard/customers/${customer.id}`)
+        } else {
+          router.push("/dashboard/customers")
+        }
         router.refresh()
       } else {
         toast({
@@ -164,20 +119,6 @@ export function CustomerForm({ customer = null }: CustomerFormProps) {
     }
   }
 
-  // Lấy label cho loại khách hàng
-  const getCustomerTypeLabel = (type: string) => {
-    switch (type) {
-      case "individual":
-        return "Ngày sinh"
-      case "company":
-        return "Ngày thành lập công ty"
-      case "government":
-        return "Ngày thành lập cơ quan"
-      default:
-        return "Ngày sinh/thành lập"
-    }
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -190,6 +131,39 @@ export function CustomerForm({ customer = null }: CustomerFormProps) {
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {/* Mã khách hàng */}
+              <FormField
+                control={form.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mã khách hàng</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Tự động tạo nếu để trống" {...field} disabled={isEditing} />
+                    </FormControl>
+                    <FormDescription>Mã khách hàng sẽ được tạo tự động nếu để trống</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Tên khách hàng */}
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Tên khách hàng <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nhập tên khách hàng" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Loại khách hàng */}
               <FormField
                 control={form.control}
@@ -233,43 +207,6 @@ export function CustomerForm({ customer = null }: CustomerFormProps) {
                           </FormLabel>
                         </FormItem>
                       </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Mã khách hàng */}
-              <FormField
-                control={form.control}
-                name="code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mã khách hàng</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={generatedCode || "Chọn loại khách hàng để tạo mã"}
-                        {...field}
-                        disabled={isEditing}
-                      />
-                    </FormControl>
-                    <FormDescription>Mã khách hàng được tạo tự động dựa trên loại khách hàng</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Tên khách hàng */}
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Tên khách hàng <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nhập tên khách hàng" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -332,73 +269,10 @@ export function CustomerForm({ customer = null }: CustomerFormProps) {
                 )}
               />
 
-              {/* Ngày sinh/thành lập */}
-              <FormField
-                control={form.control}
-                name="birthday"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>{getCustomerTypeLabel(form.getValues("type"))}</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                          >
-                            {field.value ? (
-                              format(new Date(field.value), "dd/MM/yyyy", { locale: vi })
-                            ) : (
-                              <span>Chọn ngày</span>
-                            )}
-                            <Calendar className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <CalendarComponent
-                          mode="single"
-                          selected={field.value ? new Date(field.value) : undefined}
-                          onSelect={(date) => field.onChange(date ? date.toISOString() : "")}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Kênh bán hàng */}
-              <FormField
-                control={form.control}
-                name="sales_channel"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Kênh bán hàng</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn kênh bán hàng" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {salesChannels.map((channel) => (
-                          <SelectItem key={channel.value} value={channel.value}>
-                            {channel.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               {/* Mã số thuế */}
               <FormField
                 control={form.control}
-                name="tax_code"
+                name="taxCode"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Mã số thuế</FormLabel>
@@ -436,49 +310,6 @@ export function CustomerForm({ customer = null }: CustomerFormProps) {
                   <FormControl>
                     <Input placeholder="Nhập địa chỉ" {...field} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Geocode */}
-            <FormField
-              control={form.control}
-              name="geocode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Vị trí địa lý (Geocode)</FormLabel>
-                  <FormControl>
-                    <div className="flex">
-                      <Input placeholder="Nhập tọa độ (vd: 21.0285,105.8542)" {...field} className="flex-1" />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="ml-2"
-                        onClick={() => {
-                          if (navigator.geolocation) {
-                            navigator.geolocation.getCurrentPosition(
-                              (position) => {
-                                const geocode = `${position.coords.latitude},${position.coords.longitude}`
-                                form.setValue("geocode", geocode)
-                              },
-                              (error) => {
-                                toast({
-                                  title: "Lỗi",
-                                  description: "Không thể lấy vị trí hiện tại",
-                                  variant: "destructive",
-                                })
-                              },
-                            )
-                          }
-                        }}
-                      >
-                        <MapPin className="h-4 w-4 mr-2" />
-                        Vị trí hiện tại
-                      </Button>
-                    </div>
-                  </FormControl>
-                  <FormDescription>Nhập tọa độ dưới dạng "vĩ độ,kinh độ" hoặc sử dụng vị trí hiện tại</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
