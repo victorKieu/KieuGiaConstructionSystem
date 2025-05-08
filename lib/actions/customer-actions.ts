@@ -4,6 +4,22 @@ import { supabase } from "@/lib/supabase/client"
 import { revalidatePath } from "next/cache"
 import type { CustomerFormData } from "@/types/customer"
 
+// Hàm tạo mã khách hàng tự động
+function generateCustomerCode(type: string): string {
+  const timestamp = Date.now().toString().slice(-4)
+
+  switch (type) {
+    case "company":
+      return `KDN-${timestamp}`
+    case "individual":
+      return `KCN-${timestamp}`
+    case "government":
+      return `KCQ-${timestamp}`
+    default:
+      return `KH-${timestamp}`
+  }
+}
+
 // Lấy danh sách khách hàng
 export async function getCustomers() {
   try {
@@ -43,9 +59,7 @@ export async function createCustomer(customerData: CustomerFormData) {
   try {
     // Tạo mã khách hàng tự động nếu không có
     if (!customerData.code) {
-      const prefix = customerData.type === "company" ? "DN" : customerData.type === "individual" ? "CN" : "NH"
-      const timestamp = Date.now().toString().slice(-6)
-      customerData.code = `${prefix}${timestamp}`
+      customerData.code = generateCustomerCode(customerData.type)
     }
 
     // Thêm thời gian tạo và cập nhật

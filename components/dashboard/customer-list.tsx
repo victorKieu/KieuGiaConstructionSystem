@@ -162,7 +162,7 @@ export function CustomerList({ customers = [] }: { customers: Customer[] }) {
             ) : (
               filteredCustomers.map((customer) => (
                 <TableRow key={customer.id}>
-                  <TableCell className="font-medium">{customer.code}</TableCell>
+                  <TableCell className="font-medium">{customer.code || "-"}</TableCell>
                   <TableCell>
                     <div className="font-medium">{customer.name}</div>
                     {customer.created_at && (
