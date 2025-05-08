@@ -8,6 +8,7 @@ import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { getEmployees } from "@/lib/actions/employee-actions"
 import { format } from "date-fns"
+import { getStatusLabel } from "@/lib/constants/employee-constants"
 
 export const metadata: Metadata = {
   title: "Quản lý nhân viên | Kieu Gia Construction",
@@ -19,11 +20,12 @@ export const dynamic = "force-dynamic"
 export default async function EmployeesPage() {
   // Lấy danh sách nhân viên từ Supabase
   const employees = await getEmployees()
+  console.log("Employees in page component:", employees?.length || 0)
 
   // Phân loại nhân viên theo trạng thái
-  const activeEmployees = employees.filter((emp) => emp.status === "Đang làm việc")
-  const onLeaveEmployees = employees.filter((emp) => emp.status === "Nghỉ phép")
-  const terminatedEmployees = employees.filter((emp) => emp.status === "Đã nghỉ việc")
+  const activeEmployees = employees.filter((emp) => emp.status === "active")
+  const onLeaveEmployees = employees.filter((emp) => emp.status === "on_leave")
+  const terminatedEmployees = employees.filter((emp) => emp.status === "terminated")
 
   // Hàm render bảng nhân viên
   const renderEmployeeTable = (employeeList: any[]) => (
@@ -44,24 +46,24 @@ export default async function EmployeesPage() {
           {employeeList.length > 0 ? (
             employeeList.map((employee) => (
               <tr key={employee.id} className="border-b">
-                <td className="py-3 px-4">{employee.id}</td>
+                <td className="py-3 px-4">{employee.code || "N/A"}</td>
                 <td className="py-3 px-4 font-medium">{employee.name}</td>
                 <td className="py-3 px-4">{employee.position}</td>
                 <td className="py-3 px-4">{employee.department}</td>
                 <td className="py-3 px-4">
-                  {employee.join_date ? format(new Date(employee.join_date), "dd/MM/yyyy") : "N/A"}
+                  {employee.hire_date ? format(new Date(employee.hire_date), "dd/MM/yyyy") : "N/A"}
                 </td>
                 <td className="py-3 px-4">
                   <span
                     className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${
-                      employee.status === "Đang làm việc"
+                      employee.status === "active"
                         ? "bg-green-50 text-green-700 ring-green-600/20"
-                        : employee.status === "Nghỉ phép"
+                        : employee.status === "on_leave"
                           ? "bg-yellow-50 text-yellow-700 ring-yellow-600/20"
                           : "bg-red-50 text-red-700 ring-red-600/20"
                     }`}
                   >
-                    {employee.status}
+                    {getStatusLabel(employee.status)}
                   </span>
                 </td>
                 <td className="py-3 px-4">

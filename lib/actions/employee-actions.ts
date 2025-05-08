@@ -4,22 +4,35 @@ import { supabase } from "@/lib/supabase/client"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
-// Định nghĩa kiểu dữ liệu cho nhân viên
+// Định nghĩa kiểu dữ liệu cho nhân viên theo schema thực tế
 export type Employee = {
   id?: string
+  code?: string
   name: string
   position: string
   department: string
   phone?: string | null
   email?: string | null
   address?: string | null
-  join_date: string
+  hire_date: string
+  birth_date?: string | null
+  gender?: string | null
+  id_number?: string | null
+  tax_code?: string | null
+  bank_account?: string | null
+  bank_name?: string | null
+  emergency_contact?: string | null
+  emergency_phone?: string | null
   status?: string
+  notes?: string | null
+  created_at?: string
+  updated_at?: string
 }
 
 // Lấy danh sách nhân viên
 export async function getEmployees() {
   try {
+    console.log("Fetching employees from Supabase...")
     const { data, error } = await supabase.from("employees").select("*").order("name", { ascending: true })
 
     if (error) {
@@ -27,6 +40,7 @@ export async function getEmployees() {
       return []
     }
 
+    console.log("Employees fetched:", data?.length || 0)
     return data || []
   } catch (error) {
     console.error("Failed to fetch employees:", error)
@@ -55,17 +69,18 @@ export async function getEmployeeById(id: string) {
 export async function createEmployee(formData: FormData) {
   try {
     // Lấy dữ liệu từ form
+    const code = formData.get("code") as string
     const name = formData.get("name") as string
     const position = formData.get("position") as string
     const department = formData.get("department") as string
     const phone = formData.get("phone") as string
     const email = formData.get("email") as string
     const address = formData.get("address") as string
-    const join_date = formData.get("join_date") as string
-    const status = (formData.get("status") as string) || "Đang làm việc"
+    const hire_date = formData.get("hire_date") as string
+    const status = (formData.get("status") as string) || "active"
 
     // Kiểm tra dữ liệu bắt buộc
-    if (!name || !position || !department || !join_date) {
+    if (!name || !position || !department || !hire_date) {
       throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc")
     }
 
@@ -74,13 +89,14 @@ export async function createEmployee(formData: FormData) {
       .from("employees")
       .insert([
         {
+          code,
           name,
           position,
           department,
           phone: phone || null,
           email: email || null,
           address: address || null,
-          join_date,
+          hire_date,
           status,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -108,17 +124,18 @@ export async function createEmployee(formData: FormData) {
 export async function updateEmployee(id: string, formData: FormData) {
   try {
     // Lấy dữ liệu từ form
+    const code = formData.get("code") as string
     const name = formData.get("name") as string
     const position = formData.get("position") as string
     const department = formData.get("department") as string
     const phone = formData.get("phone") as string
     const email = formData.get("email") as string
     const address = formData.get("address") as string
-    const join_date = formData.get("join_date") as string
+    const hire_date = formData.get("hire_date") as string
     const status = formData.get("status") as string
 
     // Kiểm tra dữ liệu bắt buộc
-    if (!name || !position || !department || !join_date || !status) {
+    if (!name || !position || !department || !hire_date || !status) {
       throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc")
     }
 
@@ -126,13 +143,14 @@ export async function updateEmployee(id: string, formData: FormData) {
     const { data, error } = await supabase
       .from("employees")
       .update({
+        code,
         name,
         position,
         department,
         phone: phone || null,
         email: email || null,
         address: address || null,
-        join_date,
+        hire_date,
         status,
         updated_at: new Date().toISOString(),
       })
