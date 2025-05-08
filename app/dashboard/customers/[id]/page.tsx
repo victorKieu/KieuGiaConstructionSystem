@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { format } from "date-fns"
-import { Building, Calendar, Edit, Globe, Landmark, Mail, MapPin, Phone, User } from "lucide-react"
+import { Building, Calendar, Edit, Landmark, Mail, MapPin, Phone, User } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -45,13 +45,13 @@ function getCustomerTypeName(type) {
 function getStatusBadge(status) {
   switch (status) {
     case "active":
-      return <Badge variant="success">Đang hợp tác</Badge>
+      return <Badge className="bg-green-100 text-green-800">Đang hợp tác</Badge>
     case "potential":
-      return <Badge variant="warning">Tiềm năng</Badge>
+      return <Badge className="bg-blue-100 text-blue-800">Tiềm năng</Badge>
     case "inactive":
-      return <Badge variant="destructive">Ngừng hợp tác</Badge>
+      return <Badge className="bg-gray-100 text-gray-800">Ngừng hợp tác</Badge>
     default:
-      return <Badge variant="outline">Không xác định</Badge>
+      return <Badge>{status}</Badge>
   }
 }
 
@@ -77,7 +77,7 @@ export default async function CustomerDetailPage({ params }) {
             </div>
             <span className="text-muted-foreground">•</span>
             <div className="flex items-center text-muted-foreground">
-              <span>Mã: {customer.code}</span>
+              <span>Mã: {customer.code || "Chưa có"}</span>
             </div>
             <span className="text-muted-foreground">•</span>
             {getStatusBadge(customer.status)}
@@ -98,6 +98,16 @@ export default async function CustomerDetailPage({ params }) {
             <CardDescription>Thông tin liên hệ của khách hàng</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {customer.contact_person && (
+              <div className="flex items-start">
+                <User className="mr-2 h-5 w-5 text-muted-foreground" />
+                <div>
+                  <div className="font-medium">Người liên hệ</div>
+                  <div>{customer.contact_person}</div>
+                  {customer.position && <div className="text-sm text-muted-foreground">{customer.position}</div>}
+                </div>
+              </div>
+            )}
             {customer.phone && (
               <div className="flex items-start">
                 <Phone className="mr-2 h-5 w-5 text-muted-foreground" />
@@ -125,24 +135,6 @@ export default async function CustomerDetailPage({ params }) {
                 </div>
               </div>
             )}
-            {customer.website && (
-              <div className="flex items-start">
-                <Globe className="mr-2 h-5 w-5 text-muted-foreground" />
-                <div>
-                  <div className="font-medium">Website</div>
-                  <div>
-                    <a
-                      href={customer.website.startsWith("http") ? customer.website : `https://${customer.website}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {customer.website}
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
 
@@ -152,30 +144,41 @@ export default async function CustomerDetailPage({ params }) {
             <CardDescription>Thông tin chi tiết về khách hàng</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {customer.taxCode && (
+            {customer.tax_code && (
               <div className="flex items-start">
                 <div className="mr-2 h-5 w-5 flex items-center justify-center text-muted-foreground">
                   <span className="text-sm font-bold">MST</span>
                 </div>
                 <div>
                   <div className="font-medium">Mã số thuế</div>
-                  <div>{customer.taxCode}</div>
+                  <div>{customer.tax_code}</div>
                 </div>
               </div>
             )}
-            {customer.createdAt && (
+            {customer.sales_channel && (
+              <div className="flex items-start">
+                <div className="mr-2 h-5 w-5 flex items-center justify-center text-muted-foreground">
+                  <span className="text-sm font-bold">KBH</span>
+                </div>
+                <div>
+                  <div className="font-medium">Kênh bán hàng</div>
+                  <div>{customer.sales_channel}</div>
+                </div>
+              </div>
+            )}
+            {customer.created_at && (
               <div className="flex items-start">
                 <Calendar className="mr-2 h-5 w-5 text-muted-foreground" />
                 <div>
                   <div className="font-medium">Ngày tạo</div>
-                  <div>{format(new Date(customer.createdAt), "dd/MM/yyyy")}</div>
+                  <div>{format(new Date(customer.created_at), "dd/MM/yyyy")}</div>
                 </div>
               </div>
             )}
-            {customer.description && (
+            {customer.notes && (
               <div className="mt-4">
-                <div className="font-medium mb-1">Mô tả</div>
-                <div className="text-muted-foreground whitespace-pre-line">{customer.description}</div>
+                <div className="font-medium mb-1">Ghi chú</div>
+                <div className="text-muted-foreground whitespace-pre-line">{customer.notes}</div>
               </div>
             )}
           </CardContent>

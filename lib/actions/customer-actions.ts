@@ -2,11 +2,12 @@
 
 import { supabase } from "@/lib/supabase/client"
 import { revalidatePath } from "next/cache"
+import type { CustomerFormData } from "@/types/customer"
 
 // Lấy danh sách khách hàng
 export async function getCustomers() {
   try {
-    const { data, error } = await supabase.from("customers").select("*").order("createdAt", { ascending: false })
+    const { data, error } = await supabase.from("customers").select("*").order("created_at", { ascending: false })
 
     if (error) {
       console.error("Error fetching customers:", error)
@@ -38,7 +39,7 @@ export async function getCustomerById(id: string) {
 }
 
 // Tạo khách hàng mới
-export async function createCustomer(customerData: any) {
+export async function createCustomer(customerData: CustomerFormData) {
   try {
     // Tạo mã khách hàng tự động nếu không có
     if (!customerData.code) {
@@ -51,8 +52,8 @@ export async function createCustomer(customerData: any) {
     const now = new Date().toISOString()
     const dataToInsert = {
       ...customerData,
-      createdAt: now,
-      updatedAt: now,
+      created_at: now,
+      updated_at: now,
     }
 
     const { data, error } = await supabase.from("customers").insert([dataToInsert]).select()
@@ -73,13 +74,13 @@ export async function createCustomer(customerData: any) {
 }
 
 // Cập nhật khách hàng
-export async function updateCustomer(id: string, customerData: any) {
+export async function updateCustomer(id: string, customerData: CustomerFormData) {
   try {
     const { data, error } = await supabase
       .from("customers")
       .update({
         ...customerData,
-        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .eq("id", id)
       .select()
@@ -126,8 +127,8 @@ export async function getCustomerContacts(customerId: string) {
     const { data, error } = await supabase
       .from("customer_contacts")
       .select("*")
-      .eq("customerId", customerId)
-      .order("isPrimary", { ascending: false })
+      .eq("customer_id", customerId)
+      .order("is_primary", { ascending: false })
 
     if (error) {
       console.error("Error fetching customer contacts:", error)
@@ -147,8 +148,8 @@ export async function getCustomerProjects(customerId: string) {
     const { data, error } = await supabase
       .from("projects")
       .select("*")
-      .eq("customerId", customerId)
-      .order("createdAt", { ascending: false })
+      .eq("customer_id", customerId)
+      .order("created_at", { ascending: false })
 
     if (error) {
       console.error("Error fetching customer projects:", error)

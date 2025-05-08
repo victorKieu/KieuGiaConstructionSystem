@@ -16,10 +16,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "@/components/ui/use-toast"
 import { createCustomer, updateCustomer } from "@/lib/actions/customer-actions"
+import type { Customer } from "@/types/customer"
 
 // Schema validation cho form
 const customerSchema = z.object({
-  code: z.string().optional(),
+  code: z.string().optional().nullable(),
   name: z.string().min(2, {
     message: "Tên khách hàng phải có ít nhất 2 ký tự",
   }),
@@ -29,27 +30,25 @@ const customerSchema = z.object({
   status: z.enum(["active", "potential", "inactive"], {
     required_error: "Vui lòng chọn trạng thái",
   }),
-  phone: z.string().optional(),
+  contact_person: z.string().optional().nullable(),
+  position: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
   email: z
     .string()
     .email({
       message: "Email không hợp lệ",
     })
     .optional()
-    .or(z.literal("")),
-  address: z.string().optional(),
-  taxCode: z.string().optional(),
-  website: z
-    .string()
-    .url({
-      message: "Website không hợp lệ",
-    })
-    .optional()
-    .or(z.literal("")),
-  description: z.string().optional(),
+    .nullable(),
+  address: z.string().optional().nullable(),
+  tax_code: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  birthday: z.string().optional().nullable(),
+  sales_channel: z.string().optional().nullable(),
+  geocode: z.string().optional().nullable(),
 })
 
-export function CustomerForm({ customer = null }) {
+export function CustomerForm({ customer = null }: { customer?: Customer | null }) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const isEditing = !!customer
@@ -62,12 +61,16 @@ export function CustomerForm({ customer = null }) {
       name: customer?.name || "",
       type: customer?.type || "company",
       status: customer?.status || "active",
+      contact_person: customer?.contact_person || "",
+      position: customer?.position || "",
       phone: customer?.phone || "",
       email: customer?.email || "",
       address: customer?.address || "",
-      taxCode: customer?.taxCode || "",
-      website: customer?.website || "",
-      description: customer?.description || "",
+      tax_code: customer?.tax_code || "",
+      notes: customer?.notes || "",
+      birthday: customer?.birthday || "",
+      sales_channel: customer?.sales_channel || "",
+      geocode: customer?.geocode || "",
     },
   })
 
@@ -77,7 +80,7 @@ export function CustomerForm({ customer = null }) {
     try {
       let result
 
-      if (isEditing) {
+      if (isEditing && customer) {
         // Cập nhật khách hàng
         result = await updateCustomer(customer.id, values)
       } else {
@@ -94,7 +97,7 @@ export function CustomerForm({ customer = null }) {
         })
 
         // Chuyển hướng sau khi thành công
-        if (isEditing) {
+        if (isEditing && customer) {
           router.push(`/dashboard/customers/${customer.id}`)
         } else {
           router.push("/dashboard/customers")
@@ -139,7 +142,12 @@ export function CustomerForm({ customer = null }) {
                   <FormItem>
                     <FormLabel>Mã khách hàng</FormLabel>
                     <FormControl>
-                      <Input placeholder="Tự động tạo nếu để trống" {...field} disabled={isEditing} />
+                      <Input
+                        placeholder="Tự động tạo nếu để trống"
+                        {...field}
+                        value={field.value || ""}
+                        disabled={isEditing}
+                      />
                     </FormControl>
                     <FormDescription>Mã khách hàng sẽ được tạo tự động nếu để trống</FormDescription>
                     <FormMessage />
@@ -239,6 +247,36 @@ export function CustomerForm({ customer = null }) {
                 )}
               />
 
+              {/* Người liên hệ */}
+              <FormField
+                control={form.control}
+                name="contact_person"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Người liên hệ</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nhập tên người liên hệ" {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Chức vụ */}
+              <FormField
+                control={form.control}
+                name="position"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Chức vụ</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nhập chức vụ người liên hệ" {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Số điện thoại */}
               <FormField
                 control={form.control}
@@ -247,7 +285,7 @@ export function CustomerForm({ customer = null }) {
                   <FormItem>
                     <FormLabel>Số điện thoại</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nhập số điện thoại" {...field} />
+                      <Input placeholder="Nhập số điện thoại" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -262,7 +300,7 @@ export function CustomerForm({ customer = null }) {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nhập địa chỉ email" {...field} />
+                      <Input placeholder="Nhập địa chỉ email" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -272,27 +310,27 @@ export function CustomerForm({ customer = null }) {
               {/* Mã số thuế */}
               <FormField
                 control={form.control}
-                name="taxCode"
+                name="tax_code"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Mã số thuế</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nhập mã số thuế" {...field} />
+                      <Input placeholder="Nhập mã số thuế" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* Website */}
+              {/* Kênh bán hàng */}
               <FormField
                 control={form.control}
-                name="website"
+                name="sales_channel"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website</FormLabel>
+                    <FormLabel>Kênh bán hàng</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nhập địa chỉ website" {...field} />
+                      <Input placeholder="Nhập kênh bán hàng" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -308,22 +346,27 @@ export function CustomerForm({ customer = null }) {
                 <FormItem>
                   <FormLabel>Địa chỉ</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nhập địa chỉ" {...field} />
+                    <Input placeholder="Nhập địa chỉ" {...field} value={field.value || ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Mô tả */}
+            {/* Ghi chú */}
             <FormField
               control={form.control}
-              name="description"
+              name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mô tả</FormLabel>
+                  <FormLabel>Ghi chú</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Nhập thông tin mô tả về khách hàng" className="resize-none" {...field} />
+                    <Textarea
+                      placeholder="Nhập ghi chú về khách hàng"
+                      className="resize-none"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

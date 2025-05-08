@@ -29,6 +29,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { deleteCustomer } from "@/lib/actions/customer-actions"
 import { toast } from "@/components/ui/use-toast"
+import type { Customer } from "@/types/customer"
 
 // Hàm lấy biểu tượng dựa trên loại khách hàng
 function getCustomerTypeIcon(type) {
@@ -62,20 +63,20 @@ function getCustomerTypeName(type) {
 function getStatusBadge(status) {
   switch (status) {
     case "active":
-      return <Badge variant="success">Đang hợp tác</Badge>
+      return <Badge className="bg-green-100 text-green-800">Đang hợp tác</Badge>
     case "potential":
-      return <Badge variant="warning">Tiềm năng</Badge>
+      return <Badge className="bg-blue-100 text-blue-800">Tiềm năng</Badge>
     case "inactive":
-      return <Badge variant="destructive">Ngừng hợp tác</Badge>
+      return <Badge className="bg-gray-100 text-gray-800">Ngừng hợp tác</Badge>
     default:
-      return <Badge variant="outline">Không xác định</Badge>
+      return <Badge>{status}</Badge>
   }
 }
 
-export function CustomerList({ customers }) {
+export function CustomerList({ customers = [] }: { customers: Customer[] }) {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
-  const [customerToDelete, setCustomerToDelete] = useState(null)
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   // Lọc khách hàng theo từ khóa tìm kiếm
@@ -85,7 +86,8 @@ export function CustomerList({ customers }) {
       customer.name?.toLowerCase().includes(searchTermLower) ||
       customer.code?.toLowerCase().includes(searchTermLower) ||
       customer.email?.toLowerCase().includes(searchTermLower) ||
-      customer.phone?.toLowerCase().includes(searchTermLower)
+      customer.phone?.toString().includes(searchTerm) ||
+      customer.contact_person?.toLowerCase().includes(searchTermLower)
     )
   })
 
@@ -144,6 +146,7 @@ export function CustomerList({ customers }) {
               <TableHead className="w-[100px]">Mã KH</TableHead>
               <TableHead>Tên khách hàng</TableHead>
               <TableHead>Loại</TableHead>
+              <TableHead>Người liên hệ</TableHead>
               <TableHead>Liên hệ</TableHead>
               <TableHead>Trạng thái</TableHead>
               <TableHead className="text-right">Thao tác</TableHead>
@@ -152,7 +155,7 @@ export function CustomerList({ customers }) {
           <TableBody>
             {filteredCustomers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   Không tìm thấy khách hàng nào
                 </TableCell>
               </TableRow>
@@ -162,9 +165,9 @@ export function CustomerList({ customers }) {
                   <TableCell className="font-medium">{customer.code}</TableCell>
                   <TableCell>
                     <div className="font-medium">{customer.name}</div>
-                    {customer.createdAt && (
+                    {customer.created_at && (
                       <div className="text-xs text-muted-foreground">
-                        Ngày tạo: {format(new Date(customer.createdAt), "dd/MM/yyyy")}
+                        Ngày tạo: {format(new Date(customer.created_at), "dd/MM/yyyy")}
                       </div>
                     )}
                   </TableCell>
@@ -173,6 +176,10 @@ export function CustomerList({ customers }) {
                       {getCustomerTypeIcon(customer.type)}
                       <span className="ml-2">{getCustomerTypeName(customer.type)}</span>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {customer.contact_person && <div className="font-medium">{customer.contact_person}</div>}
+                    {customer.position && <div className="text-xs text-muted-foreground">{customer.position}</div>}
                   </TableCell>
                   <TableCell>
                     {customer.phone && <div>{customer.phone}</div>}
