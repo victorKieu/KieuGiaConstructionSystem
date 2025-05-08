@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { Building, Landmark, User, Save, Loader2 } from "lucide-react"
+import { Building, Landmark, User, Save, Loader2, AlertCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { toast } from "@/components/ui/use-toast"
 import { createCustomer, updateCustomer } from "@/lib/actions/customer-actions"
 import type { Customer } from "@/types/customer"
@@ -51,6 +52,8 @@ const customerSchema = z.object({
 export function CustomerForm({ customer = null }: { customer?: Customer | null }) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [debugInfo, setDebugInfo] = useState<any>(null)
   const isEditing = !!customer
 
   // Khởi tạo form với giá trị mặc định
@@ -77,16 +80,33 @@ export function CustomerForm({ customer = null }: { customer?: Customer | null }
   // Xử lý khi submit form
   async function onSubmit(values) {
     setIsSubmitting(true)
+    setError(null)
+    setDebugInfo(null)
+
     try {
+      console.log("Submitting form with values:", values)
+
+      // Chuyển đổi các giá trị rỗng thành null
+      const formattedValues = Object.fromEntries(
+        Object.entries(values).map(([key, value]) => [key, value === "" ? null : value]),
+      )
+
+      console.log("Formatted values:", formattedValues)
+
       let result
 
       if (isEditing && customer) {
         // Cập nhật khách hàng
-        result = await updateCustomer(customer.id, values)
+        console.log(`Updating customer with ID: ${customer.id}`)
+        result = await updateCustomer(customer.id, formattedValues)
       } else {
         // Tạo khách hàng mới
-        result = await createCustomer(values)
+        console.log("Creating new customer")
+        result = await createCustomer(formattedValues)
       }
+
+      console.log("Server action result:", result)
+      setDebugInfo(result)
 
       if (result.success) {
         toast({
@@ -104,6 +124,7 @@ export function CustomerForm({ customer = null }: { customer?: Customer | null }
         }
         router.refresh()
       } else {
+        setError(result.error || "Không thể lưu thông tin khách hàng")
         toast({
           title: "Có lỗi xảy ra",
           description: result.error || "Không thể lưu thông tin khách hàng",
@@ -112,6 +133,7 @@ export function CustomerForm({ customer = null }: { customer?: Customer | null }
       }
     } catch (error) {
       console.error("Error submitting form:", error)
+      setError(error instanceof Error ? error.message : "Lỗi không xác định")
       toast({
         title: "Có lỗi xảy ra",
         description: "Không thể lưu thông tin khách hàng. Vui lòng thử lại sau.",
@@ -130,6 +152,17 @@ export function CustomerForm({ customer = null }: { customer?: Customer | null }
           {isEditing ? "Cập nhật thông tin chi tiết của khách hàng" : "Nhập thông tin chi tiết để tạo khách hàng mới"}
         </CardDescription>
       </CardHeader>
+
+      {error && (
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Lỗi</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </CardContent>
+      )}
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6">
@@ -373,6 +406,18 @@ export function CustomerForm({ customer = null }: { customer?: Customer | null }
               )}
             />
           </CardContent>
+
+          {debugInfo && (
+            <CardContent>
+              <details className="text-xs">
+                <summary className="cursor-pointer text-muted-foreground">Debug Info</summary>
+                <pre className="mt-2 w-full overflow-auto rounded-md bg-slate-950 p-4 text-xs text-white">
+                  {JSON.stringify(debugInfo, null, 2)}
+                </pre>
+              </details>
+            </CardContent>
+          )}
+
           <CardFooter className="flex justify-between">
             <Button type="button" variant="outline" onClick={() => router.back()}>
               Hủy
