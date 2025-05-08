@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, FileBarChart, Search, UserPlus } from "lucide-react"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
+import { getEmployees } from "@/lib/actions/employee-actions"
+import { format } from "date-fns"
 
 export const metadata: Metadata = {
   title: "Quản lý nhân viên | Kieu Gia Construction",
@@ -15,49 +17,106 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"
 
 export default async function EmployeesPage() {
-  // Dữ liệu mẫu nhân viên
-  const employees = [
-    {
-      id: "1",
-      name: "Nguyễn Văn A",
-      position: "Kỹ sư xây dựng",
-      department: "Kỹ thuật",
-      joinDate: "01/01/2022",
-      status: "Đang làm việc",
-    },
-    {
-      id: "2",
-      name: "Trần Thị B",
-      position: "Kế toán",
-      department: "Tài chính",
-      joinDate: "15/03/2022",
-      status: "Đang làm việc",
-    },
-    {
-      id: "3",
-      name: "Lê Văn C",
-      position: "Giám sát công trình",
-      department: "Thi công",
-      joinDate: "10/05/2022",
-      status: "Đang làm việc",
-    },
-    {
-      id: "4",
-      name: "Phạm Thị D",
-      position: "Nhân viên hành chính",
-      department: "Hành chính",
-      joinDate: "20/06/2022",
-      status: "Đang làm việc",
-    },
-    {
-      id: "5",
-      name: "Hoàng Văn E",
-      position: "Kiến trúc sư",
-      department: "Thiết kế",
-      joinDate: "05/08/2022",
-      status: "Đang làm việc",
-    },
-  ]
+  // Lấy danh sách nhân viên từ Supabase
+  const employees = await getEmployees()
+
+  // Phân loại nhân viên theo trạng thái
+  const activeEmployees = employees.filter((emp) => emp.status === "Đang làm việc")
+  const onLeaveEmployees = employees.filter((emp) => emp.status === "Nghỉ phép")
+  const terminatedEmployees = employees.filter((emp) => emp.status === "Đã nghỉ việc")
+
+  // Hàm render bảng nhân viên
+  const renderEmployeeTable = (employeeList: any[]) => (
+    <div className="rounded-md border">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b bg-muted/50 font-medium">
+            <th className="py-3 px-4 text-left">Mã NV</th>
+            <th className="py-3 px-4 text-left">Họ và tên</th>
+            <th className="py-3 px-4 text-left">Chức vụ</th>
+            <th className="py-3 px-4 text-left">Phòng ban</th>
+            <th className="py-3 px-4 text-left">Ngày vào làm</th>
+            <th className="py-3 px-4 text-left">Trạng thái</th>
+            <th className="py-3 px-4 text-left">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {employeeList.length > 0 ? (
+            employeeList.map((employee) => (
+              <tr key={employee.id} className="border-b">
+                <td className="py-3 px-4">{employee.id}</td>
+                <td className="py-3 px-4 font-medium">{employee.name}</td>
+                <td className="py-3 px-4">{employee.position}</td>
+                <td className="py-3 px-4">{employee.department}</td>
+                <td className="py-3 px-4">
+                  {employee.join_date ? format(new Date(employee.join_date), "dd/MM/yyyy") : "N/A"}
+                </td>
+                <td className="py-3 px-4">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${
+                      employee.status === "Đang làm việc"
+                        ? "bg-green-50 text-green-700 ring-green-600/20"
+                        : employee.status === "Nghỉ phép"
+                          ? "bg-yellow-50 text-yellow-700 ring-yellow-600/20"
+                          : "bg-red-50 text-red-700 ring-red-600/20"
+                    }`}
+                  >
+                    {employee.status}
+                  </span>
+                </td>
+                <td className="py-3 px-4">
+                  <div className="flex space-x-2">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                      <Link href={`/dashboard/hrm/employees/${employee.id}`}>
+                        <span className="sr-only">Xem chi tiết</span>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-4 w-4"
+                        >
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                      <Link href={`/dashboard/hrm/employees/${employee.id}/edit`}>
+                        <span className="sr-only">Chỉnh sửa</span>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-4 w-4"
+                        >
+                          <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                          <path d="m15 5 4 4" />
+                        </svg>
+                      </Link>
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={7} className="py-6 text-center text-muted-foreground">
+                Không có nhân viên nào
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  )
 
   return (
     <MainLayout>
@@ -78,9 +137,11 @@ export default async function EmployeesPage() {
               <FileBarChart className="mr-2 h-4 w-4" />
               Xuất báo cáo
             </Button>
-            <Button size="sm" className="h-9">
-              <UserPlus className="mr-2 h-4 w-4" />
-              Thêm nhân viên
+            <Button size="sm" className="h-9" asChild>
+              <Link href="/dashboard/hrm/employees/new">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Thêm nhân viên
+              </Link>
             </Button>
           </div>
         </div>
@@ -88,10 +149,10 @@ export default async function EmployeesPage() {
         <Tabs defaultValue="all" className="space-y-4">
           <div className="flex items-center justify-between">
             <TabsList>
-              <TabsTrigger value="all">Tất cả nhân viên</TabsTrigger>
-              <TabsTrigger value="active">Đang làm việc</TabsTrigger>
-              <TabsTrigger value="onleave">Nghỉ phép</TabsTrigger>
-              <TabsTrigger value="terminated">Đã nghỉ việc</TabsTrigger>
+              <TabsTrigger value="all">Tất cả nhân viên ({employees.length})</TabsTrigger>
+              <TabsTrigger value="active">Đang làm việc ({activeEmployees.length})</TabsTrigger>
+              <TabsTrigger value="onleave">Nghỉ phép ({onLeaveEmployees.length})</TabsTrigger>
+              <TabsTrigger value="terminated">Đã nghỉ việc ({terminatedEmployees.length})</TabsTrigger>
             </TabsList>
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -105,77 +166,7 @@ export default async function EmployeesPage() {
                 <CardTitle>Danh sách nhân viên</CardTitle>
                 <CardDescription>Quản lý thông tin của tất cả nhân viên trong công ty</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="rounded-md border">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-muted/50 font-medium">
-                        <th className="py-3 px-4 text-left">Mã NV</th>
-                        <th className="py-3 px-4 text-left">Họ và tên</th>
-                        <th className="py-3 px-4 text-left">Chức vụ</th>
-                        <th className="py-3 px-4 text-left">Phòng ban</th>
-                        <th className="py-3 px-4 text-left">Ngày vào làm</th>
-                        <th className="py-3 px-4 text-left">Trạng thái</th>
-                        <th className="py-3 px-4 text-left">Thao tác</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {employees.map((employee) => (
-                        <tr key={employee.id} className="border-b">
-                          <td className="py-3 px-4">{employee.id}</td>
-                          <td className="py-3 px-4 font-medium">{employee.name}</td>
-                          <td className="py-3 px-4">{employee.position}</td>
-                          <td className="py-3 px-4">{employee.department}</td>
-                          <td className="py-3 px-4">{employee.joinDate}</td>
-                          <td className="py-3 px-4">
-                            <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-                              {employee.status}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="flex space-x-2">
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <Link href={`/dashboard/hrm/employees/${employee.id}`}>
-                                  <span className="sr-only">Xem chi tiết</span>
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="h-4 w-4"
-                                  >
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                  </svg>
-                                </Link>
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <span className="sr-only">Chỉnh sửa</span>
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  className="h-4 w-4"
-                                >
-                                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                                  <path d="m15 5 4 4" />
-                                </svg>
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
+              <CardContent>{renderEmployeeTable(employees)}</CardContent>
             </Card>
           </TabsContent>
 
@@ -186,9 +177,11 @@ export default async function EmployeesPage() {
                 <CardDescription>Danh sách nhân viên đang làm việc tại công ty</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Hiện có {employees.length} nhân viên đang làm việc tại công ty.
-                </p>
+                {activeEmployees.length > 0 ? (
+                  renderEmployeeTable(activeEmployees)
+                ) : (
+                  <p className="text-sm text-muted-foreground">Không có nhân viên nào đang làm việc.</p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -200,7 +193,11 @@ export default async function EmployeesPage() {
                 <CardDescription>Danh sách nhân viên đang trong thời gian nghỉ phép</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">Hiện không có nhân viên nào đang nghỉ phép.</p>
+                {onLeaveEmployees.length > 0 ? (
+                  renderEmployeeTable(onLeaveEmployees)
+                ) : (
+                  <p className="text-sm text-muted-foreground">Không có nhân viên nào đang nghỉ phép.</p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -212,7 +209,11 @@ export default async function EmployeesPage() {
                 <CardDescription>Danh sách nhân viên đã nghỉ việc tại công ty</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">Hiện không có nhân viên nào đã nghỉ việc.</p>
+                {terminatedEmployees.length > 0 ? (
+                  renderEmployeeTable(terminatedEmployees)
+                ) : (
+                  <p className="text-sm text-muted-foreground">Không có nhân viên nào đã nghỉ việc.</p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
