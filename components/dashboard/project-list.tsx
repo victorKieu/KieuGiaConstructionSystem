@@ -143,7 +143,7 @@ export function ProjectList({ projects }: ProjectListProps) {
 
   // Hàm lấy tên trạng thái dự án
   const getStatusName = (status: string) => {
-    const statusMap = {
+    const statusMap: Record<string, string> = {
       planning: "Kế hoạch",
       in_progress: "Đang thực hiện",
       on_hold: "Tạm dừng",
@@ -155,7 +155,7 @@ export function ProjectList({ projects }: ProjectListProps) {
 
   // Hàm lấy màu trạng thái dự án
   const getStatusColor = (status: string) => {
-    const statusColorMap = {
+    const statusColorMap: Record<string, string> = {
       planning: "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20",
       in_progress: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
       on_hold: "bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-600/20",
@@ -167,7 +167,7 @@ export function ProjectList({ projects }: ProjectListProps) {
 
   // Hàm lấy tên loại công trình
   const getConstructionTypeName = (type: string) => {
-    const typeMap = {
+    const typeMap: Record<string, string> = {
       residential: "Nhà ở",
       commercial: "Thương mại",
       industrial: "Công nghiệp",

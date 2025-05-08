@@ -5,19 +5,15 @@ import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { format } from "date-fns"
-import { CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Calendar } from "@/components/ui/calendar"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "@/components/ui/use-toast"
 import { getProjectById, updateProject, getCustomers } from "@/lib/actions/project-actions"
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker"
 
 // Schema cho form chỉnh sửa dự án
 const formSchema = z.object({
@@ -131,7 +127,7 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
             title: "Lỗi",
             description: "Không thể lấy thông tin dự án. Vui lòng thử lại sau.",
           })
-          router.push("/dashboard")
+          router.push("/dashboard/projectlist")
         }
 
         if (customersResult.success) {
@@ -150,7 +146,7 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
           title: "Lỗi",
           description: "Đã xảy ra lỗi khi lấy dữ liệu. Vui lòng thử lại sau.",
         })
-        router.push("/dashboard")
+        router.push("/dashboard/projectlist")
       } finally {
         setIsLoadingData(false)
       }
@@ -179,7 +175,7 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
           title: "Thành công",
           description: "Dự án đã được cập nhật thành công",
         })
-        router.push("/dashboard")
+        router.push("/dashboard/projectlist")
       } else {
         toast({
           variant: "destructive",
@@ -317,25 +313,13 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Ngày bắt đầu</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground",
-                              )}
-                            >
-                              {field.value ? format(field.value, "dd/MM/yyyy") : <span>Chọn ngày</span>}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                        </PopoverContent>
-                      </Popover>
+                      <FormControl>
+                        <EnhancedDatePicker
+                          date={field.value}
+                          setDate={field.onChange}
+                          placeholder="Chọn ngày bắt đầu"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -347,25 +331,13 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Ngày kết thúc</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground",
-                              )}
-                            >
-                              {field.value ? format(field.value, "dd/MM/yyyy") : <span>Chọn ngày</span>}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                        </PopoverContent>
-                      </Popover>
+                      <FormControl>
+                        <EnhancedDatePicker
+                          date={field.value}
+                          setDate={field.onChange}
+                          placeholder="Chọn ngày kết thúc"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -607,7 +579,12 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
           </Card>
 
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" onClick={() => router.push("/dashboard")} disabled={isLoading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/dashboard/projectlist")}
+              disabled={isLoading}
+            >
               Hủy
             </Button>
             <Button type="submit" disabled={isLoading}>
