@@ -1,25 +1,21 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import { createClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/supabase"
 
 export function createServerSupabaseClient() {
-  const cookieStore = cookies()
-
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     console.error("Missing Supabase credentials in server context")
     throw new Error("Missing Supabase credentials")
   }
 
-  return createServerClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
-    cookies: {
-      get(name) {
-        return cookieStore.get(name)?.value
-      },
-      set(name, value, options) {
-        cookieStore.set({ name, value, ...options })
-      },
-      remove(name, options) {
-        cookieStore.set({ name, value: "", ...options })
+  // Create a Supabase client with the service role key for server-side operations
+  return createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    global: {
+      headers: {
+        "x-client-info": "server",
       },
     },
   })
