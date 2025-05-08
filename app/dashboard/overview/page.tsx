@@ -1,250 +1,249 @@
-import { Suspense } from "react"
-import Link from "next/link"
-import { ArrowRight, Building, Package, Users, Clock, TrendingUp, Briefcase, DollarSign } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { ProjectProgress } from "@/components/dashboard/project-progress"
-import { InventoryList } from "@/components/dashboard/inventory-list"
-import { RecentActivities } from "@/components/dashboard/recent-activities"
-import { getProjects } from "@/lib/actions/project-actions"
-import { getMaterials } from "@/lib/actions/inventory-actions"
-import { getCustomers } from "@/lib/actions/customer-actions"
+import type { Metadata } from "next"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PerformanceChart } from "@/components/dashboard/performance-chart"
-import { ProjectStatusChart } from "@/components/dashboard/project-status-chart"
+import { ProjectProgress } from "@/components/dashboard/project-progress"
+import { RecentActivities } from "@/components/dashboard/recent-activities"
+import { InventoryList } from "@/components/dashboard/inventory-list"
 
-export const dynamic = "force-dynamic"
-
-export const metadata = {
+export const metadata: Metadata = {
   title: "Tổng quan | Kieu Gia Construction",
-  description: "Tổng quan về hoạt động và hiệu suất của công ty",
+  description: "Tổng quan về hiệu suất hoạt động của công ty",
 }
 
-export default async function OverviewPage() {
-  // Lấy dữ liệu từ cơ sở dữ liệu
-  const [projectsResult, materialsResult, customersResult] = await Promise.all([
-    getProjects(),
-    getMaterials(),
-    getCustomers(),
-  ])
-
-  const projects = projectsResult.success ? projectsResult.data : []
-  const materials = materialsResult.success ? materialsResult.data : []
-  const customers = customersResult.success ? customersResult.data : []
-
-  // Tính toán số liệu tổng quan
-  const totalProjects = projects.length
-  const activeProjects = projects.filter((p) => p.status === "in_progress").length
-  const completedProjects = projects.filter((p) => p.status === "completed").length
-  const totalMaterials = materials.length
-  const totalCustomers = customers.length
-  const lowStockMaterials = materials.filter((m) => (m.totalStock || 0) < (m.minStock || 0)).length
-
+export default function OverviewPage() {
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tổng quan</h1>
-          <p className="text-muted-foreground">Tổng quan về hoạt động và hiệu suất của công ty</p>
-        </div>
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">Tổng quan</h2>
       </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng số dự án</CardTitle>
-            <Building className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalProjects}</div>
-            <p className="text-xs text-muted-foreground">
-              {activeProjects} đang thực hiện, {completedProjects} đã hoàn thành
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="ghost" size="sm" asChild className="w-full">
-              <Link href="/dashboard">
-                Xem chi tiết
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vật tư tồn kho</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalMaterials}</div>
-            <p className="text-xs text-muted-foreground">{lowStockMaterials} vật tư sắp hết hàng</p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="ghost" size="sm" asChild className="w-full">
-              <Link href="/dashboard/inventory/materials">
-                Xem chi tiết
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Khách hàng</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalCustomers}</div>
-            <p className="text-xs text-muted-foreground">Tổng số khách hàng đã đăng ký</p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="ghost" size="sm" asChild className="w-full">
-              <Link href="/dashboard/customers">
-                Xem chi tiết
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Hoạt động gần đây</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-xs text-muted-foreground">Hoạt động trong 24 giờ qua</p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="ghost" size="sm" asChild className="w-full">
-              <Link href="/dashboard/activities">
-                Xem chi tiết
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 mt-4">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Hiệu suất công ty</CardTitle>
-            <CardDescription>Biểu đồ hiệu suất hoạt động theo thời gian</CardDescription>
-          </CardHeader>
-          <CardContent className="h-80">
-            <Suspense fallback={<div>Đang tải...</div>}>
-              <PerformanceChart />
-            </Suspense>
-          </CardContent>
-        </Card>
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Trạng thái dự án</CardTitle>
-            <CardDescription>Phân bố dự án theo trạng thái</CardDescription>
-          </CardHeader>
-          <CardContent className="h-80">
-            <Suspense fallback={<div>Đang tải...</div>}>
-              <ProjectStatusChart projects={projects} />
-            </Suspense>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Doanh thu</CardTitle>
-            <CardDescription>Tổng quan doanh thu theo quý</CardDescription>
-          </CardHeader>
-          <CardContent className="h-40 flex items-center justify-center">
-            <div className="flex flex-col items-center">
-              <DollarSign className="h-10 w-10 text-green-500 mb-2" />
-              <div className="text-2xl font-bold">15.2 tỷ</div>
-              <div className="text-sm text-green-500 flex items-center">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                +12.5% so với quý trước
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Chi phí</CardTitle>
-            <CardDescription>Tổng chi phí hoạt động</CardDescription>
-          </CardHeader>
-          <CardContent className="h-40 flex items-center justify-center">
-            <div className="flex flex-col items-center">
-              <Briefcase className="h-10 w-10 text-orange-500 mb-2" />
-              <div className="text-2xl font-bold">8.7 tỷ</div>
-              <div className="text-sm text-red-500 flex items-center">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                +5.2% so với quý trước
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Lợi nhuận</CardTitle>
-            <CardDescription>Lợi nhuận ròng</CardDescription>
-          </CardHeader>
-          <CardContent className="h-40 flex items-center justify-center">
-            <div className="flex flex-col items-center">
-              <DollarSign className="h-10 w-10 text-blue-500 mb-2" />
-              <div className="text-2xl font-bold">6.5 tỷ</div>
-              <div className="text-sm text-green-500 flex items-center">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                +8.3% so với quý trước
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 mt-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Tiến độ dự án</CardTitle>
-            <CardDescription>Theo dõi tiến độ các dự án đang thực hiện</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Suspense fallback={<div>Đang tải...</div>}>
-              <ProjectProgress projects={projects.filter((p) => p.status === "in_progress")} />
-            </Suspense>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Vật tư sắp hết hàng</CardTitle>
-            <CardDescription>Danh sách vật tư cần nhập thêm</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Suspense fallback={<div>Đang tải...</div>}>
-              <InventoryList materials={materials.filter((m) => (m.totalStock || 0) < (m.minStock || 0))} />
-            </Suspense>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" asChild className="w-full">
-              <Link href="/dashboard/inventory/materials">Xem tất cả vật tư</Link>
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-
-      <div className="mt-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Hoạt động gần đây</CardTitle>
-            <CardDescription>Các hoạt động mới nhất trong hệ thống</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Suspense fallback={<div>Đang tải...</div>}>
-              <RecentActivities />
-            </Suspense>
-          </CardContent>
-        </Card>
-      </div>
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+          <TabsTrigger value="analytics">Phân tích</TabsTrigger>
+          <TabsTrigger value="reports">Báo cáo</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Tổng dự án</CardTitle>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  className="h-4 w-4 text-muted-foreground"
+                >
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">24</div>
+                <p className="text-xs text-muted-foreground">+2 so với tháng trước</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Doanh thu (tỷ)</CardTitle>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  className="h-4 w-4 text-muted-foreground"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">30.2</div>
+                <p className="text-xs text-muted-foreground">+12% so với tháng trước</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Chi phí (tỷ)</CardTitle>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  className="h-4 w-4 text-muted-foreground"
+                >
+                  <rect width="20" height="14" x="2" y="5" rx="2" />
+                  <path d="M2 10h20" />
+                </svg>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">21.5</div>
+                <p className="text-xs text-muted-foreground">+7% so với tháng trước</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Lợi nhuận (tỷ)</CardTitle>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  className="h-4 w-4 text-muted-foreground"
+                >
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                </svg>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">8.7</div>
+                <p className="text-xs text-muted-foreground">+18% so với tháng trước</p>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <Card className="col-span-4">
+              <CardHeader>
+                <CardTitle>Hiệu suất công ty</CardTitle>
+              </CardHeader>
+              <CardContent className="pl-2">
+                <PerformanceChart />
+              </CardContent>
+            </Card>
+            <Card className="col-span-3">
+              <CardHeader>
+                <CardTitle>Trạng thái dự án</CardTitle>
+                <CardDescription>Phân bố dự án theo trạng thái</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-8">
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <div className="w-full flex items-center gap-2">
+                        <div className="font-medium">Đang thực hiện</div>
+                        <div className="ml-auto">12 dự án</div>
+                        <div className="w-16 text-right text-sm">50%</div>
+                      </div>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted">
+                      <div className="h-full w-1/2 rounded-full bg-primary"></div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <div className="w-full flex items-center gap-2">
+                        <div className="font-medium">Hoàn thành</div>
+                        <div className="ml-auto">8 dự án</div>
+                        <div className="w-16 text-right text-sm">33.3%</div>
+                      </div>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted">
+                      <div className="h-full w-1/3 rounded-full bg-green-500"></div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <div className="w-full flex items-center gap-2">
+                        <div className="font-medium">Tạm dừng</div>
+                        <div className="ml-auto">3 dự án</div>
+                        <div className="w-16 text-right text-sm">12.5%</div>
+                      </div>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted">
+                      <div className="h-full w-[12.5%] rounded-full bg-yellow-500"></div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <div className="w-full flex items-center gap-2">
+                        <div className="font-medium">Hủy bỏ</div>
+                        <div className="ml-auto">1 dự án</div>
+                        <div className="w-16 text-right text-sm">4.2%</div>
+                      </div>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted">
+                      <div className="h-full w-[4.2%] rounded-full bg-red-500"></div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <Card className="col-span-4">
+              <CardHeader>
+                <CardTitle>Tiến độ dự án</CardTitle>
+                <CardDescription>Các dự án đang thực hiện</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProjectProgress />
+              </CardContent>
+            </Card>
+            <Card className="col-span-3">
+              <CardHeader>
+                <CardTitle>Vật tư sắp hết hàng</CardTitle>
+                <CardDescription>Danh sách vật tư cần nhập thêm</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <InventoryList />
+              </CardContent>
+            </Card>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
+            <Card className="col-span-1">
+              <CardHeader>
+                <CardTitle>Hoạt động gần đây</CardTitle>
+                <CardDescription>Các hoạt động trong 7 ngày qua</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RecentActivities />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
+            <Card>
+              <CardHeader>
+                <CardTitle>Phân tích chi tiết</CardTitle>
+                <CardDescription>Đang phát triển...</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[200px] flex items-center justify-center border rounded-md">
+                  <p className="text-muted-foreground">Tính năng đang được phát triển</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        <TabsContent value="reports" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
+            <Card>
+              <CardHeader>
+                <CardTitle>Báo cáo</CardTitle>
+                <CardDescription>Đang phát triển...</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[200px] flex items-center justify-center border rounded-md">
+                  <p className="text-muted-foreground">Tính năng đang được phát triển</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

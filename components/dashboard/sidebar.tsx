@@ -36,6 +36,7 @@ import {
   AlertTriangle,
   PieChartIcon as ChartPie,
   X,
+  LayoutDashboard,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
@@ -67,6 +68,12 @@ export function DashboardSidebar() {
   }
 
   const navItems = [
+    {
+      icon: LayoutDashboard,
+      label: "Tổng quan",
+      href: "/dashboard/overview",
+      active: pathname === "/dashboard/overview",
+    },
     {
       icon: Home,
       label: "Tổng quan",
