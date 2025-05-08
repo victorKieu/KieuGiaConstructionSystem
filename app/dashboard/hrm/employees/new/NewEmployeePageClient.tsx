@@ -2,36 +2,30 @@
 
 import { EmployeeForm } from "@/components/dashboard/employee-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { createEmployee } from "@/lib/actions/employee-actions"
+import { createEmployeeAction } from "@/lib/actions/create-employee-action"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { useRouter } from "next/navigation"
 
 export default function NewEmployeePageClient() {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const router = useRouter()
 
   const handleSubmit = async (formData: FormData) => {
     try {
       setError(null)
       setIsSubmitting(true)
 
-      console.log("📝 Đang tạo nhân viên mới")
+      console.log("📝 Đang gọi server action để tạo nhân viên mới")
+      await createEmployeeAction(formData)
 
-      const result = await createEmployee(formData)
-      console.log("✅ Tạo nhân viên thành công:", result)
-
-      // Chuyển hướng về trang danh sách nhân viên
-      router.push("/dashboard/hrm/employees")
-      router.refresh()
+      // Nếu không có lỗi và không redirect, hiển thị thông báo thành công
+      console.log("✅ Tạo nhân viên thành công")
     } catch (err) {
       console.error("❌ Lỗi khi tạo nhân viên mới:", err)
       setError(err instanceof Error ? err.message : "Có lỗi xảy ra khi tạo nhân viên mới")
-    } finally {
       setIsSubmitting(false)
     }
   }

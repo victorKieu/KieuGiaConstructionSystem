@@ -2,13 +2,13 @@
 
 import { EmployeeForm } from "@/components/dashboard/employee-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { type Employee, updateEmployee } from "@/lib/actions/employee-actions"
+import type { Employee } from "@/lib/actions/employee-actions"
+import { updateEmployeeAction } from "@/lib/actions/update-employee-action"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { useRouter } from "next/navigation"
 
 interface EditEmployeeClientPageProps {
   employee: Employee
@@ -17,27 +17,23 @@ interface EditEmployeeClientPageProps {
 export default function EditEmployeeClientPage({ employee }: EditEmployeeClientPageProps) {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const router = useRouter()
 
   const handleSubmit = async (formData: FormData) => {
     try {
       setError(null)
       setIsSubmitting(true)
 
-      console.log("📝 Đang cập nhật thông tin nhân viên:", employee.id)
+      console.log("📝 Đang gọi server action để cập nhật thông tin nhân viên:", employee.id)
 
       if (!employee.id) throw new Error("ID nhân viên không hợp lệ")
 
-      await updateEmployee(employee.id, formData)
-      console.log("✅ Cập nhật thành công")
+      await updateEmployeeAction(employee.id, formData)
 
-      // Chuyển hướng về trang chi tiết nhân viên
-      router.push(`/dashboard/hrm/employees/${employee.id}`)
-      router.refresh()
+      // Nếu không có lỗi và không redirect, hiển thị thông báo thành công
+      console.log("✅ Cập nhật thành công")
     } catch (err) {
       console.error("❌ Lỗi khi cập nhật nhân viên:", err)
       setError(err instanceof Error ? err.message : "Có lỗi xảy ra khi cập nhật thông tin nhân viên")
-    } finally {
       setIsSubmitting(false)
     }
   }
