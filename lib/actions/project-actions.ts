@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache"
 // Lấy danh sách dự án
 export async function getProjects() {
   try {
+    console.log("Fetching projects from Supabase...")
+
     const { data, error } = await supabase
       .from("projects")
       .select(`
@@ -37,6 +39,7 @@ export async function getProjects() {
       return { success: false, error: error.message, data: [] }
     }
 
+    console.log(`Successfully fetched ${data.length} projects`)
     return { success: true, data }
   } catch (error) {
     console.error("Error in getProjects:", error)

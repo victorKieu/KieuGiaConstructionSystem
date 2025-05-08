@@ -6,36 +6,34 @@ import { getProjects, getProjectStatusStats, getProjectTypeStats } from "@/lib/a
 import { ProjectList } from "@/components/dashboard/project-list"
 import { ProjectListSkeleton } from "@/components/dashboard/project-skeleton"
 import { ProjectStatusChart } from "@/components/dashboard/project-status-chart"
-import { isSupabaseReady } from "@/lib/supabase/client"
 
 export const metadata = {
   title: "Quản lý dự án",
   description: "Quản lý thông tin dự án xây dựng",
 }
 
-export default async function ProjectsPage() {
-  // Kiểm tra xem Supabase có sẵn sàng không
-  if (typeof window === "undefined" && !isSupabaseReady()) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-          <p className="font-bold">Cảnh báo</p>
-          <p>Không thể kết nối đến Supabase. Vui lòng kiểm tra biến môi trường.</p>
-        </div>
-      </div>
-    )
-  }
+// Đảm bảo trang luôn được render động
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
-  // Lấy danh sách dự án và thống kê từ cơ sở dữ liệu
-  const [projectsResult, statusStatsResult, typeStatsResult] = await Promise.all([
-    getProjects(),
-    getProjectStatusStats(),
-    getProjectTypeStats(),
-  ])
+export default async function ProjectsPage() {
+  // Lấy danh sách dự án từ Supabase
+  const projectsResult = await getProjects()
+  console.log("Projects result:", projectsResult)
 
   const projects = projectsResult.success ? projectsResult.data : []
-  const statusStats = statusStatsResult.success ? statusStatsResult.data : []
-  const typeStats = typeStatsResult.success ? typeStatsResult.data : []
+
+  // Lấy thống kê chỉ khi có dự án
+  let statusStats = []
+  let typeStats = []
+
+  if (projects.length > 0) {
+    const statusStatsResult = await getProjectStatusStats()
+    const typeStatsResult = await getProjectTypeStats()
+
+    statusStats = statusStatsResult.success ? statusStatsResult.data : []
+    typeStats = typeStatsResult.success ? typeStatsResult.data : []
+  }
 
   return (
     <div>
@@ -51,10 +49,12 @@ export default async function ProjectsPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <ProjectStatusChart data={statusStats} title="Trạng thái dự án" />
-        <ProjectStatusChart data={typeStats} title="Loại dự án" />
-      </div>
+      {projects.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <ProjectStatusChart data={statusStats} title="Trạng thái dự án" />
+          <ProjectStatusChart data={typeStats} title="Loại dự án" />
+        </div>
+      )}
 
       <Suspense fallback={<ProjectListSkeleton />}>
         <ProjectList projects={projects} />
