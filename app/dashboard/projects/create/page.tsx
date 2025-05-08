@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -28,7 +28,6 @@ const formSchema = z.object({
   location: z.string().min(2, {
     message: "Địa điểm dự án phải có ít nhất 2 ký tự",
   }),
-  geoCode: z.string().optional(),
   start_date: z.date({
     required_error: "Vui lòng chọn ngày bắt đầu",
   }),
@@ -64,12 +63,11 @@ export default function CreateProjectPage() {
       name: "",
       description: "",
       location: "",
-      geoCode: "",
       start_date: new Date(),
       end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)),
       budget: "",
-      project_type: "",
-      construction_type: "xay-moi",
+      project_type: "residential",
+      construction_type: "townhouse",
       project_manager: "",
       complexity: "medium",
       priority: "normal",
@@ -81,7 +79,7 @@ export default function CreateProjectPage() {
   })
 
   // Lấy danh sách khách hàng khi component được mount
-  useState(() => {
+  useEffect(() => {
     const fetchCustomers = async () => {
       const result = await getCustomers()
       if (result.success) {
@@ -109,6 +107,8 @@ export default function CreateProjectPage() {
       const projectData = {
         ...values,
         budget: budgetValue,
+        status: "planning",
+        progress: 0,
       }
 
       const result = await createProject(projectData)
@@ -118,7 +118,7 @@ export default function CreateProjectPage() {
           title: "Thành công",
           description: "Dự án đã được tạo thành công",
         })
-        router.push("/dashboard/projects")
+        router.push("/dashboard")
       } else {
         toast({
           variant: "destructive",
@@ -210,11 +210,11 @@ export default function CreateProjectPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="xay-moi">Xây mới</SelectItem>
-                          <SelectItem value="sua-chua">Sửa chữa</SelectItem>
-                          <SelectItem value="thiet-ke">Thiết kế</SelectItem>
-                          <SelectItem value="giam-sat">Giám sát</SelectItem>
-                          <SelectItem value="khac">Khác</SelectItem>
+                          <SelectItem value="townhouse">Nhà phố</SelectItem>
+                          <SelectItem value="residential">Nhà ở</SelectItem>
+                          <SelectItem value="commercial">Thương mại</SelectItem>
+                          <SelectItem value="industrial">Công nghiệp</SelectItem>
+                          <SelectItem value="infrastructure">Hạ tầng</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>Mã dự án sẽ được tạo tự động dựa trên hạng mục</FormDescription>
@@ -240,7 +240,6 @@ export default function CreateProjectPage() {
                           <SelectItem value="commercial">Thương mại</SelectItem>
                           <SelectItem value="industrial">Công nghiệp</SelectItem>
                           <SelectItem value="infrastructure">Hạ tầng</SelectItem>
-                          <SelectItem value="other">Khác</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -328,34 +327,19 @@ export default function CreateProjectPage() {
 
                 <FormField
                   control={form.control}
-                  name="geoCode"
+                  name="budget"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mã GEO</FormLabel>
+                      <FormLabel>Ngân sách</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nhập mã GEO" {...field} />
+                        <Input placeholder="Nhập ngân sách dự án" {...field} />
                       </FormControl>
-                      <FormDescription>Mã tọa độ địa lý của dự án</FormDescription>
+                      <FormDescription>Ngân sách dự kiến cho dự án (VNĐ)</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-
-              <FormField
-                control={form.control}
-                name="budget"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ngân sách</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nhập ngân sách dự án" {...field} />
-                    </FormControl>
-                    <FormDescription>Ngân sách dự kiến cho dự án (VNĐ)</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}
@@ -520,12 +504,7 @@ export default function CreateProjectPage() {
           </Card>
 
           <div className="flex justify-end gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push("/dashboard/projects")}
-              disabled={isLoading}
-            >
+            <Button type="button" variant="outline" onClick={() => router.push("/dashboard")} disabled={isLoading}>
               Hủy
             </Button>
             <Button type="submit" disabled={isLoading}>

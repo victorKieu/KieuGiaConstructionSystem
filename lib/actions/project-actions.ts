@@ -92,28 +92,19 @@ export async function getProjectById(id: string) {
 // Cập nhật dự án
 export async function updateProject(id: string, projectData: any) {
   try {
-    const { error } = await supabase
-      .from("projects")
-      .update({
-        name: projectData.name,
-        code: projectData.code,
-        description: projectData.description,
-        location: projectData.location,
-        start_date: projectData.start_date,
-        end_date: projectData.end_date,
-        budget: projectData.budget,
-        status: projectData.status,
-        progress: projectData.progress,
-        project_type: projectData.project_type,
-        construction_type: projectData.construction_type,
-        project_manager: projectData.project_manager,
-        complexity: projectData.complexity,
-        priority: projectData.priority,
-        risk_level: projectData.risk_level,
-        customer_id: projectData.customer_id,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
+    console.log("Updating project with ID:", id)
+    console.log("Project data:", projectData)
+
+    // Chuyển đổi ngày từ Date object sang ISO string nếu cần
+    const formattedData = {
+      ...projectData,
+      start_date:
+        projectData.start_date instanceof Date ? projectData.start_date.toISOString() : projectData.start_date,
+      end_date: projectData.end_date instanceof Date ? projectData.end_date.toISOString() : projectData.end_date,
+      updated_at: new Date().toISOString(),
+    }
+
+    const { error } = await supabase.from("projects").update(formattedData).eq("id", id)
 
     if (error) {
       console.error("Error updating project:", error)
@@ -122,7 +113,8 @@ export async function updateProject(id: string, projectData: any) {
 
     // Revalidate the projects pages
     revalidatePath(`/dashboard/projects/${id}`)
-    revalidatePath("/dashboard/projects")
+    revalidatePath("/dashboard")
+    revalidatePath("/dashboard/overview")
 
     return { success: true }
   } catch (error) {
@@ -134,32 +126,37 @@ export async function updateProject(id: string, projectData: any) {
 // Tạo dự án mới
 export async function createProject(projectData: any) {
   try {
+    console.log("Creating new project with data:", projectData)
+
     // Tạo mã dự án tự động dựa trên loại dự án
     const currentYear = new Date().getFullYear().toString().slice(-2)
-    let prefix = "KG"
+    let prefix = "PRJ"
 
     switch (projectData.construction_type) {
       case "residential":
-        prefix = "KGR"
+        prefix = "RES"
         break
       case "commercial":
-        prefix = "KGC"
+        prefix = "COM"
         break
       case "industrial":
-        prefix = "KGI"
+        prefix = "IND"
         break
       case "infrastructure":
-        prefix = "KGF"
+        prefix = "INF"
+        break
+      case "townhouse":
+        prefix = "TWN"
         break
       default:
-        prefix = "KGO"
+        prefix = "PRJ"
     }
 
     // Lấy số dự án hiện tại để tạo mã mới
     const { data: existingProjects, error: countError } = await supabase
       .from("projects")
       .select("code")
-      .ilike("code", `${prefix}${currentYear}%`)
+      .ilike("code", `${prefix}%`)
 
     if (countError) {
       console.error("Error counting projects:", countError)
@@ -169,33 +166,32 @@ export async function createProject(projectData: any) {
     const projectCount = existingProjects ? existingProjects.length + 1 : 1
     const sequenceNumber = projectCount.toString().padStart(3, "0")
 
-    const projectCode = `${prefix}${currentYear}${sequenceNumber}`
+    const projectCode = `${prefix}${sequenceNumber}`
 
-    const { data, error } = await supabase
-      .from("projects")
-      .insert([
-        {
-          name: projectData.name,
-          code: projectCode,
-          description: projectData.description,
-          location: projectData.location,
-          start_date: projectData.start_date,
-          end_date: projectData.end_date,
-          budget: projectData.budget,
-          status: "planning", // Trạng thái mặc định khi tạo dự án mới
-          progress: 0, // Tiến độ mặc định khi tạo dự án mới
-          project_type: projectData.project_type,
-          construction_type: projectData.construction_type,
-          project_manager: projectData.project_manager,
-          complexity: projectData.complexity,
-          priority: projectData.priority,
-          risk_level: projectData.risk_level,
-          customer_id: projectData.customer_id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ])
-      .select()
+    // Chuyển đổi ngày từ Date object sang ISO string
+    const formattedData = {
+      name: projectData.name,
+      code: projectCode,
+      description: projectData.description || null,
+      location: projectData.location || null,
+      start_date:
+        projectData.start_date instanceof Date ? projectData.start_date.toISOString() : projectData.start_date,
+      end_date: projectData.end_date instanceof Date ? projectData.end_date.toISOString() : projectData.end_date,
+      budget: projectData.budget || 0,
+      status: projectData.status || "planning",
+      progress: projectData.progress || 0,
+      project_type: projectData.project_type || null,
+      construction_type: projectData.construction_type || null,
+      project_manager: projectData.project_manager || null,
+      complexity: projectData.complexity || "medium",
+      priority: projectData.priority || "normal",
+      risk_level: projectData.risk_level || "low",
+      customer_id: projectData.customer_id || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
+    const { data, error } = await supabase.from("projects").insert([formattedData]).select()
 
     if (error) {
       console.error("Error creating project:", error)
@@ -203,7 +199,8 @@ export async function createProject(projectData: any) {
     }
 
     // Revalidate the projects page
-    revalidatePath("/dashboard/projects")
+    revalidatePath("/dashboard")
+    revalidatePath("/dashboard/overview")
 
     return { success: true, data: data[0] }
   } catch (error) {
@@ -215,6 +212,8 @@ export async function createProject(projectData: any) {
 // Xóa dự án
 export async function deleteProject(id: string) {
   try {
+    console.log("Deleting project with ID:", id)
+
     const { error } = await supabase.from("projects").delete().eq("id", id)
 
     if (error) {
@@ -223,7 +222,8 @@ export async function deleteProject(id: string) {
     }
 
     // Revalidate the projects page
-    revalidatePath("/dashboard/projects")
+    revalidatePath("/dashboard")
+    revalidatePath("/dashboard/overview")
 
     return { success: true }
   } catch (error) {
@@ -252,12 +252,19 @@ export async function getCustomers() {
 // Lấy thống kê trạng thái dự án
 export async function getProjectStatusStats() {
   try {
-    const { data, error } = await supabase.from("projects").select("status, count").order("status").group("status")
+    const { data, error } = await supabase.from("projects").select("status")
 
     if (error) {
       console.error("Error fetching project status stats:", error)
       return { success: false, error: error.message, data: [] }
     }
+
+    // Đếm số lượng dự án theo trạng thái
+    const statusCounts = data.reduce((acc, project) => {
+      const status = project.status || "unknown"
+      acc[status] = (acc[status] || 0) + 1
+      return acc
+    }, {})
 
     // Chuyển đổi dữ liệu thành định dạng phù hợp
     const statusMap = {
@@ -276,10 +283,10 @@ export async function getProjectStatusStats() {
       cancelled: "#e74c3c",
     }
 
-    const formattedData = data.map((item) => ({
-      status: statusMap[item.status] || item.status,
-      count: item.count,
-      color: statusColors[item.status] || "#95a5a6",
+    const formattedData = Object.entries(statusCounts).map(([status, count]) => ({
+      status: statusMap[status] || status,
+      count,
+      color: statusColors[status] || "#95a5a6",
     }))
 
     return { success: true, data: formattedData }
@@ -292,16 +299,19 @@ export async function getProjectStatusStats() {
 // Lấy thống kê loại dự án
 export async function getProjectTypeStats() {
   try {
-    const { data, error } = await supabase
-      .from("projects")
-      .select("project_type, count")
-      .order("project_type")
-      .group("project_type")
+    const { data, error } = await supabase.from("projects").select("project_type")
 
     if (error) {
       console.error("Error fetching project type stats:", error)
       return { success: false, error: error.message, data: [] }
     }
+
+    // Đếm số lượng dự án theo loại
+    const typeCounts = data.reduce((acc, project) => {
+      const type = project.project_type || "unknown"
+      acc[type] = (acc[type] || 0) + 1
+      return acc
+    }, {})
 
     // Chuyển đổi dữ liệu thành định dạng phù hợp
     const typeMap = {
@@ -318,10 +328,10 @@ export async function getProjectTypeStats() {
       infrastructure: "#9b59b6",
     }
 
-    const formattedData = data.map((item) => ({
-      status: typeMap[item.project_type] || item.project_type,
-      count: item.count,
-      color: typeColors[item.project_type] || "#95a5a6",
+    const formattedData = Object.entries(typeCounts).map(([type, count]) => ({
+      type: typeMap[type] || type,
+      count,
+      color: typeColors[type] || "#95a5a6",
     }))
 
     return { success: true, data: formattedData }

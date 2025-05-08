@@ -31,7 +31,6 @@ const formSchema = z.object({
   location: z.string().min(2, {
     message: "Địa điểm dự án phải có ít nhất 2 ký tự",
   }),
-  geoCode: z.string().optional(),
   start_date: z.date({
     required_error: "Vui lòng chọn ngày bắt đầu",
   }),
@@ -73,14 +72,13 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
       code: "",
       description: "",
       location: "",
-      geoCode: "",
       start_date: new Date(),
       end_date: new Date(),
       budget: "",
       status: "planning",
       progress: 0,
       project_type: "",
-      construction_type: "xay-moi",
+      construction_type: "townhouse",
       project_manager: "",
       complexity: "medium",
       priority: "normal",
@@ -101,19 +99,23 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
 
         if (projectResult.success && projectResult.data) {
           const project = projectResult.data
+
+          // Chuyển đổi ngày từ string sang Date object
+          const startDate = project.start_date ? new Date(project.start_date) : new Date()
+          const endDate = project.end_date ? new Date(project.end_date) : new Date()
+
           form.reset({
             name: project.name || "",
             code: project.code || "",
             description: project.description || "",
             location: project.location || "",
-            geoCode: project.geo_code || "",
-            start_date: project.start_date ? new Date(project.start_date) : new Date(),
-            end_date: project.end_date ? new Date(project.end_date) : new Date(),
+            start_date: startDate,
+            end_date: endDate,
             budget: project.budget ? project.budget.toString() : "",
             status: project.status || "planning",
             progress: project.progress || 0,
             project_type: project.project_type || "",
-            construction_type: project.construction_type || "xay-moi",
+            construction_type: project.construction_type || "townhouse",
             project_manager: project.project_manager || "",
             complexity: project.complexity || "medium",
             priority: project.priority || "normal",
@@ -129,7 +131,7 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
             title: "Lỗi",
             description: "Không thể lấy thông tin dự án. Vui lòng thử lại sau.",
           })
-          router.push("/dashboard/projects")
+          router.push("/dashboard")
         }
 
         if (customersResult.success) {
@@ -148,7 +150,7 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
           title: "Lỗi",
           description: "Đã xảy ra lỗi khi lấy dữ liệu. Vui lòng thử lại sau.",
         })
-        router.push("/dashboard/projects")
+        router.push("/dashboard")
       } finally {
         setIsLoadingData(false)
       }
@@ -177,7 +179,7 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
           title: "Thành công",
           description: "Dự án đã được cập nhật thành công",
         })
-        router.push("/dashboard/projects")
+        router.push("/dashboard")
       } else {
         toast({
           variant: "destructive",
@@ -295,11 +297,11 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="xay-moi">Xây mới</SelectItem>
-                          <SelectItem value="sua-chua">Sửa chữa</SelectItem>
-                          <SelectItem value="thiet-ke">Thiết kế</SelectItem>
-                          <SelectItem value="giam-sat">Giám sát</SelectItem>
-                          <SelectItem value="khac">Khác</SelectItem>
+                          <SelectItem value="townhouse">Nhà phố</SelectItem>
+                          <SelectItem value="residential">Nhà ở</SelectItem>
+                          <SelectItem value="commercial">Thương mại</SelectItem>
+                          <SelectItem value="industrial">Công nghiệp</SelectItem>
+                          <SelectItem value="infrastructure">Hạ tầng</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -387,34 +389,19 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
 
                 <FormField
                   control={form.control}
-                  name="geoCode"
+                  name="budget"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mã GEO</FormLabel>
+                      <FormLabel>Ngân sách</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nhập mã GEO" {...field} />
+                        <Input placeholder="Nhập ngân sách dự án" {...field} />
                       </FormControl>
-                      <FormDescription>Mã tọa độ địa lý của dự án</FormDescription>
+                      <FormDescription>Ngân sách dự kiến cho dự án (VNĐ)</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-
-              <FormField
-                control={form.control}
-                name="budget"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ngân sách</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nhập ngân sách dự án" {...field} />
-                    </FormControl>
-                    <FormDescription>Ngân sách dự kiến cho dự án (VNĐ)</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}
@@ -505,8 +492,8 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="planning">Kế hoạch</SelectItem>
-                          <SelectItem value="in-progress">Đang thực hiện</SelectItem>
-                          <SelectItem value="on-hold">Tạm dừng</SelectItem>
+                          <SelectItem value="in_progress">Đang thực hiện</SelectItem>
+                          <SelectItem value="on_hold">Tạm dừng</SelectItem>
                           <SelectItem value="completed">Hoàn thành</SelectItem>
                           <SelectItem value="cancelled">Đã hủy</SelectItem>
                         </SelectContent>
@@ -620,12 +607,7 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
           </Card>
 
           <div className="flex justify-end gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push("/dashboard/projects")}
-              disabled={isLoading}
-            >
+            <Button type="button" variant="outline" onClick={() => router.push("/dashboard")} disabled={isLoading}>
               Hủy
             </Button>
             <Button type="submit" disabled={isLoading}>

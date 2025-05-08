@@ -7,7 +7,6 @@ import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { useSidebar } from "./sidebar-context"
 import {
-  Home,
   Users,
   Building2,
   Package,
@@ -75,21 +74,15 @@ export function DashboardSidebar() {
       active: pathname === "/dashboard/overview",
     },
     {
-      icon: Home,
-      label: "Tổng quan",
-      href: "/dashboard",
-      active: pathname === "/dashboard",
-    },
-    {
       icon: Building2,
       label: "Dự án",
-      href: "/dashboard/projects",
-      active: pathname.startsWith("/dashboard/projects"),
+      href: "/dashboard/projectlist",
+      active: pathname === "/dashboard/projectlist" || pathname === "/dashboard",
       subItems: [
         {
           icon: List,
           label: "Danh sách dự án",
-          href: "/dashboard/projects",
+          href: "/dashboard/projectlist",
         },
       ],
     },
