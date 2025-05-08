@@ -19,6 +19,7 @@ export async function createEmployeeAction(formData: FormData) {
     const hire_date = formData.get("hire_date") as string
     const status = (formData.get("status") as string) || "active"
     const notes = formData.get("notes") as string
+    const avatar_url = formData.get("avatar_url") as string
 
     // Kiểm tra dữ liệu bắt buộc
     if (!name) throw new Error("Tên nhân viên là bắt buộc")
@@ -54,6 +55,7 @@ export async function createEmployeeAction(formData: FormData) {
         hire_date,
         status,
         notes,
+        avatar_url,
       })
       .select()
       .single()

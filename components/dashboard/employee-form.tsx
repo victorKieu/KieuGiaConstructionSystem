@@ -11,7 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
-import { CalendarIcon, Loader2 } from "lucide-react"
+import { CalendarIcon, Loader2, Upload, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
@@ -20,7 +20,9 @@ import { getDepartments, getPositions, getStatuses } from "@/lib/constants/emplo
 import Link from "next/link"
 import { useFormStatus } from "react-dom"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useState } from "react"
+import { useState, useRef } from "react"
+import { uploadAvatarAction } from "@/lib/actions/upload-avatar-action"
+import { useToast } from "@/components/ui/use-toast"
 
 // Schema validation
 const employeeFormSchema = z.object({
@@ -112,9 +114,12 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
   const departments = getDepartments()
   const positions = getPositions()
   const statuses = getStatuses()
+  const { toast } = useToast()
 
-  // State cho avatar URL
+  // State cho avatar URL và loading
   const [avatarUrl, setAvatarUrl] = useState<string>(employee?.avatar_url || "")
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Hàm lấy chữ cái đầu của họ và tên
   const getInitials = (name: string): string => {
@@ -131,26 +136,121 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
     setAvatarUrl(e.target.value)
   }
 
+  // Xử lý khi người dùng chọn file
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      setIsUploading(true)
+
+      // Tạo FormData để gửi file
+      const formData = new FormData()
+      formData.append("avatar", file)
+
+      // Gọi server action để tải lên
+      const result = await uploadAvatarAction(formData)
+
+      if (result.error) {
+        toast({
+          title: "Lỗi tải lên",
+          description: result.error,
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (result.success && result.url) {
+        // Cập nhật URL hình ảnh
+        setAvatarUrl(result.url)
+        form.setValue("avatar_url", result.url)
+
+        toast({
+          title: "Tải lên thành công",
+          description: "Hình ảnh đã được tải lên thành công",
+        })
+      }
+    } catch (error) {
+      console.error("Lỗi khi tải lên file:", error)
+      toast({
+        title: "Lỗi tải lên",
+        description: "Đã xảy ra lỗi khi tải lên hình ảnh",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUploading(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    }
+  }
+
+  // Xử lý khi người dùng nhấn nút tải lên
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  // Xử lý khi người dùng xóa hình ảnh
+  const handleClearAvatar = () => {
+    setAvatarUrl("")
+    form.setValue("avatar_url", "")
+  }
+
   return (
     <Form {...form}>
       <form action={action} className="space-y-6">
         {/* Avatar section */}
         <div className="flex flex-col items-center space-y-4 mb-6">
-          <Avatar className="h-24 w-24">
-            <AvatarImage src={avatarUrl || "/placeholder.svg"} alt={employee?.name || "Avatar"} />
-            <AvatarFallback className="text-lg">
-              {getInitials(employee?.name || form.watch("name") || "NA")}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative">
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={avatarUrl || "/placeholder.svg"} alt={employee?.name || "Avatar"} />
+              <AvatarFallback className="text-lg">
+                {getInitials(employee?.name || form.watch("name") || "NA")}
+              </AvatarFallback>
+            </Avatar>
+            {avatarUrl && (
+              <button
+                type="button"
+                className="absolute -top-2 -right-2 rounded-full bg-destructive p-1 text-white hover:bg-destructive/90"
+                onClick={handleClearAvatar}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
 
-          <FormField
-            control={form.control}
-            name="avatar_url"
-            render={({ field }) => (
-              <FormItem className="w-full max-w-md">
-                <FormLabel>Hình thẻ nhân viên</FormLabel>
-                <FormControl>
-                  <div className="flex space-x-2">
+          <div className="w-full max-w-md space-y-2">
+            <div className="flex items-center space-x-2">
+              <Button type="button" variant="outline" size="sm" onClick={handleUploadClick} disabled={isUploading}>
+                {isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang tải lên...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Tải lên hình ảnh
+                  </>
+                )}
+              </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleFileChange}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="avatar_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Hoặc nhập URL hình ảnh</FormLabel>
+                  <FormControl>
                     <Input
                       placeholder="Nhập URL hình ảnh"
                       {...field}
@@ -160,15 +260,15 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
                         handleAvatarUrlChange(e)
                       }}
                     />
-                  </div>
-                </FormControl>
-                <FormDescription>
-                  Nhập URL hình ảnh cho nhân viên. Định dạng khuyến nghị: vuông, tối thiểu 200x200px.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  </FormControl>
+                  <FormDescription>
+                    Nhập URL hình ảnh hoặc tải lên từ máy tính. Định dạng khuyến nghị: vuông, tối thiểu 200x200px.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
