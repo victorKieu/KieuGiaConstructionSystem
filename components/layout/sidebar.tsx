@@ -45,15 +45,15 @@ export function Sidebar() {
   const navItems: NavItem[] = [
     {
       title: "Tổng quan",
-      href: "/dashboard",
+      href: "/dashboard/overview",
       icon: LayoutDashboard,
     },
     {
       title: "Dự án",
-      href: "/dashboard/projects",
+      href: "/dashboard",
       icon: Building2,
       submenu: [
-        { title: "Danh sách dự án", href: "/dashboard/projects" },
+        { title: "Danh sách dự án", href: "/dashboard" },
         { title: "Tiến độ dự án", href: "/dashboard/projects/timeline" },
         { title: "Vấn đề dự án", href: "/dashboard/projects/issues" },
       ],
