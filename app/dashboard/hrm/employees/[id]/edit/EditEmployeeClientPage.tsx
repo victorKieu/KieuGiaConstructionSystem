@@ -2,13 +2,8 @@
 
 import { MainLayout } from "@/components/layout/main-layout"
 import { EmployeeForm } from "@/components/dashboard/employee-form"
-import {
-  getEmployeeById,
-  getDepartments,
-  getPositions,
-  getStatuses,
-  updateEmployee,
-} from "@/lib/actions/employee-actions"
+import { getEmployeeById } from "@/lib/actions/employee-actions"
+import { getDepartments, getPositions, getStatuses } from "@/lib/constants/employee-constants"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -16,11 +11,13 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { useEffect, useState } from "react"
 
-export default function EditEmployeeClientPage({ params }: { params: { id: string } }) {
+interface EditEmployeeClientPageProps {
+  params: { id: string }
+  updateEmployeeAction: (id: string, formData: FormData) => Promise<void>
+}
+
+export default function EditEmployeeClientPage({ params, updateEmployeeAction }: EditEmployeeClientPageProps) {
   const [employee, setEmployee] = useState<any>(null)
-  const [departments, setDepartments] = useState<any>([])
-  const [positions, setPositions] = useState<any>([])
-  const [statuses, setStatuses] = useState<any>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -32,15 +29,6 @@ export default function EditEmployeeClientPage({ params }: { params: { id: strin
           return
         }
         setEmployee(employeeData)
-
-        const departmentsData = await getDepartments()
-        setDepartments(departmentsData)
-
-        const positionsData = await getPositions()
-        setPositions(positionsData)
-
-        const statusesData = await getStatuses()
-        setStatuses(statusesData)
       } catch (error) {
         console.error("Error fetching data:", error)
       } finally {
@@ -52,9 +40,8 @@ export default function EditEmployeeClientPage({ params }: { params: { id: strin
   }, [params.id])
 
   // Hàm cập nhật nhân viên với ID
-  const updateEmployeeWithId = async (formData: FormData) => {
-    "use server"
-    await updateEmployee(params.id, formData)
+  const handleSubmit = async (formData: FormData) => {
+    await updateEmployeeAction(params.id, formData)
   }
 
   if (loading) {
@@ -85,10 +72,10 @@ export default function EditEmployeeClientPage({ params }: { params: { id: strin
           <CardContent>
             <EmployeeForm
               employee={employee}
-              departments={departments}
-              positions={positions}
-              statuses={statuses}
-              onSubmit={updateEmployeeWithId}
+              departments={getDepartments()}
+              positions={getPositions()}
+              statuses={getStatuses()}
+              onSubmit={handleSubmit}
             />
           </CardContent>
         </Card>

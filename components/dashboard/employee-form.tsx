@@ -4,48 +4,34 @@ import type React from "react"
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { format } from "date-fns"
-import { CalendarIcon, Loader2 } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-
+import { z } from "zod"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
+import { useState } from "react"
 import { toast } from "@/components/ui/use-toast"
+import { CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import type { Employee } from "@/lib/actions/employee-actions"
 
-// Schema validation cho form nhân viên
-const employeeFormSchema = z.object({
-  name: z.string().min(2, {
-    message: "Tên nhân viên phải có ít nhất 2 ký tự",
-  }),
-  position: z.string({
-    required_error: "Vui lòng chọn chức vụ",
-  }),
-  department: z.string({
-    required_error: "Vui lòng chọn phòng ban",
-  }),
+// Định nghĩa schema validation
+const employeeSchema = z.object({
+  name: z.string().min(2, { message: "Tên phải có ít nhất 2 ký tự" }),
+  position: z.string().min(1, { message: "Vui lòng chọn chức vụ" }),
+  department: z.string().min(1, { message: "Vui lòng chọn phòng ban" }),
   phone: z.string().optional(),
   email: z.string().email({ message: "Email không hợp lệ" }).optional().or(z.literal("")),
   address: z.string().optional(),
-  join_date: z.date({
-    required_error: "Vui lòng chọn ngày vào làm",
-  }),
-  status: z.string().default("Đang làm việc"),
+  join_date: z.date({ required_error: "Vui lòng chọn ngày vào làm" }),
+  status: z.string().optional(),
 })
 
-type EmployeeFormValues = z.infer<typeof employeeFormSchema>
-
-// Props cho component EmployeeForm
 interface EmployeeFormProps {
-  employee?: Employee
+  employee?: any
   departments: string[]
   positions: string[]
   statuses: string[]
@@ -53,30 +39,31 @@ interface EmployeeFormProps {
 }
 
 export function EmployeeForm({ employee, departments, positions, statuses, onSubmit }: EmployeeFormProps) {
-  const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Khởi tạo giá trị mặc định cho form
-  const defaultValues: Partial<EmployeeFormValues> = {
-    name: employee?.name || "",
-    position: employee?.position || "",
-    department: employee?.department || "",
-    phone: employee?.phone || "",
-    email: employee?.email || "",
-    address: employee?.address || "",
-    join_date: employee?.join_date ? new Date(employee.join_date) : undefined,
-    status: employee?.status || "Đang làm việc",
-  }
-
-  // Khởi tạo form
-  const form = useForm<EmployeeFormValues>({
-    resolver: zodResolver(employeeFormSchema),
-    defaultValues,
+  // Khởi tạo form với giá trị mặc định
+  const form = useForm<z.infer<typeof employeeSchema>>({
+    resolver: zodResolver(employeeSchema),
+    defaultValues: {
+      name: employee?.name || "",
+      position: employee?.position || "",
+      department: employee?.department || "",
+      phone: employee?.phone || "",
+      email: employee?.email || "",
+      address: employee?.address || "",
+      join_date: employee?.join_date ? new Date(employee.join_date) : undefined,
+      status: employee?.status || "Đang làm việc",
+    },
   })
 
-  // Xử lý khi submit form
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  // Xử lý submit form
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
+    // Validate form
+    const result = await form.trigger()
+    if (!result) return
+
     setIsSubmitting(true)
 
     try {
@@ -84,7 +71,7 @@ export function EmployeeForm({ employee, departments, positions, statuses, onSub
       await onSubmit(formData)
       toast({
         title: "Thành công",
-        description: employee ? "Đã cập nhật thông tin nhân viên" : "Đã thêm nhân viên mới",
+        description: employee ? "Đã cập nhật thông tin nhân viên" : "Đã tạo nhân viên mới",
       })
     } catch (error) {
       console.error(error)
@@ -102,6 +89,7 @@ export function EmployeeForm({ employee, departments, positions, statuses, onSub
     <Form {...form}>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* Họ và tên */}
           <FormField
             control={form.control}
             name="name"
@@ -111,13 +99,14 @@ export function EmployeeForm({ employee, departments, positions, statuses, onSub
                   Họ và tên <span className="text-red-500">*</span>
                 </FormLabel>
                 <FormControl>
-                  <Input placeholder="Nguyễn Văn A" {...field} name="name" defaultValue={field.value} />
+                  <Input placeholder="Nhập họ và tên" {...field} name="name" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
+          {/* Chức vụ */}
           <FormField
             control={form.control}
             name="position"
@@ -126,7 +115,7 @@ export function EmployeeForm({ employee, departments, positions, statuses, onSub
                 <FormLabel>
                   Chức vụ <span className="text-red-500">*</span>
                 </FormLabel>
-                <Select defaultValue={field.value} onValueChange={field.onChange} name="position">
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Chọn chức vụ" />
@@ -140,11 +129,13 @@ export function EmployeeForm({ employee, departments, positions, statuses, onSub
                     ))}
                   </SelectContent>
                 </Select>
+                <input type="hidden" name="position" value={field.value} />
                 <FormMessage />
               </FormItem>
             )}
           />
 
+          {/* Phòng ban */}
           <FormField
             control={form.control}
             name="department"
@@ -153,7 +144,7 @@ export function EmployeeForm({ employee, departments, positions, statuses, onSub
                 <FormLabel>
                   Phòng ban <span className="text-red-500">*</span>
                 </FormLabel>
-                <Select defaultValue={field.value} onValueChange={field.onChange} name="department">
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Chọn phòng ban" />
@@ -167,11 +158,43 @@ export function EmployeeForm({ employee, departments, positions, statuses, onSub
                     ))}
                   </SelectContent>
                 </Select>
+                <input type="hidden" name="department" value={field.value} />
                 <FormMessage />
               </FormItem>
             )}
           />
 
+          {/* Số điện thoại */}
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Số điện thoại</FormLabel>
+                <FormControl>
+                  <Input placeholder="Nhập số điện thoại" {...field} name="phone" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Email */}
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="Nhập email" {...field} name="email" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Ngày vào làm */}
           <FormField
             control={form.control}
             name="join_date"
@@ -193,13 +216,7 @@ export function EmployeeForm({ employee, departments, positions, statuses, onSub
                     </FormControl>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                      initialFocus
-                    />
+                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
                   </PopoverContent>
                 </Popover>
                 <input type="hidden" name="join_date" value={field.value ? format(field.value, "yyyy-MM-dd") : ""} />
@@ -208,62 +225,35 @@ export function EmployeeForm({ employee, departments, positions, statuses, onSub
             )}
           />
 
+          {/* Trạng thái */}
           <FormField
             control={form.control}
-            name="phone"
+            name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Số điện thoại</FormLabel>
-                <FormControl>
-                  <Input placeholder="0912345678" {...field} name="phone" defaultValue={field.value || ""} />
-                </FormControl>
+                <FormLabel>Trạng thái</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn trạng thái" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {statuses.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <input type="hidden" name="status" value={field.value} />
                 <FormMessage />
               </FormItem>
             )}
           />
-
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input placeholder="example@example.com" {...field} name="email" defaultValue={field.value || ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {employee && (
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Trạng thái</FormLabel>
-                  <Select defaultValue={field.value} onValueChange={field.onChange} name="status">
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn trạng thái" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {statuses.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
         </div>
 
+        {/* Địa chỉ */}
         <FormField
           control={form.control}
           name="address"
@@ -271,29 +261,24 @@ export function EmployeeForm({ employee, departments, positions, statuses, onSub
             <FormItem>
               <FormLabel>Địa chỉ</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Nhập địa chỉ nhân viên"
-                  className="resize-none"
-                  {...field}
-                  name="address"
-                  defaultValue={field.value || ""}
-                />
+                <Textarea placeholder="Nhập địa chỉ" {...field} name="address" />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <div className="flex items-center justify-end space-x-4">
-          <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
-            Hủy
+        <div className="flex justify-end space-x-4">
+          <Button type="button" variant="outline" asChild>
+            <Link href={employee ? `/dashboard/hrm/employees/${employee.id}` : "/dashboard/hrm/employees"}>Hủy</Link>
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {employee ? "Cập nhật" : "Thêm mới"}
+            {isSubmitting ? "Đang xử lý..." : employee ? "Cập nhật" : "Tạo mới"}
           </Button>
         </div>
       </form>
     </Form>
   )
 }
+
+import Link from "next/link"

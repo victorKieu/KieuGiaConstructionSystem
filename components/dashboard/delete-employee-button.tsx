@@ -14,21 +14,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { deleteEmployee } from "@/lib/actions/employee-actions"
 import { toast } from "@/components/ui/use-toast"
 
 interface DeleteEmployeeButtonProps {
   id: string
+  deleteEmployeeAction: (id: string) => Promise<void>
 }
 
-export function DeleteEmployeeButton({ id }: DeleteEmployeeButtonProps) {
+export function DeleteEmployeeButton({ id, deleteEmployeeAction }: DeleteEmployeeButtonProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [open, setOpen] = useState(false)
 
   const handleDelete = async () => {
     setIsDeleting(true)
     try {
-      await deleteEmployee(id)
+      await deleteEmployeeAction(id)
       toast({
         title: "Thành công",
         description: "Đã xóa nhân viên",
