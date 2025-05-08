@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, FileBarChart, Search, UserPlus } from "lucide-react"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
-import { getEmployees } from "@/lib/actions/employees"
 
 export const metadata: Metadata = {
   title: "Quản lý nhân viên | Kieu Gia Construction",
@@ -16,8 +15,49 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"
 
 export default async function EmployeesPage() {
-  // Lấy danh sách nhân viên từ Supabase
-  const employees = await getEmployees()
+  // Dữ liệu mẫu nhân viên
+  const employees = [
+    {
+      id: "1",
+      name: "Nguyễn Văn A",
+      position: "Kỹ sư xây dựng",
+      department: "Kỹ thuật",
+      joinDate: "01/01/2022",
+      status: "Đang làm việc",
+    },
+    {
+      id: "2",
+      name: "Trần Thị B",
+      position: "Kế toán",
+      department: "Tài chính",
+      joinDate: "15/03/2022",
+      status: "Đang làm việc",
+    },
+    {
+      id: "3",
+      name: "Lê Văn C",
+      position: "Giám sát công trình",
+      department: "Thi công",
+      joinDate: "10/05/2022",
+      status: "Đang làm việc",
+    },
+    {
+      id: "4",
+      name: "Phạm Thị D",
+      position: "Nhân viên hành chính",
+      department: "Hành chính",
+      joinDate: "20/06/2022",
+      status: "Đang làm việc",
+    },
+    {
+      id: "5",
+      name: "Hoàng Văn E",
+      position: "Kiến trúc sư",
+      department: "Thiết kế",
+      joinDate: "05/08/2022",
+      status: "Đang làm việc",
+    },
+  ]
 
   return (
     <MainLayout>
@@ -86,7 +126,7 @@ export default async function EmployeesPage() {
                           <td className="py-3 px-4 font-medium">{employee.name}</td>
                           <td className="py-3 px-4">{employee.position}</td>
                           <td className="py-3 px-4">{employee.department}</td>
-                          <td className="py-3 px-4">{employee.join_date}</td>
+                          <td className="py-3 px-4">{employee.joinDate}</td>
                           <td className="py-3 px-4">
                             <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
                               {employee.status}

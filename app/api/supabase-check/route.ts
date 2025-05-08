@@ -1,137 +1,44 @@
 import { NextResponse } from "next/server"
-import { supabase, isSupabaseReady } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 
 export async function GET() {
-  // Kiểm tra xem Supabase có sẵn sàng không
-  if (!isSupabaseReady()) {
-    return NextResponse.json({
-      status: "error",
-      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
-      timestamp: new Date().toISOString(),
-    }, { status: 503 })
-  }
-
   try {
-    // Thực hiện logic của bạn ở đây
+    // Tạo client Supabase
+    const supabase = createClient()
+
+    // Kiểm tra kết nối bằng cách thực hiện một truy vấn đơn giản
+    const { data, error } = await supabase.from("projects").select("count").single()
+
+    if (error) {
+      console.error("Lỗi kết nối Supabase:", error.message)
+      return NextResponse.json({
+        success: false,
+        error: error.message,
+        details: {
+          url: process.env.NEXT_PUBLIC_SUPABASE_URL ? "Đã cấu hình" : "Chưa cấu hình",
+          anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Đã cấu hình" : "Chưa cấu hình",
+        },
+      })
+    }
+
     return NextResponse.json({
-      status: "success",
-      message: "API đang hoạt động.",
-      timestamp: new Date().toISOString(),
+      success: true,
+      message: "Kết nối Supabase thành công",
+      data,
+      details: {
+        url: process.env.NEXT_PUBLIC_SUPABASE_URL ? "Đã cấu hình" : "Chưa cấu hình",
+        anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Đã cấu hình" : "Chưa cấu hình",
+      },
     })
   } catch (error) {
-    console.error("Error:", error)
+    console.error("Lỗi kiểm tra kết nối Supabase:", error)
     return NextResponse.json({
-      status: "error",
-      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
-      timestamp: new Date().toISOString(),
-    }, { status: 500 })
-  }
-}
-
-export async function POST() {
-  // Kiểm tra xem Supabase có sẵn sàng không
-  if (!isSupabaseReady()) {
-    return NextResponse.json({
-      status: "error",
-      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
-      timestamp: new Date().toISOString(),
-    }, { status: 503 })
-  }
-
-  try {
-    // Thực hiện logic của bạn ở đây
-    return NextResponse.json({
-      status: "success",
-      message: "API đang hoạt động.",
-      timestamp: new Date().toISOString(),
+      success: false,
+      error: "Lỗi không xác định khi kiểm tra kết nối Supabase",
+      details: {
+        url: process.env.NEXT_PUBLIC_SUPABASE_URL ? "Đã cấu hình" : "Chưa cấu hình",
+        anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Đã cấu hình" : "Chưa cấu hình",
+      },
     })
-  } catch (error) {
-    console.error("Error:", error)
-    return NextResponse.json({
-      status: "error",
-      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
-      timestamp: new Date().toISOString(),
-    }, { status: 500 })
-  }
-}
-
-export async function PUT() {
-  // Kiểm tra xem Supabase có sẵn sàng không
-  if (!isSupabaseReady()) {
-    return NextResponse.json({
-      status: "error",
-      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
-      timestamp: new Date().toISOString(),
-    }, { status: 503 })
-  }
-
-  try {
-    // Thực hiện logic của bạn ở đây
-    return NextResponse.json({
-      status: "success",
-      message: "API đang hoạt động.",
-      timestamp: new Date().toISOString(),
-    })
-  } catch (error) {
-    console.error("Error:", error)
-    return NextResponse.json({
-      status: "error",
-      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
-      timestamp: new Date().toISOString(),
-    }, { status: 500 })
-  }
-}
-
-export async function DELETE() {
-  // Kiểm tra xem Supabase có sẵn sàng không
-  if (!isSupabaseReady()) {
-    return NextResponse.json({
-      status: "error",
-      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
-      timestamp: new Date().toISOString(),
-    }, { status: 503 })
-  }
-
-  try {
-    // Thực hiện logic của bạn ở đây
-    return NextResponse.json({
-      status: "success",
-      message: "API đang hoạt động.",
-      timestamp: new Date().toISOString(),
-    })
-  } catch (error) {
-    console.error("Error:", error)
-    return NextResponse.json({
-      status: "error",
-      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
-      timestamp: new Date().toISOString(),
-    }, { status: 500 })
-  }
-}
-
-export async function PATCH() {
-  // Kiểm tra xem Supabase có sẵn sàng không
-  if (!isSupabaseReady()) {
-    return NextResponse.json({
-      status: "error",
-      message: "Supabase chưa sẵn sàng. Vui lòng kiểm tra biến môi trường.",
-      timestamp: new Date().toISOString(),
-    }, { status: 503 })
-  }
-
-  try {
-    // Thực hiện logic của bạn ở đây
-    return NextResponse.json({
-      status: "success",
-      message: "API đang hoạt động.",
-      timestamp: new Date().toISOString(),
-    })
-  } catch (error) {
-    console.error("Error:", error)
-    return NextResponse.json({
-      status: "error",
-      message: "Đã xảy ra lỗi khi xử lý yêu cầu.",
-      timestamp: new Date().toISOString(),
-    }, { status: 500 })
   }
 }
