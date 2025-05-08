@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -18,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import type { Employee } from "@/lib/actions/employee-actions"
 import { getDepartments, getPositions, getStatuses } from "@/lib/constants/employee-constants"
 import Link from "next/link"
+import { useFormStatus } from "react-dom"
 
 // Schema validation
 const employeeFormSchema = z.object({
@@ -74,13 +73,30 @@ const mapEmployeeToFormValues = (employee: Employee | null): EmployeeFormValues 
   }
 }
 
-interface EmployeeFormProps {
-  employee?: Employee | null
-  onSubmit: (formData: FormData) => Promise<void>
-  isSubmitting?: boolean
+// Component hiển thị nút submit với trạng thái loading
+function SubmitButton() {
+  const { pending } = useFormStatus()
+
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Đang xử lý...
+        </>
+      ) : (
+        "Lưu thông tin"
+      )}
+    </Button>
+  )
 }
 
-export function EmployeeForm({ employee, onSubmit, isSubmitting = false }: EmployeeFormProps) {
+interface EmployeeFormProps {
+  employee?: Employee | null
+  action: (formData: FormData) => Promise<void>
+}
+
+export function EmployeeForm({ employee, action }: EmployeeFormProps) {
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: mapEmployeeToFormValues(employee),
@@ -90,26 +106,9 @@ export function EmployeeForm({ employee, onSubmit, isSubmitting = false }: Emplo
   const positions = getPositions()
   const statuses = getStatuses()
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-
-    // Validate form
-    const result = await form.trigger()
-    if (!result) return
-
-    try {
-      console.log("📝 Submitting employee form...")
-      const formData = new FormData(e.currentTarget)
-      await onSubmit(formData)
-      console.log("✅ Form submitted successfully")
-    } catch (error) {
-      console.error("❌ Error submitting form:", error)
-    }
-  }
-
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form action={action} className="space-y-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
@@ -318,20 +317,10 @@ export function EmployeeForm({ employee, onSubmit, isSubmitting = false }: Emplo
           <Button type="button" variant="outline" asChild>
             <Link href={employee ? `/dashboard/hrm/employees/${employee.id}` : "/dashboard/hrm/employees"}>Hủy</Link>
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Đang xử lý...
-              </>
-            ) : employee ? (
-              "Cập nhật"
-            ) : (
-              "Tạo mới"
-            )}
-          </Button>
+          <SubmitButton />
         </div>
 
+        {/* Hidden fields */}
         <input type="hidden" name="id" value={employee?.id || ""} />
       </form>
     </Form>
