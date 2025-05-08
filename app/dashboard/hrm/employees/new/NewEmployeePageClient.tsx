@@ -8,17 +8,31 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useRouter } from "next/navigation"
 
 export default function NewEmployeePageClient() {
   const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useRouter()
 
   const handleSubmit = async (formData: FormData) => {
     try {
       setError(null)
-      await createEmployee(formData)
+      setIsSubmitting(true)
+
+      console.log("📝 Đang tạo nhân viên mới")
+
+      const result = await createEmployee(formData)
+      console.log("✅ Tạo nhân viên thành công:", result)
+
+      // Chuyển hướng về trang danh sách nhân viên
+      router.push("/dashboard/hrm/employees")
+      router.refresh()
     } catch (err) {
-      console.error("Error creating employee:", err)
+      console.error("❌ Lỗi khi tạo nhân viên mới:", err)
       setError(err instanceof Error ? err.message : "Có lỗi xảy ra khi tạo nhân viên mới")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -27,7 +41,7 @@ export default function NewEmployeePageClient() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Thêm nhân viên mới</h1>
-          <p className="text-muted-foreground">Nhập thông tin để tạo hồ sơ nhân viên mới</p>
+          <p className="text-muted-foreground">Tạo hồ sơ nhân viên mới trong hệ thống</p>
         </div>
         <Button variant="outline" size="sm" className="h-9" asChild>
           <Link href="/dashboard/hrm/employees">
@@ -47,10 +61,10 @@ export default function NewEmployeePageClient() {
       <Card>
         <CardHeader>
           <CardTitle>Thông tin nhân viên</CardTitle>
-          <CardDescription>Nhập đầy đủ thông tin nhân viên cần thêm mới</CardDescription>
+          <CardDescription>Nhập thông tin nhân viên mới</CardDescription>
         </CardHeader>
         <CardContent>
-          <EmployeeForm onSubmit={handleSubmit} />
+          <EmployeeForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
         </CardContent>
       </Card>
     </div>

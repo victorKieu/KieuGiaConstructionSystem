@@ -11,14 +11,13 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
-import { CalendarIcon } from "lucide-react"
+import { CalendarIcon, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import type { Employee } from "@/lib/actions/employee-actions"
 import { getDepartments, getPositions, getStatuses } from "@/lib/constants/employee-constants"
 import Link from "next/link"
-import { useState } from "react"
 
 // Schema validation
 const employeeFormSchema = z.object({
@@ -78,11 +77,10 @@ const mapEmployeeToFormValues = (employee: Employee | null): EmployeeFormValues 
 interface EmployeeFormProps {
   employee?: Employee | null
   onSubmit: (formData: FormData) => Promise<void>
+  isSubmitting?: boolean
 }
 
-export function EmployeeForm({ employee, onSubmit }: EmployeeFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
+export function EmployeeForm({ employee, onSubmit, isSubmitting = false }: EmployeeFormProps) {
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: mapEmployeeToFormValues(employee),
@@ -99,8 +97,6 @@ export function EmployeeForm({ employee, onSubmit }: EmployeeFormProps) {
     const result = await form.trigger()
     if (!result) return
 
-    setIsSubmitting(true)
-
     try {
       console.log("📝 Submitting employee form...")
       const formData = new FormData(e.currentTarget)
@@ -108,7 +104,6 @@ export function EmployeeForm({ employee, onSubmit }: EmployeeFormProps) {
       console.log("✅ Form submitted successfully")
     } catch (error) {
       console.error("❌ Error submitting form:", error)
-      setIsSubmitting(false)
     }
   }
 
@@ -324,7 +319,16 @@ export function EmployeeForm({ employee, onSubmit }: EmployeeFormProps) {
             <Link href={employee ? `/dashboard/hrm/employees/${employee.id}` : "/dashboard/hrm/employees"}>Hủy</Link>
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Đang xử lý..." : employee ? "Cập nhật" : "Tạo mới"}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Đang xử lý...
+              </>
+            ) : employee ? (
+              "Cập nhật"
+            ) : (
+              "Tạo mới"
+            )}
           </Button>
         </div>
 

@@ -1,88 +1,95 @@
 "use server"
 
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 
-// Định nghĩa kiểu dữ liệu cho nhân viên theo schema thực tế
-export type Employee = {
-  id?: string
+// Định nghĩa kiểu dữ liệu cho nhân viên
+export interface Employee {
+  id: string
   code?: string
   name: string
   position: string
   department: string
-  phone?: string | null
-  email?: string | null
-  address?: string | null
-  hire_date: string
-  birth_date?: string | null
-  gender?: string | null
-  id_number?: string | null
-  tax_code?: string | null
-  bank_account?: string | null
-  bank_name?: string | null
-  emergency_contact?: string | null
-  emergency_phone?: string | null
+  phone?: string
+  email?: string
+  address?: string
+  hire_date: string | Date
   status?: string
-  notes?: string | null
+  notes?: string
   created_at?: string
   updated_at?: string
 }
 
+// Hàm tạo Supabase client
+function createServerSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("Missing Supabase environment variables")
+  }
+
+  return createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      persistSession: false,
+    },
+  })
+}
+
 // Lấy danh sách nhân viên
-export async function getEmployees() {
-  console.log("🔍 Bắt đầu lấy danh sách nhân viên...")
-
+export async function getEmployees(): Promise<Employee[]> {
   try {
-    const supabase = createServerSupabaseClient()
-    console.log("✅ Đã tạo Supabase client (server)")
+    console.log("🔍 Đang lấy danh sách nhân viên từ Supabase...")
 
-    const { data, error, count } = await supabase
-      .from("employees")
-      .select("*", { count: "exact" })
-      .order("name", { ascending: true })
+    const supabase = createServerSupabaseClient()
+
+    const { data, error } = await supabase.from("employees").select("*").order("created_at", { ascending: false })
 
     if (error) {
       console.error("❌ Lỗi khi lấy danh sách nhân viên:", error)
-      return []
+      throw new Error(`Không thể lấy danh sách nhân viên: ${error.message}`)
     }
 
-    console.log(`✅ Đã lấy ${count || 0} nhân viên thành công`)
+    console.log(`✅ Đã lấy ${data?.length || 0} nhân viên`)
     return data || []
   } catch (error) {
-    console.error("❌ Lỗi không xác định khi lấy danh sách nhân viên:", error)
-    return []
+    console.error("❌ Lỗi khi lấy danh sách nhân viên:", error)
+    throw error
   }
 }
 
-// Lấy chi tiết nhân viên theo ID
-export async function getEmployeeById(id: string) {
-  console.log(`🔍 Bắt đầu lấy thông tin nhân viên ID: ${id}`)
-
+// Lấy thông tin nhân viên theo ID
+export async function getEmployeeById(id: string): Promise<Employee | null> {
   try {
+    console.log(`🔍 Đang lấy thông tin nhân viên với ID: ${id}`)
+
     const supabase = createServerSupabaseClient()
-    console.log("✅ Đã tạo Supabase client (server)")
 
     const { data, error } = await supabase.from("employees").select("*").eq("id", id).single()
 
     if (error) {
+      if (error.code === "PGRST116") {
+        console.log(`❓ Không tìm thấy nhân viên với ID: ${id}`)
+        return null
+      }
+
       console.error(`❌ Lỗi khi lấy thông tin nhân viên ID ${id}:`, error)
-      return null
+      throw new Error(`Không thể lấy thông tin nhân viên: ${error.message}`)
     }
 
-    console.log(`✅ Đã lấy thông tin nhân viên ID ${id} thành công`)
+    console.log(`✅ Đã lấy thông tin nhân viên: ${data.name}`)
     return data
   } catch (error) {
-    console.error(`❌ Lỗi không xác định khi lấy thông tin nhân viên ID ${id}:`, error)
-    return null
+    console.error(`❌ Lỗi khi lấy thông tin nhân viên ID ${id}:`, error)
+    throw error
   }
 }
 
 // Tạo nhân viên mới
-export async function createEmployee(formData: FormData) {
-  console.log("🔍 Bắt đầu tạo nhân viên mới...")
-
+export async function createEmployee(formData: FormData): Promise<Employee> {
   try {
+    console.log("📝 Đang tạo nhân viên mới...")
+
     // Lấy dữ liệu từ form
     const code = formData.get("code") as string
     const name = formData.get("name") as string
@@ -95,60 +102,63 @@ export async function createEmployee(formData: FormData) {
     const status = (formData.get("status") as string) || "active"
     const notes = formData.get("notes") as string
 
-    console.log("📋 Dữ liệu form:", { code, name, position, department, hire_date, status })
-
     // Kiểm tra dữ liệu bắt buộc
-    if (!name || !position || !department || !hire_date) {
-      console.error("❌ Thiếu thông tin bắt buộc")
-      throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc")
-    }
+    if (!name) throw new Error("Tên nhân viên là bắt buộc")
+    if (!position) throw new Error("Chức vụ là bắt buộc")
+    if (!department) throw new Error("Phòng ban là bắt buộc")
+    if (!hire_date) throw new Error("Ngày vào làm là bắt buộc")
 
-    const supabase = createServerSupabaseClient()
-    console.log("✅ Đã tạo Supabase client (server)")
-
-    // Tạo nhân viên mới
-    const employeeData = {
-      code: code || null,
+    console.log("📋 Dữ liệu nhân viên mới:", {
+      code,
       name,
       position,
       department,
-      phone: phone || null,
-      email: email || null,
-      address: address || null,
       hire_date,
       status,
-      notes: notes || null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }
+    })
 
-    console.log("📋 Dữ liệu sẽ insert:", employeeData)
+    const supabase = createServerSupabaseClient()
 
-    const { data, error } = await supabase.from("employees").insert([employeeData]).select()
+    // Thêm nhân viên mới vào database
+    const { data, error } = await supabase
+      .from("employees")
+      .insert({
+        code,
+        name,
+        position,
+        department,
+        phone,
+        email,
+        address,
+        hire_date,
+        status,
+        notes,
+      })
+      .select()
+      .single()
 
     if (error) {
       console.error("❌ Lỗi khi tạo nhân viên mới:", error)
-      throw new Error("Không thể tạo nhân viên mới: " + error.message)
+      throw new Error(`Không thể tạo nhân viên mới: ${error.message}`)
     }
 
-    console.log("✅ Đã tạo nhân viên mới thành công:", data)
+    console.log("✅ Đã tạo nhân viên mới:", data)
 
     // Cập nhật lại dữ liệu
     revalidatePath("/dashboard/hrm/employees")
 
-    // Chuyển hướng về trang danh sách nhân viên
-    redirect("/dashboard/hrm/employees")
+    return data
   } catch (error) {
-    console.error("❌ Lỗi không xác định khi tạo nhân viên mới:", error)
+    console.error("❌ Lỗi khi tạo nhân viên mới:", error)
     throw error
   }
 }
 
 // Cập nhật thông tin nhân viên
-export async function updateEmployee(id: string, formData: FormData) {
-  console.log(`🔍 Bắt đầu cập nhật thông tin nhân viên ID: ${id}`)
-
+export async function updateEmployee(id: string, formData: FormData): Promise<Employee> {
   try {
+    console.log(`📝 Đang cập nhật thông tin nhân viên ID: ${id}`)
+
     // Lấy dữ liệu từ form
     const code = formData.get("code") as string
     const name = formData.get("name") as string
@@ -161,79 +171,82 @@ export async function updateEmployee(id: string, formData: FormData) {
     const status = formData.get("status") as string
     const notes = formData.get("notes") as string
 
-    console.log("📋 Dữ liệu form:", { code, name, position, department, hire_date, status })
-
     // Kiểm tra dữ liệu bắt buộc
-    if (!name || !position || !department || !hire_date || !status) {
-      console.error("❌ Thiếu thông tin bắt buộc")
-      throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc")
-    }
+    if (!name) throw new Error("Tên nhân viên là bắt buộc")
+    if (!position) throw new Error("Chức vụ là bắt buộc")
+    if (!department) throw new Error("Phòng ban là bắt buộc")
+    if (!hire_date) throw new Error("Ngày vào làm là bắt buộc")
 
-    const supabase = createServerSupabaseClient()
-    console.log("✅ Đã tạo Supabase client (server)")
-
-    // Cập nhật thông tin nhân viên
-    const employeeData = {
-      code: code || null,
+    console.log("📋 Dữ liệu cập nhật:", {
+      code,
       name,
       position,
       department,
-      phone: phone || null,
-      email: email || null,
-      address: address || null,
       hire_date,
       status,
-      notes: notes || null,
-      updated_at: new Date().toISOString(),
-    }
+    })
 
-    console.log("📋 Dữ liệu sẽ update:", employeeData)
+    const supabase = createServerSupabaseClient()
 
-    const { data, error } = await supabase.from("employees").update(employeeData).eq("id", id).select()
+    // Cập nhật thông tin nhân viên
+    const { data, error } = await supabase
+      .from("employees")
+      .update({
+        code,
+        name,
+        position,
+        department,
+        phone,
+        email,
+        address,
+        hire_date,
+        status,
+        notes,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select()
+      .single()
 
     if (error) {
-      console.error(`❌ Lỗi khi cập nhật thông tin nhân viên ID ${id}:`, error)
-      throw new Error("Không thể cập nhật thông tin nhân viên: " + error.message)
+      console.error(`❌ Lỗi khi cập nhật nhân viên ID ${id}:`, error)
+      throw new Error(`Không thể cập nhật thông tin nhân viên: ${error.message}`)
     }
 
-    console.log(`✅ Đã cập nhật thông tin nhân viên ID ${id} thành công:`, data)
+    console.log(`✅ Đã cập nhật thông tin nhân viên ID ${id}:`, data)
 
     // Cập nhật lại dữ liệu
     revalidatePath(`/dashboard/hrm/employees/${id}`)
     revalidatePath("/dashboard/hrm/employees")
 
-    // Chuyển hướng về trang chi tiết nhân viên
-    redirect(`/dashboard/hrm/employees/${id}`)
+    return data
   } catch (error) {
-    console.error(`❌ Lỗi không xác định khi cập nhật thông tin nhân viên ID ${id}:`, error)
+    console.error(`❌ Lỗi khi cập nhật nhân viên ID ${id}:`, error)
     throw error
   }
 }
 
 // Xóa nhân viên
-export async function deleteEmployee(id: string) {
-  console.log(`🔍 Bắt đầu xóa nhân viên ID: ${id}`)
-
+export async function deleteEmployee(id: string): Promise<void> {
   try {
-    const supabase = createServerSupabaseClient()
-    console.log("✅ Đã tạo Supabase client (server)")
+    console.log(`🗑️ Đang xóa nhân viên ID: ${id}`)
 
+    const supabase = createServerSupabaseClient()
+
+    // Xóa nhân viên từ database
     const { error } = await supabase.from("employees").delete().eq("id", id)
 
     if (error) {
       console.error(`❌ Lỗi khi xóa nhân viên ID ${id}:`, error)
-      throw new Error("Không thể xóa nhân viên: " + error.message)
+      throw new Error(`Không thể xóa nhân viên: ${error.message}`)
     }
 
-    console.log(`✅ Đã xóa nhân viên ID ${id} thành công`)
+    console.log(`✅ Đã xóa nhân viên ID ${id}`)
 
     // Cập nhật lại dữ liệu
     revalidatePath("/dashboard/hrm/employees")
-
-    // Chuyển hướng về trang danh sách nhân viên
-    redirect("/dashboard/hrm/employees")
   } catch (error) {
-    console.error(`❌ Lỗi không xác định khi xóa nhân viên ID ${id}:`, error)
+    console.error(`❌ Lỗi khi xóa nhân viên ID ${id}:`, error)
     throw error
   }
 }

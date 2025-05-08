@@ -1,7 +1,5 @@
 "use client"
 
-import { useState } from "react"
-import { Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -14,62 +12,53 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { toast } from "@/components/ui/use-toast"
+import { Trash2 } from "lucide-react"
+import { useState } from "react"
+import { deleteEmployee } from "@/lib/actions/employee-actions"
+import { useRouter } from "next/navigation"
 
 interface DeleteEmployeeButtonProps {
-  id: string
-  deleteEmployeeAction: (id: string) => Promise<void>
+  employeeId: string
+  employeeName: string
 }
 
-export function DeleteEmployeeButton({ id, deleteEmployeeAction }: DeleteEmployeeButtonProps) {
+export function DeleteEmployeeButton({ employeeId, employeeName }: DeleteEmployeeButtonProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [open, setOpen] = useState(false)
+  const router = useRouter()
 
   const handleDelete = async () => {
-    setIsDeleting(true)
     try {
-      await deleteEmployeeAction(id)
-      toast({
-        title: "Thành công",
-        description: "Đã xóa nhân viên",
-      })
-    } catch (error) {
-      console.error(error)
-      toast({
-        title: "Lỗi",
-        description: error instanceof Error ? error.message : "Đã xảy ra lỗi, vui lòng thử lại",
-        variant: "destructive",
-      })
-      setIsDeleting(false)
+      setIsDeleting(true)
+      await deleteEmployee(employeeId)
       setOpen(false)
+      router.push("/dashboard/hrm/employees")
+      router.refresh()
+    } catch (error) {
+      console.error("Error deleting employee:", error)
+    } finally {
+      setIsDeleting(false)
     }
   }
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm" className="h-9">
+        <Button variant="destructive" size="sm">
           <Trash2 className="mr-2 h-4 w-4" />
-          Xóa
+          Xóa nhân viên
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Xác nhận xóa nhân viên</AlertDialogTitle>
+          <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
           <AlertDialogDescription>
-            Bạn có chắc chắn muốn xóa nhân viên này? Hành động này không thể hoàn tác.
+            Hành động này sẽ xóa vĩnh viễn nhân viên <strong>{employeeName}</strong> và không thể khôi phục.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={(e) => {
-              e.preventDefault()
-              handleDelete()
-            }}
-            disabled={isDeleting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
+          <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
             {isDeleting ? "Đang xóa..." : "Xóa nhân viên"}
           </AlertDialogAction>
         </AlertDialogFooter>
