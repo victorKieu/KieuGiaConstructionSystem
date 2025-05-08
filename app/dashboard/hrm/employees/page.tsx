@@ -10,6 +10,7 @@ import { getEmployees } from "@/lib/actions/employee-actions"
 import { format } from "date-fns"
 import { getStatusLabel } from "@/lib/constants/employee-constants"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export const metadata: Metadata = {
   title: "Quản lý nhân viên | Kieu Gia Construction",
@@ -46,12 +47,23 @@ export default async function EmployeesPage() {
     terminated: terminatedEmployees.length,
   })
 
+  // Hàm lấy chữ cái đầu của họ và tên
+  const getInitials = (name: string): string => {
+    if (!name) return "NA"
+
+    const parts = name.split(" ")
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
+
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
+
   // Hàm render bảng nhân viên
   const renderEmployeeTable = (employeeList: any[]) => (
     <div className="rounded-md border">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b bg-muted/50 font-medium">
+            <th className="py-3 px-4 text-left">Ảnh</th>
             <th className="py-3 px-4 text-left">Mã NV</th>
             <th className="py-3 px-4 text-left">Họ và tên</th>
             <th className="py-3 px-4 text-left">Chức vụ</th>
@@ -65,6 +77,12 @@ export default async function EmployeesPage() {
           {employeeList.length > 0 ? (
             employeeList.map((employee) => (
               <tr key={employee.id} className="border-b">
+                <td className="py-3 px-4">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={employee.avatar_url || "/placeholder.svg"} alt={employee.name} />
+                    <AvatarFallback>{getInitials(employee.name)}</AvatarFallback>
+                  </Avatar>
+                </td>
                 <td className="py-3 px-4">{employee.code || "N/A"}</td>
                 <td className="py-3 px-4 font-medium">{employee.name}</td>
                 <td className="py-3 px-4">{employee.position}</td>
@@ -129,7 +147,7 @@ export default async function EmployeesPage() {
             ))
           ) : (
             <tr>
-              <td colSpan={7} className="py-6 text-center text-muted-foreground">
+              <td colSpan={8} className="py-6 text-center text-muted-foreground">
                 Không có nhân viên nào
               </td>
             </tr>

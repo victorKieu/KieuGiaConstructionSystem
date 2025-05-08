@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -17,6 +19,8 @@ import type { Employee } from "@/lib/actions/employee-actions"
 import { getDepartments, getPositions, getStatuses } from "@/lib/constants/employee-constants"
 import Link from "next/link"
 import { useFormStatus } from "react-dom"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useState } from "react"
 
 // Schema validation
 const employeeFormSchema = z.object({
@@ -38,6 +42,7 @@ const employeeFormSchema = z.object({
   }),
   status: z.string().optional(),
   notes: z.string().optional(),
+  avatar_url: z.string().optional(),
 })
 
 type EmployeeFormValues = z.infer<typeof employeeFormSchema>
@@ -56,6 +61,7 @@ const mapEmployeeToFormValues = (employee: Employee | null): EmployeeFormValues 
       hire_date: new Date(),
       status: "active",
       notes: "",
+      avatar_url: "",
     }
   }
 
@@ -70,6 +76,7 @@ const mapEmployeeToFormValues = (employee: Employee | null): EmployeeFormValues 
     hire_date: employee.hire_date ? new Date(employee.hire_date) : new Date(),
     status: employee.status || "active",
     notes: employee.notes || "",
+    avatar_url: employee.avatar_url || "",
   }
 }
 
@@ -106,9 +113,64 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
   const positions = getPositions()
   const statuses = getStatuses()
 
+  // State cho avatar URL
+  const [avatarUrl, setAvatarUrl] = useState<string>(employee?.avatar_url || "")
+
+  // Hàm lấy chữ cái đầu của họ và tên
+  const getInitials = (name: string): string => {
+    if (!name) return "NA"
+
+    const parts = name.split(" ")
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
+
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
+
+  // Xử lý khi người dùng nhập URL hình ảnh
+  const handleAvatarUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAvatarUrl(e.target.value)
+  }
+
   return (
     <Form {...form}>
       <form action={action} className="space-y-6">
+        {/* Avatar section */}
+        <div className="flex flex-col items-center space-y-4 mb-6">
+          <Avatar className="h-24 w-24">
+            <AvatarImage src={avatarUrl || "/placeholder.svg"} alt={employee?.name || "Avatar"} />
+            <AvatarFallback className="text-lg">
+              {getInitials(employee?.name || form.watch("name") || "NA")}
+            </AvatarFallback>
+          </Avatar>
+
+          <FormField
+            control={form.control}
+            name="avatar_url"
+            render={({ field }) => (
+              <FormItem className="w-full max-w-md">
+                <FormLabel>Hình thẻ nhân viên</FormLabel>
+                <FormControl>
+                  <div className="flex space-x-2">
+                    <Input
+                      placeholder="Nhập URL hình ảnh"
+                      {...field}
+                      name="avatar_url"
+                      onChange={(e) => {
+                        field.onChange(e)
+                        handleAvatarUrlChange(e)
+                      }}
+                    />
+                  </div>
+                </FormControl>
+                <FormDescription>
+                  Nhập URL hình ảnh cho nhân viên. Định dạng khuyến nghị: vuông, tối thiểu 200x200px.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormField
             control={form.control}

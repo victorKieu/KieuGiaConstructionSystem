@@ -9,6 +9,7 @@ import { format } from "date-fns"
 import { getStatusLabel } from "@/lib/constants/employee-constants"
 import { DeleteEmployeeButton } from "@/components/dashboard/delete-employee-button"
 import type { Metadata } from "next"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export const metadata: Metadata = {
   title: "Chi tiết nhân viên | Kieu Gia Construction",
@@ -29,6 +30,16 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
   }
 
   console.log("✅ Đã tìm thấy nhân viên:", employee.name)
+
+  // Hàm lấy chữ cái đầu của họ và tên
+  const getInitials = (name: string): string => {
+    if (!name) return "NA"
+
+    const parts = name.split(" ")
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
+
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
 
   return (
     <MainLayout>
@@ -61,69 +72,75 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
               <CardDescription>Thông tin chi tiết của nhân viên</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex flex-col space-y-1">
-                  <h3 className="text-xl font-bold">{employee.name}</h3>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-muted-foreground">{employee.position}</span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-sm text-muted-foreground">{employee.department}</span>
-                  </div>
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex flex-col items-center space-y-2">
+                  <Avatar className="h-32 w-32">
+                    <AvatarImage src={employee.avatar_url || "/placeholder.svg"} alt={employee.name} />
+                    <AvatarFallback className="text-2xl">{getInitials(employee.name)}</AvatarFallback>
+                  </Avatar>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${
+                      employee.status === "active"
+                        ? "bg-green-50 text-green-700 ring-green-600/20"
+                        : employee.status === "on_leave"
+                          ? "bg-yellow-50 text-yellow-700 ring-yellow-600/20"
+                          : "bg-red-50 text-red-700 ring-red-600/20"
+                    }`}
+                  >
+                    {getStatusLabel(employee.status)}
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div>
-                    <h4 className="mb-2 text-sm font-medium text-muted-foreground">Mã nhân viên</h4>
-                    <p>{employee.code || "Chưa có mã"}</p>
-                  </div>
-                  <div>
-                    <h4 className="mb-2 text-sm font-medium text-muted-foreground">Ngày vào làm</h4>
-                    <p>{employee.hire_date ? format(new Date(employee.hire_date), "dd/MM/yyyy") : "N/A"}</p>
-                  </div>
-                  <div>
-                    <h4 className="mb-2 text-sm font-medium text-muted-foreground">Trạng thái</h4>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${
-                        employee.status === "active"
-                          ? "bg-green-50 text-green-700 ring-green-600/20"
-                          : employee.status === "on_leave"
-                            ? "bg-yellow-50 text-yellow-700 ring-yellow-600/20"
-                            : "bg-red-50 text-red-700 ring-red-600/20"
-                      }`}
-                    >
-                      {getStatusLabel(employee.status)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">Thông tin liên hệ</h4>
-                  {employee.phone && (
+                <div className="flex-1 space-y-4">
+                  <div className="flex flex-col space-y-1">
+                    <h3 className="text-xl font-bold">{employee.name}</h3>
                     <div className="flex items-center space-x-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span>{employee.phone}</span>
+                      <span className="text-sm text-muted-foreground">{employee.position}</span>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-sm text-muted-foreground">{employee.department}</span>
                     </div>
-                  )}
-                  {employee.email && (
-                    <div className="flex items-center space-x-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span>{employee.email}</span>
-                    </div>
-                  )}
-                  {employee.address && (
-                    <div className="flex items-start space-x-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{employee.address}</span>
-                    </div>
-                  )}
-                </div>
+                  </div>
 
-                {employee.notes && (
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                      <h4 className="mb-2 text-sm font-medium text-muted-foreground">Mã nhân viên</h4>
+                      <p>{employee.code || "Chưa có mã"}</p>
+                    </div>
+                    <div>
+                      <h4 className="mb-2 text-sm font-medium text-muted-foreground">Ngày vào làm</h4>
+                      <p>{employee.hire_date ? format(new Date(employee.hire_date), "dd/MM/yyyy") : "N/A"}</p>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Ghi chú</h4>
-                    <p className="text-sm">{employee.notes}</p>
+                    <h4 className="text-sm font-medium text-muted-foreground">Thông tin liên hệ</h4>
+                    {employee.phone && (
+                      <div className="flex items-center space-x-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span>{employee.phone}</span>
+                      </div>
+                    )}
+                    {employee.email && (
+                      <div className="flex items-center space-x-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span>{employee.email}</span>
+                      </div>
+                    )}
+                    {employee.address && (
+                      <div className="flex items-start space-x-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span>{employee.address}</span>
+                      </div>
+                    )}
                   </div>
-                )}
+
+                  {employee.notes && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-muted-foreground">Ghi chú</h4>
+                      <p className="text-sm">{employee.notes}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>

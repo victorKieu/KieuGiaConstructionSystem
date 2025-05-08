@@ -15,20 +15,47 @@ import {
   Laptop,
   CheckCircle2,
   XCircle,
+  AlertCircle,
 } from "lucide-react"
 import Link from "next/link"
+import { getEmployeeStats, getNewestEmployees } from "@/lib/actions/employee-actions"
+import { format } from "date-fns"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export const metadata: Metadata = {
   title: "HRM Dashboard | Kieu Gia Construction",
   description: "Tổng quan về quản lý nhân sự",
 }
 
-export default function HRMDashboard() {
-  // Dữ liệu mẫu cho dashboard
-  const stats = [
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
+export default async function HRMDashboard() {
+  console.log("🔄 Đang render trang HRM Dashboard...")
+
+  // Lấy dữ liệu thống kê từ database
+  let stats = null
+  let newEmployees = []
+  let error = null
+
+  try {
+    // Lấy thống kê nhân viên
+    stats = await getEmployeeStats()
+    console.log("📊 Đã lấy thống kê nhân viên:", stats)
+
+    // Lấy danh sách nhân viên mới nhất
+    newEmployees = await getNewestEmployees(4)
+    console.log("👥 Đã lấy danh sách nhân viên mới nhất:", newEmployees.length)
+  } catch (err) {
+    console.error("❌ Lỗi khi lấy dữ liệu:", err)
+    error = err instanceof Error ? err.message : "Không thể lấy dữ liệu từ server"
+  }
+
+  // Dữ liệu thống kê
+  const statsData = [
     {
       title: "Tổng nhân viên",
-      value: "124",
+      value: stats ? stats.totalEmployees.toString() : "0",
       icon: Users,
       change: "+5%",
       trend: "up",
@@ -44,7 +71,7 @@ export default function HRMDashboard() {
     },
     {
       title: "Nhân viên mới",
-      value: "8",
+      value: stats ? stats.newEmployees.toString() : "0",
       icon: UserPlus,
       change: "+3",
       trend: "up",
@@ -52,7 +79,7 @@ export default function HRMDashboard() {
     },
     {
       title: "Nghỉ việc",
-      value: "3",
+      value: stats ? stats.terminatedEmployees.toString() : "0",
       icon: UserMinus,
       change: "-2",
       trend: "down",
@@ -76,101 +103,7 @@ export default function HRMDashboard() {
     },
   ]
 
-  // Dữ liệu hoạt động gần đây
-  const recentActivities = [
-    {
-      id: 1,
-      user: {
-        name: "Nguyễn Văn A",
-        avatar: "/abstract-geometric-shapes.png",
-        initials: "NA",
-      },
-      action: "đã được thêm vào hệ thống",
-      time: "2 giờ trước",
-    },
-    {
-      id: 2,
-      user: {
-        name: "Trần Thị B",
-        avatar: "/abstract-geometric-tb.png",
-        initials: "TB",
-      },
-      action: "đã cập nhật thông tin cá nhân",
-      time: "3 giờ trước",
-    },
-    {
-      id: 3,
-      user: {
-        name: "Lê Văn C",
-        avatar: "/stylized-lc.png",
-        initials: "LC",
-      },
-      action: "đã được thăng chức lên Trưởng nhóm",
-      time: "5 giờ trước",
-    },
-    {
-      id: 4,
-      user: {
-        name: "Phạm Thị D",
-        avatar: "/public-domain-symbol.png",
-        initials: "PD",
-      },
-      action: "đã được cấp laptop mới",
-      time: "1 ngày trước",
-    },
-    {
-      id: 5,
-      user: {
-        name: "Hoàng Văn E",
-        avatar: "/the-element-helium.png",
-        initials: "HE",
-      },
-      action: "đã nghỉ phép 3 ngày",
-      time: "2 ngày trước",
-    },
-  ]
-
-  // Dữ liệu nhân viên mới
-  const newEmployees = [
-    {
-      id: 1,
-      name: "Nguyễn Văn A",
-      position: "Kỹ sư xây dựng",
-      department: "Kỹ thuật",
-      joinDate: "15/04/2023",
-      avatar: "/abstract-geometric-shapes.png",
-      initials: "NA",
-    },
-    {
-      id: 2,
-      name: "Trần Thị B",
-      position: "Chuyên viên kinh doanh",
-      department: "Kinh doanh",
-      joinDate: "20/04/2023",
-      avatar: "/abstract-geometric-tb.png",
-      initials: "TB",
-    },
-    {
-      id: 3,
-      name: "Lê Văn C",
-      position: "Kế toán",
-      department: "Tài chính",
-      joinDate: "22/04/2023",
-      avatar: "/stylized-lc.png",
-      initials: "LC",
-    },
-    {
-      id: 4,
-      name: "Phạm Thị D",
-      position: "Nhân viên nhân sự",
-      department: "Nhân sự",
-      joinDate: "25/04/2023",
-      avatar: "/public-domain-symbol.png",
-      initials: "PD",
-    },
-  ]
-
-  // Dữ liệu chấm công hôm nay
+  // Dữ liệu chấm công hôm nay (vẫn sử dụng dữ liệu mẫu vì chưa có bảng chấm công)
   const todayAttendance = [
     {
       id: 1,
@@ -219,6 +152,16 @@ export default function HRMDashboard() {
     },
   ]
 
+  // Hàm lấy chữ cái đầu của họ và tên
+  const getInitials = (name: string): string => {
+    if (!name) return "NA"
+
+    const parts = name.split(" ")
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
+
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
+
   return (
     <div className="flex flex-1 flex-col space-y-4 p-4 md:p-8 pt-6">
       <div className="flex flex-col items-start gap-2 md:flex-row md:items-center md:justify-between">
@@ -227,6 +170,14 @@ export default function HRMDashboard() {
           <p className="text-muted-foreground">Tổng quan về quản lý nhân sự</p>
         </div>
       </div>
+
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Lỗi</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
@@ -238,7 +189,7 @@ export default function HRMDashboard() {
         <TabsContent value="overview" className="space-y-4">
           {/* Thẻ thống kê */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {stats.map((stat, index) => {
+            {statsData.map((stat, index) => {
               const Icon = stat.icon
               const TrendIcon = stat.trend === "up" ? TrendingUp : TrendingDown
               const trendColor =
@@ -278,20 +229,24 @@ export default function HRMDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentActivities.map((activity) => (
-                    <div key={activity.id} className="flex items-start gap-4">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={activity.user.avatar || "/placeholder.svg"} alt={activity.user.name} />
-                        <AvatarFallback>{activity.user.initials}</AvatarFallback>
-                      </Avatar>
-                      <div className="space-y-1">
-                        <p className="text-sm">
-                          <span className="font-medium">{activity.user.name}</span> {activity.action}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{activity.time}</p>
+                  {stats && stats.recentActivities.length > 0 ? (
+                    stats.recentActivities.map((activity, index) => (
+                      <div key={index} className="flex items-start gap-4">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={activity.user.avatar || "/placeholder.svg"} alt={activity.user.name} />
+                          <AvatarFallback>{activity.user.initials}</AvatarFallback>
+                        </Avatar>
+                        <div className="space-y-1">
+                          <p className="text-sm">
+                            <span className="font-medium">{activity.user.name}</span> {activity.action}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{activity.time}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Không có hoạt động gần đây.</p>
+                  )}
                 </div>
               </CardContent>
               <CardFooter>
@@ -309,22 +264,26 @@ export default function HRMDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {newEmployees.map((employee) => (
-                    <div key={employee.id} className="flex items-center gap-4">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={employee.avatar || "/placeholder.svg"} alt={employee.name} />
-                        <AvatarFallback>{employee.initials}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium leading-none">{employee.name}</p>
-                        <p className="text-xs text-muted-foreground">{employee.position}</p>
+                  {newEmployees.length > 0 ? (
+                    newEmployees.map((employee) => (
+                      <div key={employee.id} className="flex items-center gap-4">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={employee.avatar_url || "/placeholder.svg"} alt={employee.name} />
+                          <AvatarFallback>{getInitials(employee.name)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium leading-none">{employee.name}</p>
+                          <p className="text-xs text-muted-foreground">{employee.position}</p>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          <p>{employee.department}</p>
+                          <p>{employee.hire_date ? format(new Date(employee.hire_date), "dd/MM/yyyy") : "N/A"}</p>
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        <p>{employee.department}</p>
-                        <p>{employee.joinDate}</p>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Không có nhân viên mới.</p>
+                  )}
                 </div>
               </CardContent>
               <CardFooter>
@@ -344,7 +303,7 @@ export default function HRMDashboard() {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">124</div>
+                <div className="text-2xl font-bold">{stats ? stats.totalEmployees : 0}</div>
               </CardContent>
             </Card>
             <Card>
@@ -427,7 +386,7 @@ export default function HRMDashboard() {
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Danh sách nhân viên</CardTitle>
-                <CardDescription>Tổng số: 124 nhân viên</CardDescription>
+                <CardDescription>Tổng số: {stats ? stats.totalEmployees : 0} nhân viên</CardDescription>
               </div>
               <Button>
                 <Link href="/dashboard/hrm/employees">Xem tất cả</Link>
@@ -435,25 +394,29 @@ export default function HRMDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {newEmployees.map((employee) => (
-                  <div key={employee.id} className="flex items-center gap-4 p-2 hover:bg-muted rounded-md">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={employee.avatar || "/placeholder.svg"} alt={employee.name} />
-                      <AvatarFallback>{employee.initials}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">{employee.name}</p>
-                      <p className="text-xs text-muted-foreground">{employee.position}</p>
+                {newEmployees.length > 0 ? (
+                  newEmployees.map((employee) => (
+                    <div key={employee.id} className="flex items-center gap-4 p-2 hover:bg-muted rounded-md">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={employee.avatar_url || "/placeholder.svg"} alt={employee.name} />
+                        <AvatarFallback>{getInitials(employee.name)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium leading-none">{employee.name}</p>
+                        <p className="text-xs text-muted-foreground">{employee.position}</p>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        <p>{employee.department}</p>
+                        <p>{employee.hire_date ? format(new Date(employee.hire_date), "dd/MM/yyyy") : "N/A"}</p>
+                      </div>
+                      <Button variant="ghost" size="sm">
+                        <Link href={`/dashboard/hrm/employees/${employee.id}`}>Chi tiết</Link>
+                      </Button>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      <p>{employee.department}</p>
-                      <p>{employee.joinDate}</p>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      <Link href={`/dashboard/hrm/employees/${employee.id}`}>Chi tiết</Link>
-                    </Button>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">Không có nhân viên nào.</p>
+                )}
               </div>
             </CardContent>
           </Card>
