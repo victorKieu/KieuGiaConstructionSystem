@@ -3,12 +3,13 @@ import { MainLayout } from "@/components/layout/main-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, FileBarChart, Search, UserPlus } from "lucide-react"
+import { AlertCircle, ArrowLeft, FileBarChart, Search, UserPlus } from "lucide-react"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { getEmployees } from "@/lib/actions/employee-actions"
 import { format } from "date-fns"
 import { getStatusLabel } from "@/lib/constants/employee-constants"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export const metadata: Metadata = {
   title: "Quản lý nhân viên | Kieu Gia Construction",
@@ -16,16 +17,34 @@ export const metadata: Metadata = {
 }
 
 export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 export default async function EmployeesPage() {
+  console.log("🔄 Đang render trang danh sách nhân viên...")
+
   // Lấy danh sách nhân viên từ Supabase
-  const employees = await getEmployees()
-  console.log("Employees in page component:", employees?.length || 0)
+  let employees = []
+  let error = null
+
+  try {
+    employees = await getEmployees()
+    console.log("📋 Số lượng nhân viên đã lấy:", employees.length)
+  } catch (err) {
+    console.error("❌ Lỗi khi lấy danh sách nhân viên:", err)
+    error = err instanceof Error ? err.message : "Không thể lấy danh sách nhân viên"
+  }
 
   // Phân loại nhân viên theo trạng thái
   const activeEmployees = employees.filter((emp) => emp.status === "active")
   const onLeaveEmployees = employees.filter((emp) => emp.status === "on_leave")
   const terminatedEmployees = employees.filter((emp) => emp.status === "terminated")
+
+  console.log("📊 Phân loại nhân viên:", {
+    total: employees.length,
+    active: activeEmployees.length,
+    onLeave: onLeaveEmployees.length,
+    terminated: terminatedEmployees.length,
+  })
 
   // Hàm render bảng nhân viên
   const renderEmployeeTable = (employeeList: any[]) => (
@@ -147,6 +166,14 @@ export default async function EmployeesPage() {
             </Button>
           </div>
         </div>
+
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Lỗi</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         <Tabs defaultValue="all" className="space-y-4">
           <div className="flex items-center justify-between">

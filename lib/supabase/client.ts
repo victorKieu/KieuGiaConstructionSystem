@@ -1,8 +1,17 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js"
+import { createClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/supabase"
 
-// Kiểm tra xem có đang trong quá trình build không
-const isBuildProcess = process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_SUPABASE_URL
+// Kiểm tra môi trường
+const isBrowser = typeof window !== "undefined"
+const isServer = !isBrowser
+
+// Log thông tin môi trường để debug
+console.log("Environment:", {
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? "Set" : "Not set",
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Set" : "Not set",
+  isBrowser,
+  isServer,
+})
 
 // Tạo một client giả cho quá trình build
 const mockClient = {
@@ -28,30 +37,22 @@ const mockClient = {
   },
 }
 
-// Export createClient để tương thích với code hiện tại
-export const createClient = () => {
-  if (isBuildProcess) {
-    console.warn("Build process detected, returning mock Supabase client")
-    return mockClient
-  }
+// Kiểm tra xem có đủ thông tin để tạo client không
+const hasSupabaseCredentials = !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error("Supabase environment variables are not defined")
-    return mockClient
-  }
+// Tạo Supabase client thực nếu có đủ thông tin
+const supabaseClient = hasSupabaseCredentials
+  ? createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+      auth: {
+        persistSession: true,
+      },
+    })
+  : mockClient
 
-  return createSupabaseClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-}
-
-// Tạo client thực hoặc client giả tùy thuộc vào môi trường
-export const supabase = isBuildProcess
-  ? mockClient
-  : createSupabaseClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
-    )
+// Export client để sử dụng trong ứng dụng
+export const supabase = supabaseClient
 
 // Hàm kiểm tra xem Supabase có sẵn sàng không
 export function isSupabaseReady() {
-  return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  return hasSupabaseCredentials
 }

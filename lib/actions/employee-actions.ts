@@ -1,6 +1,6 @@
 "use server"
 
-import { supabase } from "@/lib/supabase/client"
+import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
@@ -31,42 +31,57 @@ export type Employee = {
 
 // Lấy danh sách nhân viên
 export async function getEmployees() {
+  console.log("🔍 Bắt đầu lấy danh sách nhân viên...")
+
   try {
-    console.log("Fetching employees from Supabase...")
-    const { data, error } = await supabase.from("employees").select("*").order("name", { ascending: true })
+    const supabase = createServerSupabaseClient()
+    console.log("✅ Đã tạo Supabase client (server)")
+
+    const { data, error, count } = await supabase
+      .from("employees")
+      .select("*", { count: "exact" })
+      .order("name", { ascending: true })
 
     if (error) {
-      console.error("Error fetching employees:", error)
+      console.error("❌ Lỗi khi lấy danh sách nhân viên:", error)
       return []
     }
 
-    console.log("Employees fetched:", data?.length || 0)
+    console.log(`✅ Đã lấy ${count || 0} nhân viên thành công`)
     return data || []
   } catch (error) {
-    console.error("Failed to fetch employees:", error)
+    console.error("❌ Lỗi không xác định khi lấy danh sách nhân viên:", error)
     return []
   }
 }
 
 // Lấy chi tiết nhân viên theo ID
 export async function getEmployeeById(id: string) {
+  console.log(`🔍 Bắt đầu lấy thông tin nhân viên ID: ${id}`)
+
   try {
+    const supabase = createServerSupabaseClient()
+    console.log("✅ Đã tạo Supabase client (server)")
+
     const { data, error } = await supabase.from("employees").select("*").eq("id", id).single()
 
     if (error) {
-      console.error("Error fetching employee:", error)
+      console.error(`❌ Lỗi khi lấy thông tin nhân viên ID ${id}:`, error)
       return null
     }
 
+    console.log(`✅ Đã lấy thông tin nhân viên ID ${id} thành công`)
     return data
   } catch (error) {
-    console.error("Failed to fetch employee:", error)
+    console.error(`❌ Lỗi không xác định khi lấy thông tin nhân viên ID ${id}:`, error)
     return null
   }
 }
 
 // Tạo nhân viên mới
 export async function createEmployee(formData: FormData) {
+  console.log("🔍 Bắt đầu tạo nhân viên mới...")
+
   try {
     // Lấy dữ liệu từ form
     const code = formData.get("code") as string
@@ -78,36 +93,45 @@ export async function createEmployee(formData: FormData) {
     const address = formData.get("address") as string
     const hire_date = formData.get("hire_date") as string
     const status = (formData.get("status") as string) || "active"
+    const notes = formData.get("notes") as string
+
+    console.log("📋 Dữ liệu form:", { code, name, position, department, hire_date, status })
 
     // Kiểm tra dữ liệu bắt buộc
     if (!name || !position || !department || !hire_date) {
+      console.error("❌ Thiếu thông tin bắt buộc")
       throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc")
     }
 
+    const supabase = createServerSupabaseClient()
+    console.log("✅ Đã tạo Supabase client (server)")
+
     // Tạo nhân viên mới
-    const { data, error } = await supabase
-      .from("employees")
-      .insert([
-        {
-          code,
-          name,
-          position,
-          department,
-          phone: phone || null,
-          email: email || null,
-          address: address || null,
-          hire_date,
-          status,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ])
-      .select()
+    const employeeData = {
+      code: code || null,
+      name,
+      position,
+      department,
+      phone: phone || null,
+      email: email || null,
+      address: address || null,
+      hire_date,
+      status,
+      notes: notes || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
+    console.log("📋 Dữ liệu sẽ insert:", employeeData)
+
+    const { data, error } = await supabase.from("employees").insert([employeeData]).select()
 
     if (error) {
-      console.error("Error creating employee:", error)
+      console.error("❌ Lỗi khi tạo nhân viên mới:", error)
       throw new Error("Không thể tạo nhân viên mới: " + error.message)
     }
+
+    console.log("✅ Đã tạo nhân viên mới thành công:", data)
 
     // Cập nhật lại dữ liệu
     revalidatePath("/dashboard/hrm/employees")
@@ -115,13 +139,15 @@ export async function createEmployee(formData: FormData) {
     // Chuyển hướng về trang danh sách nhân viên
     redirect("/dashboard/hrm/employees")
   } catch (error) {
-    console.error("Failed to create employee:", error)
+    console.error("❌ Lỗi không xác định khi tạo nhân viên mới:", error)
     throw error
   }
 }
 
 // Cập nhật thông tin nhân viên
 export async function updateEmployee(id: string, formData: FormData) {
+  console.log(`🔍 Bắt đầu cập nhật thông tin nhân viên ID: ${id}`)
+
   try {
     // Lấy dữ liệu từ form
     const code = formData.get("code") as string
@@ -133,34 +159,44 @@ export async function updateEmployee(id: string, formData: FormData) {
     const address = formData.get("address") as string
     const hire_date = formData.get("hire_date") as string
     const status = formData.get("status") as string
+    const notes = formData.get("notes") as string
+
+    console.log("📋 Dữ liệu form:", { code, name, position, department, hire_date, status })
 
     // Kiểm tra dữ liệu bắt buộc
     if (!name || !position || !department || !hire_date || !status) {
+      console.error("❌ Thiếu thông tin bắt buộc")
       throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc")
     }
 
+    const supabase = createServerSupabaseClient()
+    console.log("✅ Đã tạo Supabase client (server)")
+
     // Cập nhật thông tin nhân viên
-    const { data, error } = await supabase
-      .from("employees")
-      .update({
-        code,
-        name,
-        position,
-        department,
-        phone: phone || null,
-        email: email || null,
-        address: address || null,
-        hire_date,
-        status,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select()
+    const employeeData = {
+      code: code || null,
+      name,
+      position,
+      department,
+      phone: phone || null,
+      email: email || null,
+      address: address || null,
+      hire_date,
+      status,
+      notes: notes || null,
+      updated_at: new Date().toISOString(),
+    }
+
+    console.log("📋 Dữ liệu sẽ update:", employeeData)
+
+    const { data, error } = await supabase.from("employees").update(employeeData).eq("id", id).select()
 
     if (error) {
-      console.error("Error updating employee:", error)
+      console.error(`❌ Lỗi khi cập nhật thông tin nhân viên ID ${id}:`, error)
       throw new Error("Không thể cập nhật thông tin nhân viên: " + error.message)
     }
+
+    console.log(`✅ Đã cập nhật thông tin nhân viên ID ${id} thành công:`, data)
 
     // Cập nhật lại dữ liệu
     revalidatePath(`/dashboard/hrm/employees/${id}`)
@@ -169,20 +205,27 @@ export async function updateEmployee(id: string, formData: FormData) {
     // Chuyển hướng về trang chi tiết nhân viên
     redirect(`/dashboard/hrm/employees/${id}`)
   } catch (error) {
-    console.error("Failed to update employee:", error)
+    console.error(`❌ Lỗi không xác định khi cập nhật thông tin nhân viên ID ${id}:`, error)
     throw error
   }
 }
 
 // Xóa nhân viên
 export async function deleteEmployee(id: string) {
+  console.log(`🔍 Bắt đầu xóa nhân viên ID: ${id}`)
+
   try {
+    const supabase = createServerSupabaseClient()
+    console.log("✅ Đã tạo Supabase client (server)")
+
     const { error } = await supabase.from("employees").delete().eq("id", id)
 
     if (error) {
-      console.error("Error deleting employee:", error)
+      console.error(`❌ Lỗi khi xóa nhân viên ID ${id}:`, error)
       throw new Error("Không thể xóa nhân viên: " + error.message)
     }
+
+    console.log(`✅ Đã xóa nhân viên ID ${id} thành công`)
 
     // Cập nhật lại dữ liệu
     revalidatePath("/dashboard/hrm/employees")
@@ -190,7 +233,7 @@ export async function deleteEmployee(id: string) {
     // Chuyển hướng về trang danh sách nhân viên
     redirect("/dashboard/hrm/employees")
   } catch (error) {
-    console.error("Failed to delete employee:", error)
+    console.error(`❌ Lỗi không xác định khi xóa nhân viên ID ${id}:`, error)
     throw error
   }
 }

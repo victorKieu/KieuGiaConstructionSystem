@@ -1,53 +1,38 @@
-// Lấy danh sách phòng ban
+// Danh sách phòng ban
 export function getDepartments() {
-  return [
-    "Ban giám đốc",
-    "Phòng kỹ thuật",
-    "Phòng thi công",
-    "Phòng thiết kế",
-    "Phòng dự án",
-    "Phòng kinh doanh",
-    "Phòng tài chính kế toán",
-    "Phòng hành chính nhân sự",
-    "Phòng vật tư thiết bị",
-    "Kho vận",
-  ]
+  return ["Ban giám đốc", "Kế toán", "Nhân sự", "Kỹ thuật", "Kinh doanh", "Dự án", "Kho vận", "Hành chính"]
 }
 
-// Lấy danh sách chức vụ
+// Danh sách chức vụ
 export function getPositions() {
   return [
     "Giám đốc",
     "Phó giám đốc",
     "Trưởng phòng",
     "Phó phòng",
-    "Kỹ sư xây dựng",
-    "Kỹ sư thiết kế",
+    "Trưởng nhóm",
+    "Nhân viên",
+    "Kỹ sư",
     "Kiến trúc sư",
-    "Giám sát công trình",
-    "Chỉ huy trưởng",
     "Kế toán trưởng",
     "Kế toán viên",
-    "Nhân viên kinh doanh",
-    "Nhân viên hành chính",
-    "Nhân viên vật tư",
+    "Quản lý dự án",
     "Quản lý kho",
-    "Công nhân",
+    "Thủ kho",
   ]
 }
 
-// Lấy danh sách trạng thái
+// Danh sách trạng thái
 export function getStatuses() {
   return [
     { value: "active", label: "Đang làm việc" },
     { value: "on_leave", label: "Nghỉ phép" },
-    { value: "suspended", label: "Tạm ngưng" },
     { value: "terminated", label: "Đã nghỉ việc" },
   ]
 }
 
-// Chuyển đổi mã trạng thái thành nhãn hiển thị
-export function getStatusLabel(statusCode: string): string {
-  const status = getStatuses().find((s) => s.value === statusCode)
-  return status ? status.label : statusCode
+// Hàm lấy nhãn trạng thái từ giá trị
+export function getStatusLabel(status: string) {
+  const statusObj = getStatuses().find((s) => s.value === status)
+  return statusObj ? statusObj.label : status
 }

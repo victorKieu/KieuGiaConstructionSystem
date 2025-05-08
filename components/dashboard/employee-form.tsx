@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -15,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import type { Employee } from "@/lib/actions/employee-actions"
 import { getDepartments, getPositions, getStatuses } from "@/lib/constants/employee-constants"
+import Link from "next/link"
+import { useState } from "react"
 
 // Schema validation
 const employeeFormSchema = z.object({
@@ -73,10 +77,12 @@ const mapEmployeeToFormValues = (employee: Employee | null): EmployeeFormValues 
 
 interface EmployeeFormProps {
   employee?: Employee | null
-  action: (formData: FormData) => Promise<void>
+  onSubmit: (formData: FormData) => Promise<void>
 }
 
-export function EmployeeForm({ employee, action }: EmployeeFormProps) {
+export function EmployeeForm({ employee, onSubmit }: EmployeeFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: mapEmployeeToFormValues(employee),
@@ -86,9 +92,29 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
   const positions = getPositions()
   const statuses = getStatuses()
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    // Validate form
+    const result = await form.trigger()
+    if (!result) return
+
+    setIsSubmitting(true)
+
+    try {
+      console.log("📝 Submitting employee form...")
+      const formData = new FormData(e.currentTarget)
+      await onSubmit(formData)
+      console.log("✅ Form submitted successfully")
+    } catch (error) {
+      console.error("❌ Error submitting form:", error)
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <Form {...form}>
-      <form action={action} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
@@ -97,7 +123,7 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
               <FormItem>
                 <FormLabel>Mã nhân viên</FormLabel>
                 <FormControl>
-                  <Input placeholder="VD: EMP001" {...field} />
+                  <Input placeholder="VD: EMP001" {...field} name="code" />
                 </FormControl>
                 <FormDescription>Mã nhân viên dùng để phân biệt nhân viên trong hệ thống.</FormDescription>
                 <FormMessage />
@@ -112,7 +138,7 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
               <FormItem>
                 <FormLabel>Họ và tên</FormLabel>
                 <FormControl>
-                  <Input placeholder="Nhập họ và tên nhân viên" {...field} />
+                  <Input placeholder="Nhập họ và tên nhân viên" {...field} name="name" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -139,6 +165,7 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
                     ))}
                   </SelectContent>
                 </Select>
+                <input type="hidden" name="position" value={field.value} />
                 <FormMessage />
               </FormItem>
             )}
@@ -164,6 +191,7 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
                     ))}
                   </SelectContent>
                 </Select>
+                <input type="hidden" name="department" value={field.value} />
                 <FormMessage />
               </FormItem>
             )}
@@ -176,7 +204,7 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
               <FormItem>
                 <FormLabel>Số điện thoại</FormLabel>
                 <FormControl>
-                  <Input placeholder="Nhập số điện thoại" {...field} />
+                  <Input placeholder="Nhập số điện thoại" {...field} name="phone" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -190,7 +218,7 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="Nhập địa chỉ email" {...field} />
+                  <Input placeholder="Nhập địa chỉ email" {...field} name="email" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -225,6 +253,7 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
                     />
                   </PopoverContent>
                 </Popover>
+                <input type="hidden" name="hire_date" value={field.value ? format(field.value, "yyyy-MM-dd") : ""} />
                 <FormMessage />
               </FormItem>
             )}
@@ -250,6 +279,7 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
                     ))}
                   </SelectContent>
                 </Select>
+                <input type="hidden" name="status" value={field.value} />
                 <FormMessage />
               </FormItem>
             )}
@@ -263,7 +293,7 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
             <FormItem>
               <FormLabel>Địa chỉ</FormLabel>
               <FormControl>
-                <Textarea placeholder="Nhập địa chỉ nhân viên" className="resize-none" {...field} />
+                <Textarea placeholder="Nhập địa chỉ nhân viên" className="resize-none" {...field} name="address" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -277,7 +307,12 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
             <FormItem>
               <FormLabel>Ghi chú</FormLabel>
               <FormControl>
-                <Textarea placeholder="Nhập ghi chú về nhân viên (nếu có)" className="resize-none" {...field} />
+                <Textarea
+                  placeholder="Nhập ghi chú về nhân viên (nếu có)"
+                  className="resize-none"
+                  {...field}
+                  name="notes"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -285,10 +320,12 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
         />
 
         <div className="flex justify-end space-x-4">
-          <Button type="button" variant="outline">
-            Hủy
+          <Button type="button" variant="outline" asChild>
+            <Link href={employee ? `/dashboard/hrm/employees/${employee.id}` : "/dashboard/hrm/employees"}>Hủy</Link>
           </Button>
-          <Button type="submit">Lưu thông tin</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Đang xử lý..." : employee ? "Cập nhật" : "Tạo mới"}
+          </Button>
         </div>
 
         <input type="hidden" name="id" value={employee?.id || ""} />
