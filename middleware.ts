@@ -2,14 +2,17 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 
+// Danh sách các route không cần xác thực
+const publicRoutes = ["/", "/login", "/api/health", "/fallback-login", "/welcome"]
+
 export async function middleware(request: NextRequest) {
-  // Bỏ qua các route không cần xác thực
-  if (
-    request.nextUrl.pathname === "/" ||
-    request.nextUrl.pathname === "/login" ||
-    request.nextUrl.pathname === "/api/health" ||
-    request.nextUrl.pathname === "/fallback-login"
-  ) {
+  // Kiểm tra xem route hiện tại có trong danh sách public không
+  const isPublicRoute = publicRoutes.some(
+    (route) => request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith("/api/auth/"),
+  )
+
+  // Nếu là public route, cho phép truy cập
+  if (isPublicRoute) {
     return NextResponse.next()
   }
 
@@ -48,25 +51,17 @@ export async function middleware(request: NextRequest) {
       },
     )
 
-    // Kiểm tra nếu route bắt đầu bằng /dashboard hoặc /api (trừ các API auth và health)
-    if (
-      request.nextUrl.pathname.startsWith("/dashboard") ||
-      (request.nextUrl.pathname.startsWith("/api") &&
-        !request.nextUrl.pathname.startsWith("/api/auth") &&
-        !request.nextUrl.pathname.startsWith("/api/health"))
-    ) {
-      // Kiểm tra session
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+    // Kiểm tra session
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
 
-      // Nếu không có session, chuyển hướng đến trang login
-      if (!session) {
-        const redirectUrl = new URL("/login", request.url)
-        // Thêm returnUrl để sau khi đăng nhập có thể quay lại trang ban đầu
-        redirectUrl.searchParams.set("returnUrl", request.nextUrl.pathname)
-        return NextResponse.redirect(redirectUrl)
-      }
+    // Nếu không có session, chuyển hướng đến trang login
+    if (!session) {
+      const redirectUrl = new URL("/login", request.url)
+      // Thêm returnUrl để sau khi đăng nhập có thể quay lại trang ban đầu
+      redirectUrl.searchParams.set("returnUrl", request.nextUrl.pathname)
+      return NextResponse.redirect(redirectUrl)
     }
   } catch (error) {
     console.error("Middleware error:", error)
@@ -79,5 +74,13 @@ export async function middleware(request: NextRequest) {
 
 // Chỉ áp dụng middleware cho các route cần bảo vệ
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/:path*"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+  ],
 }
