@@ -1,50 +1,32 @@
+import { LoginForm } from "@/components/auth/login-form"
 import Image from "next/image"
-import LoginForm from "@/components/auth/login-form"
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen">
-      {/* Form đăng nhập */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4 bg-white">
-        <div className="w-full max-w-md">
-          <div className="flex justify-center mb-6">
-            <Image src="/logo-kieu-gia.png" alt="Kieu Gia Logo" width={150} height={150} className="mb-4" />
+    <div className="flex min-h-screen bg-gray-100">
+      <div className="flex flex-1 flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+        <div className="mx-auto w-full max-w-sm lg:w-96">
+          <div className="flex justify-center">
+            <Image
+              src="/logo-kieu-gia.png"
+              alt="Kieu Gia Logo"
+              width={80}
+              height={80}
+              className="h-20 w-auto"
+              priority
+            />
           </div>
-
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-800">Kieu Gia Construction</h1>
-            <p className="text-gray-600 mt-1">Đăng Nhập Hệ Thống</p>
-          </div>
-
-          <LoginForm />
-
-          <div className="text-center mt-8 text-gray-600 text-sm">
-            <p>Nâng Tầm Cuộc Sống, Giá Trị Tương Lai</p>
+          <div className="mt-8">
+            <LoginForm />
           </div>
         </div>
       </div>
-
-      {/* Sidebar thông tin */}
-      <div className="hidden lg:flex lg:flex-col lg:w-1/2 bg-gray-800 text-white p-10">
-        <div className="flex-1 flex flex-col justify-center">
-          <h2 className="text-3xl font-bold mb-4">Kieu Gia Construction</h2>
-          <p className="text-gray-300 mb-10">Hệ thống quản lý toàn diện cho công ty xây dựng hàng đầu Việt Nam</p>
-
-          <div className="space-y-8">
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Tầm nhìn:</h3>
-              <p className="text-gray-300">
-                Trở thành công ty tư vấn và xây dựng hàng đầu tại Việt Nam, nổi bật với chất lượng công trình và dịch vụ
-                khách hàng xuất sắc.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Sứ mệnh:</h3>
-              <p className="text-gray-300">
-                Đem đến giải pháp xây dựng tối ưu, an toàn và bền vững cho khách hàng, góp phần phát triển hạ tầng và đô
-                thị Việt Nam.
-              </p>
+      <div className="relative hidden w-0 flex-1 lg:block">
+        <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-amber-500 to-amber-700">
+          <div className="flex h-full items-center justify-center">
+            <div className="text-center text-white p-8">
+              <h1 className="text-4xl font-bold mb-4">Hệ Thống Quản Lý Xây Dựng</h1>
+              <p className="text-xl">Kiều Gia Construction</p>
             </div>
           </div>
         </div>

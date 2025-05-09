@@ -1,20 +1,17 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
+// Middleware đơn giản chỉ chuyển hướng trang chủ đến trang đăng nhập
 export function middleware(request: NextRequest) {
-  // Lấy đường dẫn từ URL
-  const path = request.nextUrl.pathname
-
-  // Chỉ chuyển hướng trang chủ đến trang đăng nhập
-  if (path === "/") {
+  // Chỉ áp dụng cho trang chủ
+  if (request.nextUrl.pathname === "/") {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
-  // Cho phép tất cả các request khác đi qua
   return NextResponse.next()
 }
 
-// Chỉ áp dụng middleware cho trang chủ
+// Chỉ áp dụng cho trang chủ
 export const config = {
   matcher: ["/"],
 }
