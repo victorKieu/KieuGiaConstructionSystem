@@ -1,131 +1,159 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Bell, Search, Menu, X } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Sidebar } from "@/components/layout/sidebar"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import type { User } from "@supabase/supabase-js"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { Bell, Menu, X, LogOut, Settings } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
 
-export function Header() {
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+interface HeaderProps {
+  user: User | null
+}
 
-  useEffect(() => {
-    async function getUser() {
-      const supabase = createClient()
-      const { data } = await supabase.auth.getUser()
-      setUser(data.user)
-      setLoading(false)
-    }
-    getUser()
-  }, [])
+export function Header({ user }: HeaderProps) {
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const router = useRouter()
+  const supabase = createClientComponentClient()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push("/login")
+    router.refresh()
+  }
 
   return (
-    <>
-      <header className="bg-white shadow-sm border-b h-16 flex items-center px-4">
-        <div className="md:hidden mr-2">
-          <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
-        </div>
-
-        <div className="flex-1 flex items-center max-w-md">
-          <div className="relative w-full">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input type="search" placeholder="Tìm kiếm..." className="w-full pl-8 bg-gray-50 border-gray-200" />
+    <header className="bg-white shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex">
+            <div className="flex-shrink-0 flex items-center">
+              <Link href="/dashboard">
+                <Image src="/logo-kieu-gia.png" alt="Kieu Gia Logo" width={40} height={40} />
+              </Link>
+              <span className="ml-2 text-xl font-bold text-amber-600 hidden md:block">Kieu Gia Construction</span>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center space-x-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="max-h-80 overflow-y-auto">
-                <DropdownMenuItem className="py-3 cursor-pointer">
-                  <div>
-                    <p className="font-medium text-sm">Cập nhật dự án Chung cư Kiều Gia</p>
-                    <p className="text-xs text-gray-500 mt-1">Tiến độ dự án đã đạt 75%</p>
-                    <p className="text-xs text-gray-400 mt-1">2 giờ trước</p>
+          <div className="hidden sm:ml-6 sm:flex sm:items-center">
+            <button
+              type="button"
+              className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+            >
+              <span className="sr-only">Xem thông báo</span>
+              <Bell className="h-6 w-6" />
+            </button>
+
+            {/* Profile dropdown */}
+            <div className="ml-3 relative">
+              <div>
+                <button
+                  type="button"
+                  className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+                  id="user-menu"
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                >
+                  <span className="sr-only">Mở menu người dùng</span>
+                  <div className="h-8 w-8 rounded-full bg-amber-500 flex items-center justify-center text-white">
+                    {user?.email?.charAt(0).toUpperCase() || "U"}
                   </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="py-3 cursor-pointer">
-                  <div>
-                    <p className="font-medium text-sm">Cảnh báo tồn kho</p>
-                    <p className="text-xs text-gray-500 mt-1">Xi măng Portland sắp hết hàng</p>
-                    <p className="text-xs text-gray-400 mt-1">5 giờ trước</p>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="py-3 cursor-pointer">
-                  <div>
-                    <p className="font-medium text-sm">Yêu cầu vật tư mới</p>
-                    <p className="text-xs text-gray-500 mt-1">Dự án Nhà phố Thủ Đức yêu cầu vật tư</p>
-                    <p className="text-xs text-gray-400 mt-1">1 ngày trước</p>
-                  </div>
-                </DropdownMenuItem>
+                </button>
               </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="justify-center">
-                <Button variant="ghost" size="sm" className="w-full">
-                  Xem tất cả
-                </Button>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
 
-          <div className="flex items-center space-x-2">
-            {!loading && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <div className="flex items-center space-x-2 cursor-pointer">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.user_metadata?.avatar_url || "/placeholder.svg"} />
-                      <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
-                    </Avatar>
-                    <div className="hidden md:block">
-                      <p className="text-sm font-medium">{user?.email}</p>
-                    </div>
+              {isProfileOpen && (
+                <div
+                  className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+                  role="menu"
+                  aria-orientation="vertical"
+                  aria-labelledby="user-menu"
+                >
+                  <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                    <p className="font-medium">{user?.email}</p>
+                    <p className="text-gray-500 text-xs">Quản trị viên</p>
                   </div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Hồ sơ</DropdownMenuItem>
-                  <DropdownMenuItem>Cài đặt</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Đăng xuất</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                  <Link
+                    href="/dashboard/settings"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    role="menuitem"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Cài đặt tài khoản
+                  </Link>
+                  <button
+                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    role="menuitem"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Đăng xuất
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="-mr-2 flex items-center sm:hidden">
+            {/* Mobile menu button */}
+            <button
+              type="button"
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-500"
+              aria-expanded="false"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              <span className="sr-only">Mở menu chính</span>
+              {isMobileMenuOpen ? <X className="block h-6 w-6" /> : <Menu className="block h-6 w-6" />}
+            </button>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 md:hidden">
-          <div className="h-full w-64 bg-white">
-            <Sidebar />
+      {/* Mobile menu, show/hide based on menu state */}
+      {isMobileMenuOpen && (
+        <div className="sm:hidden">
+          <div className="pt-4 pb-3 border-t border-gray-200">
+            <div className="flex items-center px-4">
+              <div className="flex-shrink-0">
+                <div className="h-10 w-10 rounded-full bg-amber-500 flex items-center justify-center text-white">
+                  {user?.email?.charAt(0).toUpperCase() || "U"}
+                </div>
+              </div>
+              <div className="ml-3">
+                <div className="text-base font-medium text-gray-800">{user?.email}</div>
+                <div className="text-sm font-medium text-gray-500">Quản trị viên</div>
+              </div>
+              <button
+                type="button"
+                className="ml-auto flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+              >
+                <span className="sr-only">Xem thông báo</span>
+                <Bell className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="mt-3 space-y-1">
+              <Link
+                href="/dashboard/settings"
+                className="flex items-center px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Settings className="mr-2 h-5 w-5" />
+                Cài đặt tài khoản
+              </Link>
+              <button
+                className="flex w-full items-center px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-5 w-5" />
+                Đăng xuất
+              </button>
+            </div>
           </div>
         </div>
       )}
-    </>
+    </header>
   )
 }

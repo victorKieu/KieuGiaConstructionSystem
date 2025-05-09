@@ -1,22 +1,33 @@
 import type React from "react"
-import Link from "next/link"
+import { Sidebar } from "@/components/layout/sidebar"
+import { Header } from "@/components/layout/header"
+import { createClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // Kiểm tra xác thực
+  const cookieStore = cookies()
+  const supabase = createClient()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session) {
+    redirect("/login")
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow">
-        <div className="container mx-auto p-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-amber-600">Kieu Gia Construction</h1>
-          <Link href="/login" className="text-amber-600 hover:text-amber-800">
-            Đăng xuất
-          </Link>
-        </div>
-      </header>
-      <main className="container mx-auto p-4">{children}</main>
+      <Header user={session.user} />
+      <div className="flex">
+        <Sidebar />
+        <main className="flex-1 p-6">{children}</main>
+      </div>
     </div>
   )
 }

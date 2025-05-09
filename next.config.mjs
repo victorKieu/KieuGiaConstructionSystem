@@ -6,7 +6,7 @@ const nextConfig = {
     domains: ["localhost"],
     unoptimized: true,
   },
-  // Loại bỏ output: 'standalone' để tránh lỗi khi build
+  // Không sử dụng output: 'standalone' để tránh lỗi khi build
   experimental: {
     serverActions: {
       allowedOrigins: ["localhost:3000", "app.kieugia-construction.biz.vn"],

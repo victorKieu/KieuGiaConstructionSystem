@@ -1,7 +1,10 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/supabase"
+import { cookies } from "next/headers"
 
-export function createServerSupabaseClient() {
+export function createClient() {
+  const cookieStore = cookies()
+
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     console.error("Missing Supabase credentials in server context")
     throw new Error("Missing Supabase credentials")
@@ -13,13 +16,10 @@ export function createServerSupabaseClient() {
       persistSession: false,
       autoRefreshToken: false,
     },
-    global: {
-      headers: {
-        "x-client-info": "server",
+    cookies: {
+      get(name) {
+        return cookieStore.get(name)?.value
       },
     },
   })
 }
-
-// Thêm export createClient để tương thích với code cũ
-export const createClient = createServerSupabaseClient
