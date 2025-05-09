@@ -1,7 +1,6 @@
 "use server"
 
 import { createClient } from "@supabase/supabase-js"
-import { v4 as uuidv4 } from "uuid"
 
 export async function uploadAvatarAction(formData: FormData) {
   try {
@@ -37,10 +36,12 @@ export async function uploadAvatarAction(formData: FormData) {
       },
     })
 
-    // Tạo tên file duy nhất
+    // Tạo tên file duy nhất sử dụng timestamp và random string thay vì uuid
+    const timestamp = Date.now()
+    const randomString = Math.random().toString(36).substring(2, 15)
     const fileExt = file.name.split(".").pop()
-    const fileName = `${uuidv4()}.${fileExt}`
-    const filePath = `employee-avatars/${fileName}`
+    const fileName = `${timestamp}_${randomString}.${fileExt}`
+    const filePath = `${fileName}` // Đơn giản hóa đường dẫn
 
     // Chuyển đổi File thành ArrayBuffer
     const arrayBuffer = await file.arrayBuffer()
@@ -59,6 +60,8 @@ export async function uploadAvatarAction(formData: FormData) {
 
     // Lấy URL công khai của hình ảnh
     const { data: publicUrlData } = supabase.storage.from("avatars").getPublicUrl(filePath)
+
+    console.log("✅ Tải lên hình ảnh thành công:", publicUrlData.publicUrl)
 
     return {
       success: true,
