@@ -5,10 +5,10 @@ import { useEffect, useState } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 import { isSupabaseReady } from "@/lib/supabase/client"
-import { DashboardSidebar } from "@/components/dashboard/sidebar"
-import { DashboardHeader } from "@/components/dashboard/header"
-import { SidebarProvider } from "@/components/dashboard/sidebar-context"
-import { ThemeProvider } from "@/components/theme-provider"
+import { DashboardSidebar } from "../../components/dashboard/sidebar"
+import { DashboardHeader } from "../../components/dashboard/header"
+import { SidebarProvider } from "../../components/dashboard/sidebar-context"
+import { ThemeProvider } from "../../components/theme-provider"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
