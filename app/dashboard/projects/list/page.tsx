@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   description: "Quản lý danh sách các dự án xây dựng",
 }
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 async function ProjectListContent() {
   const { data: projects = [], success, error } = await getProjects()
 
@@ -32,6 +35,16 @@ async function ProjectListContent() {
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
           <strong className="font-bold">Lỗi! </strong>
           <span className="block sm:inline">{error || "Không thể tải dữ liệu dự án. Vui lòng thử lại sau."}</span>
+        </div>
+      )}
+
+      {success && projects.length === 0 && (
+        <div
+          className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded relative mb-4"
+          role="alert"
+        >
+          <strong className="font-bold">Chưa có dữ liệu! </strong>
+          <span className="block sm:inline">Chưa có dự án nào trong hệ thống. Hãy tạo dự án mới để bắt đầu.</span>
         </div>
       )}
 

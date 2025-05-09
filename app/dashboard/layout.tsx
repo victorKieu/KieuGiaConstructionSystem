@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { isSupabaseReady } from "@/lib/supabase/client"
-import { DashboardSidebar } from "@/components/dashboard/sidebar"
+import { DashboardSidebar } from "@/components/layout/sidebar"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { SidebarProvider } from "@/components/dashboard/sidebar-context"
 import { ThemeProvider } from "@/components/theme-provider"
