@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 interface LoginFormProps {
   returnUrl?: string
@@ -16,6 +16,7 @@ export default function LoginForm({ returnUrl }: LoginFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const supabase = createClientComponentClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,7 +24,6 @@ export default function LoginForm({ returnUrl }: LoginFormProps) {
     setError(null)
 
     try {
-      const supabase = createClient()
       const { error } = await supabase.auth.signInWithPassword({
         email: username,
         password,

@@ -1,40 +1,42 @@
 import Image from "next/image"
 import LoginForm from "@/components/auth/login-form"
-import { isSupabaseReady } from "@/lib/supabase/client"
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createServerClient } from "@supabase/ssr"
 
 export default async function LoginPage({
   searchParams,
 }: {
   searchParams: { returnUrl?: string }
 }) {
-  // Kiểm tra xem Supabase có sẵn sàng không
-  if (typeof window === "undefined" && !isSupabaseReady()) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-          <p className="font-bold">Cảnh báo</p>
-          <p>Không thể kết nối đến Supabase. Vui lòng kiểm tra biến môi trường.</p>
-        </div>
-      </div>
-    )
-  }
+  // Kiểm tra xem người dùng đã đăng nhập chưa
+  const cookieStore = cookies()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+        set(name: string, value: string, options: any) {
+          cookieStore.set({ name, value, ...options })
+        },
+        remove(name: string, options: any) {
+          cookieStore.set({ name, value: "", ...options })
+        },
+      },
+    },
+  )
 
-  // Kiểm tra nếu người dùng đã đăng nhập
-  try {
-    const supabase = createServerSupabaseClient()
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
-    if (session) {
-      // Nếu đã đăng nhập, chuyển hướng đến trang được yêu cầu hoặc dashboard
-      const returnUrl = searchParams.returnUrl || "/dashboard"
-      redirect(returnUrl)
-    }
-  } catch (error) {
-    console.error("Error checking auth status:", error)
+  // Nếu người dùng đã đăng nhập, chuyển hướng đến trang dashboard hoặc returnUrl
+  if (session) {
+    const returnUrl = searchParams.returnUrl || "/dashboard"
+    redirect(returnUrl)
   }
 
   return (
