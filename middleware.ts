@@ -3,8 +3,13 @@ import type { NextRequest } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 
 export async function middleware(request: NextRequest) {
-  // Bỏ qua route health check
-  if (request.nextUrl.pathname === "/api/health") {
+  // Bỏ qua các route không cần xác thực
+  if (
+    request.nextUrl.pathname === "/" ||
+    request.nextUrl.pathname === "/login" ||
+    request.nextUrl.pathname === "/api/health" ||
+    request.nextUrl.pathname === "/fallback-login"
+  ) {
     return NextResponse.next()
   }
 
@@ -15,41 +20,41 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  // Tạo Supabase client
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name: string, options: any) {
-          response.cookies.set({
-            name,
-            value: "",
-            ...options,
-          })
+  try {
+    // Tạo Supabase client
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            response.cookies.set({
+              name,
+              value,
+              ...options,
+            })
+          },
+          remove(name: string, options: any) {
+            response.cookies.set({
+              name,
+              value: "",
+              ...options,
+            })
+          },
         },
       },
-    },
-  )
+    )
 
-  // Kiểm tra nếu route bắt đầu bằng /dashboard hoặc /api (trừ các API auth và health)
-  if (
-    request.nextUrl.pathname.startsWith("/dashboard") ||
-    (request.nextUrl.pathname.startsWith("/api") &&
-      !request.nextUrl.pathname.startsWith("/api/auth") &&
-      !request.nextUrl.pathname.startsWith("/api/health"))
-  ) {
-    try {
+    // Kiểm tra nếu route bắt đầu bằng /dashboard hoặc /api (trừ các API auth và health)
+    if (
+      request.nextUrl.pathname.startsWith("/dashboard") ||
+      (request.nextUrl.pathname.startsWith("/api") &&
+        !request.nextUrl.pathname.startsWith("/api/auth") &&
+        !request.nextUrl.pathname.startsWith("/api/health"))
+    ) {
       // Kiểm tra session
       const {
         data: { session },
@@ -62,11 +67,11 @@ export async function middleware(request: NextRequest) {
         redirectUrl.searchParams.set("returnUrl", request.nextUrl.pathname)
         return NextResponse.redirect(redirectUrl)
       }
-    } catch (error) {
-      console.error("Middleware error:", error)
-      // Nếu có lỗi, cho phép request tiếp tục thay vì trả về lỗi 500
-      return response
     }
+  } catch (error) {
+    console.error("Middleware error:", error)
+    // Nếu có lỗi, cho phép request tiếp tục thay vì trả về lỗi 500
+    return response
   }
 
   return response
