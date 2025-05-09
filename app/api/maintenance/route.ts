@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 
 export const dynamic = "force-dynamic"
 
-// Sử dụng route này thay vì catch-all route để tránh xung đột
+// Route handler để chặn các API route
 export async function GET() {
   return NextResponse.json({
     status: "maintenance",
