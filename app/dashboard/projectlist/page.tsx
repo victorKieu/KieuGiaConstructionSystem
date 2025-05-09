@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { MainLayout } from "@/components/layout/main-layout"
 import { ProjectList } from "@/components/dashboard/project-list"
 import { getProjects } from "@/lib/actions/project-actions"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 export const metadata = {
   title: "Danh sách dự án | Kieu Gia Construction",
@@ -15,9 +17,16 @@ export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 export default async function ProjectListPage() {
+  console.log("Đang render trang danh sách dự án...")
+
   // Lấy dữ liệu dự án từ Supabase
   const result = await getProjects()
-  const projects = result.success ? result.data : []
+
+  console.log("Kết quả lấy dự án:", {
+    success: result.success,
+    errorMessage: result.error,
+    dataLength: result.data?.length || 0,
+  })
 
   return (
     <MainLayout>
@@ -35,7 +44,25 @@ export default async function ProjectListPage() {
           </Button>
         </div>
 
-        <ProjectList projects={projects} />
+        {!result.success && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Lỗi</AlertTitle>
+            <AlertDescription>
+              {result.error || "Không thể lấy danh sách dự án. Vui lòng thử lại sau."}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {result.success && result.data.length === 0 && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Chưa có dữ liệu</AlertTitle>
+            <AlertDescription>Chưa có dự án nào trong hệ thống. Hãy tạo dự án mới để bắt đầu.</AlertDescription>
+          </Alert>
+        )}
+
+        <ProjectList projects={result.data || []} />
       </div>
     </MainLayout>
   )

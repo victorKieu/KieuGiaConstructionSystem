@@ -16,6 +16,9 @@ import {
   Settings,
   ChevronDown,
   LogOut,
+  List,
+  Clock,
+  AlertTriangle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
@@ -28,6 +31,7 @@ type NavItem = {
   submenu?: {
     title: string
     href: string
+    icon?: React.ElementType
   }[]
 }
 
@@ -50,12 +54,13 @@ export function Sidebar() {
     },
     {
       title: "Dự án",
-      href: "/dashboard",
+      href: "/dashboard/projects",
       icon: Building2,
       submenu: [
-        { title: "Danh sách dự án", href: "/dashboard" },
-        { title: "Tiến độ dự án", href: "/dashboard/projects/timeline" },
-        { title: "Vấn đề dự án", href: "/dashboard/projects/issues" },
+        { title: "Tổng quan dự án", href: "/dashboard/projects", icon: LayoutDashboard },
+        { title: "Danh sách dự án", href: "/dashboard/projects/list", icon: List },
+        { title: "Tiến độ dự án", href: "/dashboard/projects/timeline", icon: Clock },
+        { title: "Vấn đề dự án", href: "/dashboard/projects/issues", icon: AlertTriangle },
       ],
     },
     {
@@ -152,10 +157,11 @@ export function Sidebar() {
                           key={subitem.href}
                           href={subitem.href}
                           className={cn(
-                            "block px-4 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100",
+                            "flex items-center px-4 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100",
                             pathname === subitem.href && "bg-gray-100 text-indigo-600 font-medium",
                           )}
                         >
+                          {subitem.icon && <subitem.icon className="w-4 h-4 mr-2" />}
                           {subitem.title}
                         </Link>
                       ))}
