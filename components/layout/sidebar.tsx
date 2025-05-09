@@ -196,3 +196,6 @@ export function Sidebar() {
     </div>
   )
 }
+
+// Thêm export DashboardSidebar để tương thích với code cũ
+export const DashboardSidebar = Sidebar

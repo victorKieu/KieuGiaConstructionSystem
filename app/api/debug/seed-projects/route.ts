@@ -1,5 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
-import { cookies } from "next/headers"
+import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 
 // Dữ liệu mẫu cho bảng projects
@@ -152,8 +151,7 @@ const sampleCustomers = [
 
 export async function GET() {
   try {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = createServerSupabaseClient()
 
     // Kiểm tra xem đã có dữ liệu chưa
     const { count: projectCount, error: countError } = await supabase

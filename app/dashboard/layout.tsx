@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { isSupabaseReady } from "@/lib/supabase/client"
-import { DashboardSidebar } from "@/components/layout/sidebar"
+import { Sidebar } from "@/components/layout/sidebar"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { SidebarProvider } from "@/components/dashboard/sidebar-context"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <SidebarProvider>
         <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
-          <DashboardSidebar />
+          <Sidebar />
           <div className="flex flex-col flex-1 overflow-hidden">
             <DashboardHeader />
             <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
