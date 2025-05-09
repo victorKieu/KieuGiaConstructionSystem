@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/client"
 import { isSupabaseReady } from "@/lib/supabase/client"
 import { notFound } from "next/navigation"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 export default async function ProjectPage({ params }: { params: { id: string } }) {
   // Kiểm tra xem Supabase có sẵn sàng không
   if (!isSupabaseReady()) {

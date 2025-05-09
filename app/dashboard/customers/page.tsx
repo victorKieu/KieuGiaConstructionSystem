@@ -6,6 +6,9 @@ import { CustomerList } from "@/components/dashboard/customer-list"
 import { getCustomers } from "@/lib/actions/customer-actions"
 import { isSupabaseReady } from "@/lib/supabase/client"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 export const metadata = {
   title: "Quản lý khách hàng",
   description: "Quản lý thông tin khách hàng của công ty",

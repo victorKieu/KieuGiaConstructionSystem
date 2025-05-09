@@ -8,6 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { getCustomerById } from "@/lib/actions/customer-actions"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 export const metadata = {
   title: "Chi tiết khách hàng",
   description: "Xem thông tin chi tiết khách hàng",
