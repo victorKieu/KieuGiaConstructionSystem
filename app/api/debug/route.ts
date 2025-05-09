@@ -1,24 +1,24 @@
 import { NextResponse } from "next/server"
-import { checkEnvironmentVariables, testSupabaseConnection } from "@/lib/debug"
+import { createClient } from "@/lib/supabase/server"
+
+export const dynamic = "force-dynamic"
 
 export async function GET() {
   try {
-    const envVars = await checkEnvironmentVariables()
-    const dbTest = await testSupabaseConnection()
+    const supabase = createClient()
 
-    return NextResponse.json({
-      status: "ok",
-      environment: envVars,
-      database: dbTest,
-      timestamp: new Date().toISOString(),
-    })
-  } catch (error: any) {
+    // Thực hiện một truy vấn đơn giản để kiểm tra kết nối
+    const { data, error } = await supabase.from("projects").select("id").limit(1)
+
+    if (error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, data })
+  } catch (error) {
+    console.error("Debug error:", error)
     return NextResponse.json(
-      {
-        status: "error",
-        message: error.message,
-        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
-      },
+      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 },
     )
   }
