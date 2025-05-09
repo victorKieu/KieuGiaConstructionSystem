@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 export const dynamic = "force-dynamic"
 
 // Route handler để chặn các API route
-export async function GET() {
+export async function GET(request: Request) {
   return NextResponse.json({
     status: "maintenance",
     message: "API đang được bảo trì. Vui lòng thử lại sau.",
@@ -11,7 +11,7 @@ export async function GET() {
   })
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   return NextResponse.json({
     status: "maintenance",
     message: "API đang được bảo trì. Vui lòng thử lại sau.",
@@ -19,7 +19,7 @@ export async function POST() {
   })
 }
 
-export async function PUT() {
+export async function PUT(request: Request) {
   return NextResponse.json({
     status: "maintenance",
     message: "API đang được bảo trì. Vui lòng thử lại sau.",
@@ -27,7 +27,7 @@ export async function PUT() {
   })
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   return NextResponse.json({
     status: "maintenance",
     message: "API đang được bảo trì. Vui lòng thử lại sau.",
@@ -35,7 +35,7 @@ export async function DELETE() {
   })
 }
 
-export async function PATCH() {
+export async function PATCH(request: Request) {
   return NextResponse.json({
     status: "maintenance",
     message: "API đang được bảo trì. Vui lòng thử lại sau.",
