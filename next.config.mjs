@@ -1,14 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    serverActions: {
-      allowedOrigins: ["localhost:3000"]
-    }
-  },
-  images: {
-    domains: ['localhost'],
-  },
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -16,8 +8,13 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    domains: ['localhost', 'placehold.co'],
     unoptimized: true,
   },
-};
+  experimental: {
+    // Tắt tính năng static generation cho các API routes
+    serverComponentsExternalPackages: ['@supabase/ssr', '@supabase/supabase-js'],
+  },
+}
 
-export default nextConfig;
+export default nextConfig

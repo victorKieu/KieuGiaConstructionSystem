@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { isSupabaseReady } from "@/lib/supabase/client"
 
+export const dynamic = "force-dynamic"
+
 export async function GET() {
   // Kiểm tra các thành phần hệ thống
   const systemInfo = {

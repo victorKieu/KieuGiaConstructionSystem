@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 
+// Thêm export const dynamic = 'force-dynamic' để ngăn Next.js cố gắng render tĩnh route này
+export const dynamic = "force-dynamic"
+
 export async function GET(request: Request) {
   try {
+    // Lấy URL params một cách an toàn
     const url = new URL(request.url)
     const action = url.searchParams.get("action") || "list"
     const id = url.searchParams.get("id")
