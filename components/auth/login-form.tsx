@@ -6,7 +6,11 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
-export default function LoginForm() {
+interface LoginFormProps {
+  returnUrl?: string
+}
+
+export default function LoginForm({ returnUrl }: LoginFormProps) {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -28,7 +32,8 @@ export default function LoginForm() {
       if (error) {
         setError(error.message)
       } else {
-        router.push("/dashboard")
+        // Chuyển hướng đến returnUrl nếu có, nếu không thì đến dashboard
+        router.push(returnUrl || "/dashboard")
         router.refresh()
       }
     } catch (err) {

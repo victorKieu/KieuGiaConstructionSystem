@@ -1,8 +1,14 @@
 import Image from "next/image"
 import LoginForm from "@/components/auth/login-form"
 import { isSupabaseReady } from "@/lib/supabase/client"
+import { redirect } from "next/navigation"
+import { createServerSupabaseClient } from "@/lib/supabase/server"
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: { returnUrl?: string }
+}) {
   // Kiểm tra xem Supabase có sẵn sàng không
   if (typeof window === "undefined" && !isSupabaseReady()) {
     return (
@@ -13,6 +19,22 @@ export default function LoginPage() {
         </div>
       </div>
     )
+  }
+
+  // Kiểm tra nếu người dùng đã đăng nhập
+  try {
+    const supabase = createServerSupabaseClient()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (session) {
+      // Nếu đã đăng nhập, chuyển hướng đến trang được yêu cầu hoặc dashboard
+      const returnUrl = searchParams.returnUrl || "/dashboard"
+      redirect(returnUrl)
+    }
+  } catch (error) {
+    console.error("Error checking auth status:", error)
   }
 
   return (
@@ -29,7 +51,7 @@ export default function LoginPage() {
             <p className="text-gray-600 mt-1">Đăng Nhập Hệ Thống</p>
           </div>
 
-          <LoginForm />
+          <LoginForm returnUrl={searchParams.returnUrl} />
 
           <div className="text-center mt-8 text-gray-600 text-sm">
             <p>Nâng Tầm Cuộc Sống, Giá Trị Tương Lai</p>
