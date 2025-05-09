@@ -2,80 +2,50 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/supabase"
 
 // Tạo một mock client để sử dụng trong quá trình build
-const mockClient = {
-  from: () => ({
-    select: () => ({
-      eq: () => ({
-        single: () => Promise.resolve({ data: null, error: null }),
-        data: null,
-        error: null,
-      }),
-      data: null,
-      error: null,
+function createMockClient() {
+  return {
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+      getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+    },
+    from: () => ({
+      select: () => ({ data: null, error: null }),
+      insert: () => ({ data: null, error: null }),
+      update: () => ({ data: null, error: null }),
+      delete: () => ({ data: null, error: null }),
     }),
-    insert: () => ({ data: null, error: null }),
-    update: () => ({ data: null, error: null }),
-    delete: () => ({ data: null, error: null }),
-  }),
-  auth: {
-    getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-    signOut: () => Promise.resolve({ error: null }),
-    signInWithPassword: () => Promise.resolve({ data: { user: null }, error: null }),
-    signUp: () => Promise.resolve({ data: { user: null }, error: null }),
-  },
-} as any
+  } as any
+}
 
+// Tạo Supabase client cho server-side
 export function createClient() {
-  // Kiểm tra xem có đang trong quá trình build không
-  const isBuildProcess =
-    process.env.NODE_ENV === "production" && typeof window === "undefined" && !process.env.VERCEL_ENV
-
-  if (isBuildProcess) {
-    console.log("Using mock Supabase client during build process")
-    return mockClient
-  }
-
   try {
-    // Kiểm tra xem có đang trong quá trình build không
-    if (typeof window === "undefined") {
-      // Server-side
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        console.error("Missing Supabase credentials in server context")
-        return mockClient
+    // Trong quá trình build, trả về mock client
+    if (process.env.NODE_ENV === "production" && process.env.VERCEL_ENV === "production") {
+      // Kiểm tra xem có đang trong quá trình build không
+      if (process.env.NEXT_PHASE === "phase-production-build") {
+        console.log("Using mock Supabase client during build")
+        return createMockClient()
       }
-
-      // Create a Supabase client with the service role key for server-side operations
-      return createSupabaseClient<Database>(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_ROLE_KEY,
-        {
-          auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-          },
-        },
-      )
-    } else {
-      // Client-side
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        console.error("Missing Supabase credentials in client context")
-        return mockClient
-      }
-
-      // Create a Supabase client with the anon key for client-side operations
-      return createSupabaseClient<Database>(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      )
     }
+
+    // Kiểm tra biến môi trường
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+      console.error("Missing Supabase environment variables")
+      return createMockClient()
+    }
+
+    // Tạo client thực
+    return createSupabaseClient<Database>(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: false,
+      },
+    })
   } catch (error) {
     console.error("Error creating Supabase client:", error)
-    return mockClient
+    return createMockClient()
   }
 }
 
-// Thêm export createServerSupabaseClient để tương thích với code hiện tại
-export const createServerSupabaseClient = createClient
-
-// Thêm export supabase để tương thích với code hiện tại
+// Export một instance để tương thích với code hiện tại
 export const supabase = createClient()

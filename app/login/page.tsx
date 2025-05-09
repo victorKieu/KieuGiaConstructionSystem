@@ -1,26 +1,11 @@
 import Image from "next/image"
-import LoginForm from "@/components/auth/login-form"
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { cookies } from "next/headers"
+import Link from "next/link"
 
-export default async function LoginPage({
+export default function LoginPage({
   searchParams,
 }: {
   searchParams: { returnUrl?: string }
 }) {
-  // Kiểm tra xem người dùng đã đăng nhập chưa
-  const cookieStore = cookies()
-  const supabase = createClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  // Nếu đã đăng nhập, chuyển hướng đến dashboard
-  if (session) {
-    redirect("/dashboard")
-  }
-
   const returnUrl = searchParams.returnUrl || "/dashboard"
 
   return (
@@ -37,7 +22,41 @@ export default async function LoginPage({
             <p className="text-gray-600 mt-1">Đăng Nhập Hệ Thống</p>
           </div>
 
-          <LoginForm returnUrl={returnUrl} />
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <form className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="your@email.com"
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Mật khẩu
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <Link
+                  href={returnUrl}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Đăng nhập
+                </Link>
+              </div>
+            </form>
+          </div>
 
           <div className="text-center mt-8 text-gray-600 text-sm">
             <p>Nâng Tầm Cuộc Sống, Giá Trị Tương Lai</p>
