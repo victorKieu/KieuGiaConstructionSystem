@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 
 export default function LoginPage() {
   return (
@@ -15,7 +16,8 @@ export default function LoginPage() {
             <p className="text-gray-600 mt-1">Đăng Nhập Hệ Thống</p>
           </div>
 
-          <form className="space-y-6" action="/dashboard" method="get">
+          {/* Form đăng nhập tĩnh */}
+          <div className="space-y-6">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                 Tên đăng nhập
@@ -37,9 +39,7 @@ export default function LoginPage() {
                 </div>
                 <input
                   id="username"
-                  name="username"
                   type="text"
-                  required
                   className="pl-10 w-full py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                   placeholder="Nhập tên đăng nhập"
                 />
@@ -67,9 +67,7 @@ export default function LoginPage() {
                 </div>
                 <input
                   id="password"
-                  name="password"
                   type="password"
-                  required
                   className="pl-10 w-full py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                   placeholder="Nhập mật khẩu"
                 />
@@ -77,14 +75,14 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <button
-                type="submit"
-                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
+              <Link
+                href="/dashboard"
+                className="block w-full text-center bg-amber-500 hover:bg-amber-600 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
               >
                 Đăng Nhập
-              </button>
+              </Link>
             </div>
-          </form>
+          </div>
 
           <div className="text-center mt-8 text-gray-600 text-sm">
             <p>Nâng Tầm Cuộc Sống, Giá Trị Tương Lai</p>
