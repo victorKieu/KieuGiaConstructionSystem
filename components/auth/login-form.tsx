@@ -3,19 +3,17 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
-interface LoginFormProps {
-  returnUrl?: string
-}
-
-export default function LoginForm({ returnUrl }: LoginFormProps) {
+export default function LoginForm() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnUrl = searchParams.get("returnUrl") || "/dashboard"
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,8 +30,8 @@ export default function LoginForm({ returnUrl }: LoginFormProps) {
       if (error) {
         setError(error.message)
       } else {
-        // Chuyển hướng đến returnUrl nếu có, nếu không thì đến dashboard
-        router.push(returnUrl || "/dashboard")
+        // Chuyển hướng đến returnUrl
+        router.push(returnUrl)
         router.refresh()
       }
     } catch (err) {
