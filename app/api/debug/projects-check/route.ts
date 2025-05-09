@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase/client"
-
-export const dynamic = "force-dynamic"
+import { createClient } from "@/lib/supabase/client"
 
 export async function GET() {
   try {
     // Kiểm tra kết nối đến bảng projects
+    const supabase = createClient()
     const { data, error } = await supabase.from("projects").select("*").limit(5)
 
     if (error) {

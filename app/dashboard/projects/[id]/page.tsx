@@ -1,4 +1,5 @@
-import { supabase, isSupabaseReady } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
+import { isSupabaseReady } from "@/lib/supabase/client"
 import { notFound } from "next/navigation"
 
 export default async function ProjectPage({ params }: { params: { id: string } }) {
@@ -16,6 +17,7 @@ export default async function ProjectPage({ params }: { params: { id: string } }
 
   try {
     // Lấy thông tin dự án
+    const supabase = createClient()
     const { data: project, error } = await supabase.from("projects").select("*").eq("id", params.id).single()
 
     if (error || !project) {

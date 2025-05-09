@@ -3,14 +3,12 @@ const nextConfig = {
   reactStrictMode: false,
   swcMinify: false,
   images: {
-    domains: ["localhost"],
+    domains: ["localhost", "127.0.0.1", "vercel.app"],
     unoptimized: true,
   },
-  // Không sử dụng output: 'standalone' để tránh lỗi khi build
   experimental: {
-    serverActions: {
-      allowedOrigins: ["localhost:3000", "app.kieugia-construction.biz.vn"],
-    },
+    serverActions: true,
+    serverComponentsExternalPackages: ["@prisma/client"],
   },
   eslint: {
     ignoreDuringBuilds: true,
@@ -18,6 +16,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Loại bỏ output: 'standalone' để tránh lỗi build
 }
 
 export default nextConfig

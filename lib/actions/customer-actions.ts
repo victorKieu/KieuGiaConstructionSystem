@@ -1,6 +1,6 @@
 "use server"
 
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { CustomerFormData } from "@/types/customer"
 
@@ -25,7 +25,7 @@ export async function getCustomers() {
   try {
     console.log("🔍 Đang lấy danh sách khách hàng từ Supabase...")
 
-    const supabase = createServerSupabaseClient()
+    const supabase = createClient()
     const { data, error } = await supabase.from("customers").select("*").order("created_at", { ascending: false })
 
     if (error) {
@@ -46,7 +46,7 @@ export async function getCustomerById(id: string) {
   try {
     console.log(`🔍 Đang lấy thông tin khách hàng với ID: ${id}`)
 
-    const supabase = createServerSupabaseClient()
+    const supabase = createClient()
     const { data, error } = await supabase.from("customers").select("*").eq("id", id).single()
 
     if (error) {
@@ -92,7 +92,7 @@ export async function createCustomer(customerData: CustomerFormData) {
       status: dataToInsert.status,
     })
 
-    const supabase = createServerSupabaseClient()
+    const supabase = createClient()
     const { data, error } = await supabase.from("customers").insert([dataToInsert]).select()
 
     if (error) {
@@ -123,7 +123,7 @@ export async function updateCustomer(id: string, customerData: CustomerFormData)
       status: customerData.status,
     })
 
-    const supabase = createServerSupabaseClient()
+    const supabase = createClient()
     const { data, error } = await supabase
       .from("customers")
       .update({
@@ -156,7 +156,7 @@ export async function deleteCustomer(id: string) {
   try {
     console.log(`🗑️ Đang xóa khách hàng ID: ${id}`)
 
-    const supabase = createServerSupabaseClient()
+    const supabase = createClient()
     const { error } = await supabase.from("customers").delete().eq("id", id)
 
     if (error) {
@@ -181,7 +181,7 @@ export async function getCustomerContacts(customerId: string) {
   try {
     console.log(`🔍 Đang lấy danh sách liên hệ của khách hàng ID: ${customerId}`)
 
-    const supabase = createServerSupabaseClient()
+    const supabase = createClient()
     const { data, error } = await supabase
       .from("customer_contacts")
       .select("*")
@@ -206,7 +206,7 @@ export async function getCustomerProjects(customerId: string) {
   try {
     console.log(`🔍 Đang lấy danh sách dự án của khách hàng ID: ${customerId}`)
 
-    const supabase = createServerSupabaseClient()
+    const supabase = createClient()
     const { data, error } = await supabase
       .from("projects")
       .select("*")

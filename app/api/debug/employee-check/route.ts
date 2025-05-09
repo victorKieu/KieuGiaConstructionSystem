@@ -1,13 +1,12 @@
-import { supabase } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { NextResponse } from "next/server"
-
-export const dynamic = "force-dynamic"
 
 export async function GET() {
   try {
     console.log("Testing Supabase connection to employees table...")
 
     // Kiểm tra kết nối đến bảng employees
+    const supabase = createClient()
     const { data, error, count } = await supabase.from("employees").select("*", { count: "exact" }).limit(5)
 
     if (error) {

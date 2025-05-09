@@ -23,3 +23,6 @@ export function createClient() {
     },
   })
 }
+
+// Thêm export createServerSupabaseClient để tương thích với code hiện tại
+export const createServerSupabaseClient = createClient

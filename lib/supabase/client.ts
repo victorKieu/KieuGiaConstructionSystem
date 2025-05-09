@@ -20,6 +20,9 @@ export function createClient() {
   return supabaseInstance
 }
 
+// Export supabase instance để tương thích với code hiện tại
+export const supabase = createClient()
+
 // Hàm kiểm tra xem Supabase có sẵn sàng không
 export function isSupabaseReady() {
   return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
