@@ -1,44 +1,13 @@
 import Image from "next/image"
-import LoginForm from "@/components/auth/login-form"
-import { cookies } from "next/headers"
-import { redirect } from "next/navigation"
-import { createServerClient } from "@supabase/ssr"
+import LoginForm from "@/components/auth/login-form-static"
 
-export default async function LoginPage({
+export const dynamic = "force-dynamic"
+
+export default function LoginPage({
   searchParams,
 }: {
   searchParams: { returnUrl?: string }
 }) {
-  // Kiểm tra xem người dùng đã đăng nhập chưa
-  const cookieStore = cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          cookieStore.set({ name, value, ...options })
-        },
-        remove(name: string, options: any) {
-          cookieStore.set({ name, value: "", ...options })
-        },
-      },
-    },
-  )
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  // Nếu người dùng đã đăng nhập, chuyển hướng đến trang dashboard hoặc returnUrl
-  if (session) {
-    const returnUrl = searchParams.returnUrl || "/dashboard"
-    redirect(returnUrl)
-  }
-
   return (
     <div className="flex min-h-screen">
       {/* Form đăng nhập */}

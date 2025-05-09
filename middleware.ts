@@ -75,12 +75,8 @@ export async function middleware(request: NextRequest) {
 // Chỉ áp dụng middleware cho các route cần bảo vệ
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/dashboard/:path*",
+    "/api/:path*",
+    "/((?!_next/static|_next/image|favicon.ico|login|api/auth|api/health|welcome).*)",
   ],
 }
