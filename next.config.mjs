@@ -11,6 +11,13 @@ const nextConfig = {
     unoptimized: true,
   },
   
+  // Thêm transpilePackages để giải quyết vấn đề với các dependencies
+  transpilePackages: [
+    'react-hook-form',
+    '@hookform/resolvers',
+    'zod'
+  ],
+  
   // Vô hiệu hóa static generation cho toàn bộ dự án
   output: 'standalone',
   
