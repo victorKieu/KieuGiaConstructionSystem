@@ -1,67 +1,96 @@
-import { createServerClient } from "@supabase/ssr"
+import { createClient } from "@supabase/supabase-js"
+import type { Database } from "@/types/supabase"
 import { cookies } from "next/headers"
+import { createServerClient as createSupabaseServerClient } from "@supabase/ssr"
 
-export const createClient = () => {
-  // Kiểm tra xem chúng ta có đang ở trong quá trình build không
-  const isBuildTime = process.env.NEXT_PHASE === "phase-production-build"
+// Kiểm tra xem có đang trong quá trình build không
+const isBuildProcess = process.env.NODE_ENV === "production" && !process.env.VERCEL_URL
 
-  // Nếu đang trong quá trình build, trả về một mock client
-  if (isBuildTime) {
-    return {
-      auth: {
-        getUser: async () => ({ data: { user: null }, error: null }),
-        getSession: async () => ({ data: { session: null }, error: null }),
-      },
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            data: [],
-            error: null,
-          }),
-        }),
+// Tạo một client giả cho quá trình build
+const mockServerClient = {
+  from: () => ({
+    select: () => ({
+      eq: () => ({
+        single: () => Promise.resolve({ data: null, error: null }),
+        data: null,
+        error: null,
       }),
-    }
+      data: null,
+      error: null,
+    }),
+    insert: () => ({ data: null, error: null }),
+    update: () => ({ data: null, error: null }),
+    delete: () => ({ data: null, error: null }),
+  }),
+  auth: {
+    getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+  },
+}
+
+export function createServerSupabaseClient() {
+  if (isBuildProcess) {
+    console.warn("Build process detected, returning mock Supabase server client")
+    return mockServerClient
+  }
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("Missing Supabase credentials in server context")
+    return mockServerClient
+  }
+
+  // Create a Supabase client with the service role key for server-side operations
+  return createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    global: {
+      headers: {
+        "x-client-info": "server",
+      },
+    },
+  })
+}
+
+// Tạo client sử dụng cookies từ request
+export function createBrowserClient() {
+  if (isBuildProcess) {
+    return mockServerClient
   }
 
   try {
     const cookieStore = cookies()
 
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+    return createSupabaseServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          get(name) {
+          get(name: string) {
             return cookieStore.get(name)?.value
           },
-          set(name, value, options) {
-            cookieStore.set(name, value, options)
+          set(name: string, value: string, options: any) {
+            try {
+              cookieStore.set({ name, value, ...options })
+            } catch (error) {
+              // Xử lý lỗi khi không thể set cookie (ví dụ: trong quá trình build)
+              console.error("Error setting cookie:", name)
+            }
           },
-          remove(name, options) {
-            cookieStore.set(name, "", { ...options, maxAge: 0 })
+          remove(name: string, options: any) {
+            try {
+              cookieStore.set({ name, value: "", ...options })
+            } catch (error) {
+              // Xử lý lỗi khi không thể remove cookie
+              console.error("Error removing cookie:", name)
+            }
           },
         },
       },
     )
-
-    return supabase
   } catch (error) {
     console.error("Error creating Supabase client:", error)
-
-    // Trả về mock client nếu có lỗi
-    return {
-      auth: {
-        getUser: async () => ({ data: { user: null }, error: null }),
-        getSession: async () => ({ data: { session: null }, error: null }),
-      },
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            data: [],
-            error: null,
-          }),
-        }),
-      }),
-    }
+    return mockServerClient
   }
 }

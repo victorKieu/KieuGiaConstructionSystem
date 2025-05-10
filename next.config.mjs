@@ -1,19 +1,55 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  images: {
-    unoptimized: true,
-  },
-  // Tắt các tính năng không cần thiết
-  reactStrictMode: true,
-  swcMinify: true,
-  // Không sử dụng trailing slashes
-  trailingSlash: false,
+  // Cấu hình hiện tại của bạn
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
+  },
+  images: {
+    unoptimized: true,
+  },
+  
+  // Vô hiệu hóa static generation cho toàn bộ dự án
+  output: 'standalone',
+  
+  // Thêm cấu hình bảo mật
+  poweredByHeader: false, // Ẩn header X-Powered-By
+  
+  // Cấu hình Content Security Policy
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+          },
+        ],
+      },
+    ];
   },
 }
 

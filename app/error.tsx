@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect } from "react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export default function Error({
   error,
@@ -10,33 +12,20 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    // Log lỗi lên server
+    // Ghi log lỗi cho server
     console.error("Application error:", error)
   }, [error])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-        <h2 className="text-2xl font-bold text-red-600 mb-4">Đã xảy ra lỗi</h2>
-        <p className="text-gray-600 mb-6">
-          Rất tiếc, đã xảy ra lỗi khi tải trang. Vui lòng thử lại sau hoặc liên hệ với quản trị viên.
-        </p>
-        <div className="bg-gray-100 p-4 rounded mb-6 overflow-auto">
-          <p className="text-sm text-gray-800 font-mono">{error.message || "Unknown error"}</p>
-        </div>
-        <div className="flex space-x-4">
-          <button
-            onClick={() => reset()}
-            className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
-          >
-            Thử lại
-          </button>
-          <button
-            onClick={() => (window.location.href = "/")}
-            className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
-          >
-            Về trang chủ
-          </button>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4">
+      <div className="text-center max-w-md">
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">Đã xảy ra lỗi</h1>
+        <p className="text-gray-600 mb-8">Chúng tôi đã ghi nhận lỗi này và sẽ khắc phục sớm nhất có thể.</p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button onClick={reset}>Thử lại</Button>
+          <Button variant="outline" asChild>
+            <Link href="/dashboard">Quay lại Dashboard</Link>
+          </Button>
         </div>
       </div>
     </div>
