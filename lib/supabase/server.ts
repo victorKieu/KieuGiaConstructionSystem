@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/supabase"
 import { cookies } from "next/headers"
-import { createServerClient as createSupabaseServerClient } from "@supabase/ssr"
+import { createServerClient } from "@supabase/ssr"
 
 // Kiểm tra xem có đang trong quá trình build không
 const isBuildProcess = process.env.NODE_ENV === "production" && !process.env.VERCEL_URL
@@ -62,33 +62,19 @@ export function createBrowserClient() {
   try {
     const cookieStore = cookies()
 
-    return createSupabaseServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            try {
-              cookieStore.set({ name, value, ...options })
-            } catch (error) {
-              // Xử lý lỗi khi không thể set cookie (ví dụ: trong quá trình build)
-              console.error("Error setting cookie:", name)
-            }
-          },
-          remove(name: string, options: any) {
-            try {
-              cookieStore.set({ name, value: "", ...options })
-            } catch (error) {
-              // Xử lý lỗi khi không thể remove cookie
-              console.error("Error removing cookie:", name)
-            }
-          },
+    return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+      cookies: {
+        get(name) {
+          return cookieStore.get(name)?.value
+        },
+        set(name, value, options) {
+          cookieStore.set({ name, value, ...options })
+        },
+        remove(name, options) {
+          cookieStore.set({ name, value: "", ...options })
         },
       },
-    )
+    })
   } catch (error) {
     console.error("Error creating Supabase client:", error)
     return mockServerClient

@@ -1,31 +1,75 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { createServerClient } from "@supabase/ssr"
 
 export async function middleware(request: NextRequest) {
-  // Lấy đường dẫn từ URL
-  const path = request.nextUrl.pathname
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
 
-  // Nếu đường dẫn là trang chủ, chuyển hướng đến trang đăng nhập
-  if (path === "/") {
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name) {
+          return request.cookies.get(name)?.value
+        },
+        set(name, value, options) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+        },
+        remove(name, options) {
+          request.cookies.set({
+            name,
+            value: "",
+            ...options,
+          })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          response.cookies.set({
+            name,
+            value: "",
+            ...options,
+          })
+        },
+      },
+    },
+  )
+
+  const { data } = await supabase.auth.getSession()
+
+  // Nếu người dùng không đăng nhập và đang truy cập trang dashboard, chuyển hướng đến trang đăng nhập
+  if (!data.session && request.nextUrl.pathname.startsWith("/dashboard")) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
-  // Bảo vệ các route dashboard và API
-  if (path.startsWith("/dashboard") || path.startsWith("/api/")) {
-    // Kiểm tra cookie xác thực
-    const supabaseCookie = request.cookies.get("sb-auth-token")?.value
-
-    // Nếu không có cookie xác thực, chuyển hướng đến trang đăng nhập
-    if (!supabaseCookie && !path.startsWith("/api/auth")) {
-      return NextResponse.redirect(new URL("/login", request.url))
-    }
+  // Nếu người dùng đã đăng nhập và đang truy cập trang đăng nhập, chuyển hướng đến trang dashboard
+  if (data.session && request.nextUrl.pathname === "/login") {
+    return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
-  // Xử lý các route khác như bình thường
-  return NextResponse.next()
+  return response
 }
 
-// Chỉ áp dụng middleware cho các route cụ thể
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/api/:path*", "/((?!_next/static|_next/image|favicon.ico|login|public).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 }

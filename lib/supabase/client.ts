@@ -1,69 +1,18 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js"
-import type { Database } from "@/types/supabase"
+"use client"
 
-// Kiểm tra xem có đang trong quá trình build không
-const isBuildProcess = process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_SUPABASE_URL
+import { createBrowserClient } from "@supabase/ssr"
 
-// Tạo một client giả cho quá trình build
-const mockClient = {
-  from: () => ({
-    select: () => ({
-      eq: () => ({
-        single: () => Promise.resolve({ data: null, error: null }),
-        data: null,
-        error: null,
-      }),
-      data: null,
-      error: null,
-    }),
-    insert: () => ({ data: null, error: null }),
-    update: () => ({ data: null, error: null }),
-    delete: () => ({ data: null, error: null }),
-  }),
-  auth: {
-    getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-    signOut: () => Promise.resolve({ error: null }),
-    signInWithPassword: () => Promise.resolve({ data: { user: null }, error: null }),
-    signUp: () => Promise.resolve({ data: { user: null }, error: null }),
-  },
-}
+let supabaseClient: ReturnType<typeof createBrowserClient> | null = null
 
-// Singleton pattern để tránh tạo nhiều client
-let supabaseClientInstance: ReturnType<typeof createSupabaseClient<Database>> | null = null
-
-// Export createClient để tương thích với code hiện tại
-export const createClient = () => {
-  if (isBuildProcess) {
-    console.warn("Build process detected, returning mock Supabase client")
-    return mockClient
-  }
-
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error("Supabase environment variables are not defined")
-    return mockClient
-  }
-
-  // Sử dụng singleton pattern
-  if (!supabaseClientInstance) {
-    supabaseClientInstance = createSupabaseClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true,
-        },
-        global: {
-          headers: {
-            "x-application-name": "kieu-gia-construction",
-          },
-        },
-      },
+export function createClient() {
+  if (supabaseClient === null) {
+    supabaseClient = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     )
   }
 
-  return supabaseClientInstance
+  return supabaseClient
 }
 
 // Tạo client thực hoặc client giả tùy thuộc vào môi trường

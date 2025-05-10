@@ -1,24 +1,34 @@
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
-export const dynamic = "force-dynamic"
-
 export async function GET() {
-  try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+  const cookieStore = cookies()
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name) {
+          return cookieStore.get(name)?.value
+        },
+        set(name, value, options) {
+          cookieStore.set({ name, value, ...options })
+        },
+        remove(name, options) {
+          cookieStore.set({ name, value: "", ...options })
+        },
+      },
+    },
+  )
 
-    return NextResponse.json({
-      authenticated: !!session,
-      user: session?.user || null,
-    })
-  } catch (error) {
-    console.error("Error checking auth status:", error)
-    return NextResponse.json({ error: "Failed to check authentication status" }, { status: 500 })
-  }
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  return NextResponse.json({
+    authenticated: !!session,
+    user: session?.user || null,
+  })
 }
