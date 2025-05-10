@@ -14,6 +14,9 @@ const nextConfig = {
     unoptimized: true,
   },
   
+  // Tắt SWC Minify để tránh lỗi
+  swcMinify: false,
+  
   // Cấu hình headers bảo mật
   async headers() {
     return [

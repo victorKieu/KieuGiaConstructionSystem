@@ -7,7 +7,8 @@ interface ProjectProgressBarProps {
   color?: string
 }
 
-export function ProgressBar({ progress, label, description, color }: ProjectProgressBarProps) {
+// Đổi tên từ ProgressBar thành ProjectProgressBar để phù hợp với import
+export function ProjectProgressBar({ progress, label, description, color }: ProjectProgressBarProps) {
   // Đảm bảo progress nằm trong khoảng 0-100
   const safeProgress = Math.min(Math.max(0, progress), 100)
 
