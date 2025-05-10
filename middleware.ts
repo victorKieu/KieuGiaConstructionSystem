@@ -1,5 +1,2 @@
-export { default } from "next/middleware"
-
-export const config = {
-  matcher: [], // Không áp dụng middleware cho bất kỳ đường dẫn nào
-}
+// File này cố tình để trống để tránh lỗi
+// Next.js sẽ bỏ qua nếu không có export
