@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/supabase"
 import { cookies } from "next/headers"
 import { createServerClient } from "@supabase/ssr"
@@ -28,6 +28,32 @@ const mockServerClient = {
   },
 }
 
+// Hàm tạo client cho server-side (tương thích với code cũ)
+export function createClient() {
+  if (isBuildProcess) {
+    console.warn("Build process detected, returning mock Supabase server client")
+    return mockServerClient
+  }
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("Missing Supabase credentials in server context")
+    return mockServerClient
+  }
+
+  // Create a Supabase client with the service role key for server-side operations
+  return createSupabaseClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    global: {
+      headers: {
+        "x-client-info": "server",
+      },
+    },
+  })
+}
+
 export function createServerSupabaseClient() {
   if (isBuildProcess) {
     console.warn("Build process detected, returning mock Supabase server client")
@@ -40,7 +66,7 @@ export function createServerSupabaseClient() {
   }
 
   // Create a Supabase client with the service role key for server-side operations
-  return createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+  return createSupabaseClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
