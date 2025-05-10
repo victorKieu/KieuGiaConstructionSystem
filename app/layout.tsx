@@ -1,10 +1,13 @@
 import type React from "react"
 import "./globals.css"
-import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import { ThemeProvider } from "@/components/theme-provider"
 
-export const metadata: Metadata = {
+const inter = Inter({ subsets: ["latin"] })
+
+export const metadata = {
   title: "Kieu Gia Construction Management",
-  description: "Hệ thống quản lý xây dựng Kieu Gia",
+  description: "Hệ thống quản lý xây dựng chuyên nghiệp",
 }
 
 export default function RootLayout({
@@ -13,8 +16,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="vi">
-      <body>{children}</body>
+    <html lang="vi" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   )
 }

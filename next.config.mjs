@@ -1,18 +1,48 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  images: {
-    domains: ['localhost', 'vercel.app'],
-  },
-  // Tắt static export để tránh lỗi khi build
+  // Tắt static generation để tránh lỗi khi sử dụng Supabase
   output: 'standalone',
-  // Tắt ESLint trong quá trình build để tránh lỗi
+  
+  // Bỏ qua lỗi ESLint và TypeScript trong quá trình build
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // Tắt TypeScript type checking trong quá trình build để tránh lỗi
   typescript: {
     ignoreBuildErrors: true,
+  },
+  images: {
+    unoptimized: true,
+  },
+  
+  // Cấu hình headers bảo mật
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+        ],
+      },
+    ]
   },
 }
 
