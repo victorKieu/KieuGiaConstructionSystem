@@ -1,12 +1,12 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
 // Lấy danh sách dự án
 export async function getProjects() {
   try {
-    const supabase = createClient()
+    const supabase = createServerSupabaseClient()
 
     // Lấy dữ liệu dự án từ bảng projects
     const { data, error } = await supabase
@@ -34,7 +34,7 @@ export async function getProjects() {
 // Lấy thông tin dự án theo ID
 export async function getProjectById(id: string) {
   try {
-    const supabase = createClient()
+    const supabase = createServerSupabaseClient()
 
     const { data, error } = await supabase
       .from("projects")
@@ -62,7 +62,7 @@ export async function getProjectById(id: string) {
 // Lấy danh sách khách hàng
 export async function getCustomers() {
   try {
-    const supabase = createClient()
+    const supabase = createServerSupabaseClient()
 
     const { data, error } = await supabase.from("customers").select("id, name, code").order("name")
 
@@ -81,7 +81,7 @@ export async function getCustomers() {
 // Tạo dự án mới
 export async function createProject(projectData: any) {
   try {
-    const supabase = createClient()
+    const supabase = createServerSupabaseClient()
 
     // Tạo mã dự án tự động
     const prefix = getProjectCodePrefix(projectData.construction_type)
@@ -127,7 +127,7 @@ export async function createProject(projectData: any) {
 // Cập nhật dự án
 export async function updateProject(id: string, projectData: any) {
   try {
-    const supabase = createClient()
+    const supabase = createServerSupabaseClient()
 
     const { data, error } = await supabase
       .from("projects")
@@ -154,7 +154,7 @@ export async function updateProject(id: string, projectData: any) {
 // Xóa dự án
 export async function deleteProject(id: string) {
   try {
-    const supabase = createClient()
+    const supabase = createServerSupabaseClient()
 
     const { error } = await supabase.from("projects").delete().eq("id", id)
 

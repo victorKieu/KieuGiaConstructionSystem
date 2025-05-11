@@ -17,3 +17,6 @@ export function createServerSupabaseClient() {
     },
   )
 }
+
+// Export createClient để tương thích với code hiện tại
+export const createClient = createServerSupabaseClient

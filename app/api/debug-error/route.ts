@@ -1,14 +1,14 @@
+import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
 
 export const dynamic = "force-dynamic"
 
 export async function GET() {
   try {
-    const supabase = createClient()
+    const supabase = createServerSupabaseClient()
 
-    // Thực hiện một truy vấn đơn giản để kiểm tra kết nối
-    const { data, error } = await supabase.from("projects").select("id").limit(1)
+    // Thử truy vấn một bảng không tồn tại để tạo lỗi
+    const { data, error } = await supabase.from("non_existent_table").select("*")
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 })
@@ -17,9 +17,6 @@ export async function GET() {
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error("Debug error:", error)
-    return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 },
-    )
+    return NextResponse.json({ success: false, error: "Lỗi không xác định khi kiểm tra lỗi" }, { status: 500 })
   }
 }

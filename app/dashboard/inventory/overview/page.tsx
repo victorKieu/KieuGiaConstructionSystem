@@ -19,13 +19,15 @@ export default async function InventoryOverviewPage() {
   let warehouses = []
 
   try {
-    materials = await getMaterials()
+    const materialsResult = await getMaterials()
+    materials = materialsResult.success ? materialsResult.data : []
   } catch (error) {
     console.error("Error in getMaterials:", error)
   }
 
   try {
-    warehouses = await getWarehouses()
+    const warehousesResult = await getWarehouses()
+    warehouses = warehousesResult.success ? warehousesResult.data : []
   } catch (error) {
     console.error("Error in getWarehouses:", error)
   }
@@ -219,7 +221,7 @@ export default async function InventoryOverviewPage() {
                     {/* Thay thế Chart bằng div để tránh lỗi valueFormatter */}
                     <div className="flex h-full flex-col justify-between">
                       <div className="grid grid-cols-3 gap-4 h-full">
-                        {warehouses.slice(0, 3).map((warehouse, index) => (
+                        {(warehouses || []).slice(0, 3).map((warehouse, index) => (
                           <div
                             key={warehouse.id}
                             className="flex flex-col items-center justify-center bg-slate-50 rounded-lg p-4"

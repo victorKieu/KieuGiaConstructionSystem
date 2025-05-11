@@ -1,10 +1,10 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { createServerSupabaseClient } from "@/lib/supabase/server"
 
 export async function getMaterials() {
   try {
-    const supabase = createClient()
+    const supabase = createServerSupabaseClient()
 
     const { data, error } = await supabase.from("materials").select("*").order("name")
 
@@ -22,7 +22,7 @@ export async function getMaterials() {
 
 export async function getMaterialById(id: string) {
   try {
-    const supabase = createClient()
+    const supabase = createServerSupabaseClient()
 
     const { data, error } = await supabase.from("materials").select("*").eq("id", id).single()
 
@@ -40,7 +40,7 @@ export async function getMaterialById(id: string) {
 
 export async function createMaterial(materialData: any) {
   try {
-    const supabase = createClient()
+    const supabase = createServerSupabaseClient()
 
     const { data, error } = await supabase.from("materials").insert(materialData).select()
 
@@ -58,7 +58,7 @@ export async function createMaterial(materialData: any) {
 
 export async function updateMaterial(id: string, materialData: any) {
   try {
-    const supabase = createClient()
+    const supabase = createServerSupabaseClient()
 
     const { data, error } = await supabase.from("materials").update(materialData).eq("id", id).select()
 
@@ -76,7 +76,7 @@ export async function updateMaterial(id: string, materialData: any) {
 
 export async function deleteMaterial(id: string) {
   try {
-    const supabase = createClient()
+    const supabase = createServerSupabaseClient()
 
     const { error } = await supabase.from("materials").delete().eq("id", id)
 
@@ -94,7 +94,7 @@ export async function deleteMaterial(id: string) {
 
 export async function getWarehouses() {
   try {
-    const supabase = createClient()
+    const supabase = createServerSupabaseClient()
 
     const { data, error } = await supabase.from("warehouses").select("*").order("name")
 
