@@ -1,7 +1,7 @@
 "use server"
 
 import { createClient } from "@supabase/supabase-js"
-import { v4 as uuidv4 } from "uuid"
+import { randomUUID } from "crypto" // Sử dụng randomUUID từ Node.js crypto thay vì uuid
 
 export async function uploadAvatarAction(formData: FormData) {
   try {
@@ -39,7 +39,7 @@ export async function uploadAvatarAction(formData: FormData) {
 
     // Tạo tên file duy nhất
     const fileExt = file.name.split(".").pop()
-    const fileName = `${uuidv4()}.${fileExt}`
+    const fileName = `${randomUUID()}.${fileExt}` // Sử dụng randomUUID thay vì v4
     const filePath = `${fileName}` // Đơn giản hóa đường dẫn
 
     // Chuyển đổi File thành ArrayBuffer
