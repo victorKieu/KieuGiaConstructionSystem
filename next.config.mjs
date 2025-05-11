@@ -20,6 +20,21 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['@supabase/supabase-js'],
     disableOptimizedLoading: true
+  },
+  
+  // Thêm cấu hình để tắt static generation cho các trang dashboard
+  async headers() {
+    return [
+      {
+        source: '/dashboard/:path*',
+        headers: [
+          {
+            key: 'x-middleware-rewrite',
+            value: '/dashboard/:path*',
+          },
+        ],
+      },
+    ]
   }
 }
 
