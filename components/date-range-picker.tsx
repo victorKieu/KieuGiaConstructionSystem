@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
-import { vi } from "date-fns/locale"
+import { CalendarIcon } from "lucide-react"
 import type { DateRange } from "react-day-picker"
+import { vi } from "date-fns/locale"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -17,8 +17,8 @@ interface DatePickerWithRangeProps {
 
 export function DatePickerWithRange({ className }: DatePickerWithRangeProps) {
   const [date, setDate] = React.useState<DateRange | undefined>({
-    from: new Date(2023, 0, 1),
-    to: new Date(),
+    from: new Date(2024, 3, 1), // April 1, 2024
+    to: new Date(), // Today
   })
 
   return (
@@ -28,7 +28,7 @@ export function DatePickerWithRange({ className }: DatePickerWithRangeProps) {
           <Button
             id="date"
             variant={"outline"}
-            className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
+            className={cn("w-[300px] justify-start text-left font-normal", !date && "text-muted-foreground")}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {date?.from ? (
