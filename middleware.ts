@@ -3,7 +3,14 @@ import type { NextRequest } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 
 export async function middleware(request: NextRequest) {
-  // Tạo Supabase client
+  // Tạo response mới để có thể sửa đổi cookies
+  const response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
+
+  // Tạo Supabase client với cookies từ request và response
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -13,72 +20,70 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: any) {
+          // Khi Supabase đặt cookie, cập nhật cả request và response
           request.cookies.set({
             name,
             value,
             ...options,
-          })
-          const response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
           })
           response.cookies.set({
             name,
             value,
             ...options,
           })
-          return response
         },
         remove(name: string, options: any) {
+          // Khi Supabase xóa cookie, cập nhật cả request và response
           request.cookies.set({
             name,
             value: "",
             ...options,
-          })
-          const response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
           })
           response.cookies.set({
             name,
             value: "",
             ...options,
           })
-          return response
         },
       },
     },
   )
 
   // Kiểm tra phiên đăng nhập
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const { data } = await supabase.auth.getSession()
+  const session = data?.session
 
-  // Ghi log để debug
-  console.log("Middleware running for path:", request.nextUrl.pathname)
-  console.log("Session exists:", !!session)
+  // Đường dẫn hiện tại
+  const path = request.nextUrl.pathname
 
   // Nếu không có phiên đăng nhập và đang truy cập trang dashboard, chuyển hướng đến trang đăng nhập
-  if (!session && request.nextUrl.pathname.startsWith("/dashboard")) {
-    console.log("Redirecting to login page")
+  if (!session && path.startsWith("/dashboard")) {
+    // Tạo URL chuyển hướng đến trang đăng nhập
     const redirectUrl = new URL("/login", request.url)
-    redirectUrl.searchParams.set("redirect", request.nextUrl.pathname)
+
+    // Lưu đường dẫn hiện tại để sau khi đăng nhập có thể quay lại
+    redirectUrl.searchParams.set("redirect", path)
+
+    // Chuyển hướng đến trang đăng nhập
     return NextResponse.redirect(redirectUrl)
   }
 
   // Nếu đã đăng nhập và đang truy cập trang đăng nhập, chuyển hướng đến trang dashboard
-  if (session && request.nextUrl.pathname === "/login") {
-    console.log("Redirecting to dashboard")
+  if (session && path === "/login") {
     return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
-  return NextResponse.next()
+  // Trả về response đã được cập nhật
+  return response
 }
 
-// Đảm bảo middleware được áp dụng cho tất cả các đường dẫn dashboard
+// Đảm bảo middleware được áp dụng cho tất cả các đường dẫn cần bảo vệ
 export const config = {
-  matcher: ["/dashboard/:path*", "/dashboard", "/login"],
+  matcher: [
+    // Áp dụng cho tất cả các đường dẫn dashboard
+    "/dashboard",
+    "/dashboard/:path*",
+    // Áp dụng cho trang đăng nhập
+    "/login",
+  ],
 }

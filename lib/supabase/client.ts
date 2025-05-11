@@ -1,83 +1,32 @@
-import { createBrowserClient } from "@supabase/ssr"
+"use client"
+
+import { createBrowserClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/supabase"
+import { isSupabaseReady } from "@/lib/supabase/utils"
 
-// Singleton pattern để tránh tạo nhiều client
-let supabaseClient: ReturnType<typeof createBrowserClient> | null = null
+// Biến để kiểm tra xem Supabase đã được khởi tạo chưa
+let supabaseInstance: ReturnType<typeof createBrowserClient<Database>> | null = null
 
+// Tạo Supabase client cho phía client
 export function createClient() {
-  if (supabaseClient) return supabaseClient
-
-  if (typeof window === "undefined") {
-    // Trả về client giả khi đang trong quá trình build
-    return createMockClient()
+  if (!isSupabaseReady()) {
+    console.error("Supabase environment variables are not set")
+    throw new Error("Supabase environment variables are not set")
   }
 
-  supabaseClient = createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+  return createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   )
-
-  return supabaseClient
 }
 
-// Client giả cho quá trình build
-function createMockClient() {
-  return {
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          single: () => Promise.resolve({ data: null, error: null }),
-          data: null,
-          error: null,
-        }),
-        data: null,
-        error: null,
-      }),
-      insert: () => ({ data: null, error: null }),
-      update: () => ({ data: null, error: null }),
-      delete: () => ({ data: null, error: null }),
-    }),
-    auth: {
-      getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-      signOut: () => Promise.resolve({ error: null }),
-      signInWithPassword: () => Promise.resolve({ data: { user: null }, error: null }),
-      signUp: () => Promise.resolve({ data: { user: null }, error: null }),
-    },
+// Singleton pattern để tránh tạo nhiều instance
+function getSupabaseClient() {
+  if (!supabaseInstance) {
+    supabaseInstance = createClient()
   }
+  return supabaseInstance
 }
 
-// Export supabase instance
-export const supabase = createClient()
-
-// Kiểm tra xem Supabase có sẵn sàng không
-export function isSupabaseReady() {
-  return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-}
-
-// Thêm hàm testSupabaseConnection
-export async function testSupabaseConnection() {
-  try {
-    const client = createClient()
-    const { data, error } = await client.from("test").select("*").limit(1)
-
-    if (error) {
-      return {
-        success: false,
-        message: `Lỗi kết nối: ${error.message}`,
-        error,
-      }
-    }
-
-    return {
-      success: true,
-      message: "Kết nối thành công",
-      data,
-    }
-  } catch (error) {
-    return {
-      success: false,
-      message: `Lỗi không xác định: ${error instanceof Error ? error.message : String(error)}`,
-      error,
-    }
-  }
-}
+// Export supabase client để sử dụng trong ứng dụng
+export const supabase = getSupabaseClient()

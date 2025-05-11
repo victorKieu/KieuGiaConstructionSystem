@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation"
 
-export default function Home() {
-  // Chuyển hướng đến trang đăng nhập
+// Đảm bảo trang luôn được render động
+export const dynamic = "force-dynamic"
+
+export default function HomePage() {
+  // Chuyển hướng người dùng đến trang đăng nhập
   redirect("/login")
 }

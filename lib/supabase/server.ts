@@ -13,6 +13,22 @@ export function createServerSupabaseClient() {
         get(name: string) {
           return cookieStore.get(name)?.value
         },
+        set(name: string, value: string, options: any) {
+          try {
+            cookieStore.set(name, value, options)
+          } catch (error) {
+            // Xử lý lỗi khi không thể đặt cookie trong môi trường read-only
+            console.error("Cannot set cookie in read-only context:", error)
+          }
+        },
+        remove(name: string, options: any) {
+          try {
+            cookieStore.set({ name, value: "", ...options })
+          } catch (error) {
+            // Xử lý lỗi khi không thể xóa cookie trong môi trường read-only
+            console.error("Cannot remove cookie in read-only context:", error)
+          }
+        },
       },
     },
   )
