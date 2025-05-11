@@ -7,18 +7,15 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
   title: "Kieu Gia Construction Management",
-  description: "Hệ thống quản lý xây dựng chuyên nghiệp",
+  description: "Hệ thống quản lý xây dựng Kiều Gia",
+    generator: 'v0.dev'
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           {children}
         </ThemeProvider>
       </body>

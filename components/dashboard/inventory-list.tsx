@@ -1,91 +1,38 @@
-"use client"
+import Link from "next/link"
+import { Package } from "lucide-react"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useState, useEffect } from "react"
+interface InventoryListProps {
+  materials: any[]
+}
 
-export function InventoryList() {
-  const [inventory, setInventory] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchInventory = async () => {
-      try {
-        setLoading(true)
-        // Sử dụng dữ liệu mẫu thay vì gọi API để tránh lỗi
-        setInventory([
-          { id: 1, name: "Xi măng", quantity: 500, unit: "bao" },
-          { id: 2, name: "Cát", quantity: 30, unit: "m³" },
-          { id: 3, name: "Thép", quantity: 2000, unit: "kg" },
-        ])
-        setLoading(false)
-      } catch (err: any) {
-        console.error("Error fetching inventory:", err)
-        setError("Không thể tải dữ liệu kho hàng")
-        setLoading(false)
-      }
-    }
-
-    fetchInventory()
-  }, [])
-
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Kho hàng</CardTitle>
-          <CardDescription>Đang tải dữ liệu...</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-8 bg-gray-200 rounded animate-pulse"></div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Kho hàng</CardTitle>
-          <CardDescription className="text-red-500">{error}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="p-4 text-center">
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Thử lại
-            </button>
-          </div>
-        </CardContent>
-      </Card>
-    )
+export function InventoryList({ materials }: InventoryListProps) {
+  if (materials.length === 0) {
+    return <p className="text-muted-foreground">Không có vật tư cần nhập thêm</p>
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Kho hàng</CardTitle>
-        <CardDescription>Vật tư hiện có trong kho</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {inventory.map((item) => (
-            <div key={item.id} className="flex items-center justify-between border-b pb-2">
-              <span className="font-medium">{item.name}</span>
+    <div className="space-y-4">
+      {materials.slice(0, 5).map((material) => (
+        <div key={material.id} className="flex items-center space-x-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+            <Package className="h-5 w-5 text-blue-600" />
+          </div>
+          <div className="flex-1 space-y-1">
+            <Link href={`/dashboard/inventory/materials/${material.id}`} className="font-medium hover:underline">
+              {material.name}
+            </Link>
+            <div className="flex items-center text-sm text-muted-foreground">
+              <span className="text-red-500 font-medium">
+                Tồn kho: {material.totalStock || 0} {material.unit}
+              </span>
+              <span className="mx-2">•</span>
               <span>
-                {item.quantity} {item.unit}
+                Tối thiểu: {material.minStock || 0} {material.unit}
               </span>
             </div>
-          ))}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      ))}
+    </div>
   )
 }

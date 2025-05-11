@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -11,230 +11,182 @@ import {
   Users,
   Package,
   Truck,
+  FileText,
+  ShoppingCart,
   Settings,
   ChevronDown,
-  ChevronRight,
-  HardHatIcon as UserHardHat,
-  FileText,
-  BarChart3,
+  LogOut,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 
-interface NavItem {
+type NavItem = {
   title: string
   href: string
-  icon: React.ReactNode
-  submenu?: NavItem[]
-  expanded?: boolean
+  icon: React.ElementType
+  submenu?: {
+    title: string
+    href: string
+  }[]
 }
 
 export function Sidebar() {
   const pathname = usePathname()
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [navItems, setNavItems] = useState<NavItem[]>([
+  const router = useRouter()
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
+
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/login")
+  }
+
+  const navItems: NavItem[] = [
     {
       title: "Tổng quan",
       href: "/dashboard/overview",
-      icon: <LayoutDashboard className="h-5 w-5" />,
+      icon: LayoutDashboard,
     },
     {
       title: "Dự án",
-      href: "/dashboard/projects",
-      icon: <Building2 className="h-5 w-5" />,
+      href: "/dashboard",
+      icon: Building2,
       submenu: [
-        {
-          title: "Danh sách dự án",
-          href: "/dashboard/projectlist",
-          icon: <FileText className="h-5 w-5" />,
-        },
-        {
-          title: "Tạo dự án mới",
-          href: "/dashboard/projects/create",
-          icon: <FileText className="h-5 w-5" />,
-        },
+        { title: "Danh sách dự án", href: "/dashboard" },
+        { title: "Tiến độ dự án", href: "/dashboard/projects/timeline" },
+        { title: "Vấn đề dự án", href: "/dashboard/projects/issues" },
       ],
     },
     {
       title: "Khách hàng",
       href: "/dashboard/customers",
-      icon: <Users className="h-5 w-5" />,
+      icon: Users,
+    },
+    {
+      title: "Kho & Vật tư",
+      href: "/dashboard/inventory",
+      icon: Package,
       submenu: [
-        {
-          title: "Danh sách khách hàng",
-          href: "/dashboard/customers",
-          icon: <FileText className="h-5 w-5" />,
-        },
-        {
-          title: "Thống kê khách hàng",
-          href: "/dashboard/customers/overview",
-          icon: <BarChart3 className="h-5 w-5" />,
-        },
+        { title: "Danh mục vật tư", href: "/dashboard/inventory/materials" },
+        { title: "Quản lý kho", href: "/dashboard/inventory/warehouses" },
+        { title: "Nhập/Xuất kho", href: "/dashboard/inventory/transactions" },
+        { title: "Yêu cầu vật tư", href: "/dashboard/inventory/requests" },
+        { title: "Nhà cung cấp", href: "/dashboard/inventory/suppliers" },
       ],
     },
     {
       title: "Nhân sự",
       href: "/dashboard/hrm",
-      icon: <UserHardHat className="h-5 w-5" />,
+      icon: Users,
       submenu: [
-        {
-          title: "Tổng quan nhân sự",
-          href: "/dashboard/hrm",
-          icon: <LayoutDashboard className="h-5 w-5" />,
-        },
-        {
-          title: "Danh sách nhân viên",
-          href: "/dashboard/hrm/employees",
-          icon: <Users className="h-5 w-5" />,
-        },
-        {
-          title: "Chấm công",
-          href: "/dashboard/hrm/attendance",
-          icon: <FileText className="h-5 w-5" />,
-        },
-        {
-          title: "KPI & Đánh giá",
-          href: "/dashboard/hrm/kpi",
-          icon: <BarChart3 className="h-5 w-5" />,
-        },
+        { title: "Danh sách nhân viên", href: "/dashboard/hrm/employees" },
+        { title: "Chấm công", href: "/dashboard/hrm/attendance" },
+        { title: "Quản lý tài sản", href: "/dashboard/hrm/assets" },
       ],
     },
     {
-      title: "Kho vật tư",
-      href: "/dashboard/inventory",
-      icon: <Package className="h-5 w-5" />,
-      submenu: [
-        {
-          title: "Tổng quan kho",
-          href: "/dashboard/inventory/overview",
-          icon: <LayoutDashboard className="h-5 w-5" />,
-        },
-      ],
+      title: "Thiết bị",
+      href: "/dashboard/equipment",
+      icon: Truck,
     },
     {
-      title: "Mua sắm & Cung ứng",
+      title: "Dự toán & Báo giá",
+      href: "/dashboard/estimation",
+      icon: FileText,
+    },
+    {
+      title: "Mua sắm",
       href: "/dashboard/procurement",
-      icon: <Truck className="h-5 w-5" />,
+      icon: ShoppingCart,
     },
     {
       title: "Cài đặt",
       href: "/dashboard/settings",
-      icon: <Settings className="h-5 w-5" />,
+      icon: Settings,
     },
-  ])
+  ]
 
-  // Tự động mở rộng menu dựa trên đường dẫn hiện tại
-  useEffect(() => {
-    setNavItems((prevItems) =>
-      prevItems.map((item) => {
-        if (item.submenu) {
-          const isActive = item.submenu.some((subItem) => pathname.startsWith(subItem.href))
-          return { ...item, expanded: isActive }
-        }
-        return item
-      }),
-    )
-  }, [pathname])
-
-  const toggleSubmenu = (index: number) => {
-    setNavItems((prevItems) =>
-      prevItems.map((item, i) => {
-        if (i === index) {
-          return { ...item, expanded: !item.expanded }
-        }
-        return item
-      }),
-    )
-  }
-
-  const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed)
+  const toggleSubmenu = (title: string) => {
+    if (openSubmenu === title) {
+      setOpenSubmenu(null)
+    } else {
+      setOpenSubmenu(title)
+    }
   }
 
   return (
-    <div className={`bg-white shadow-sm transition-all duration-300 ${isCollapsed ? "w-16" : "w-64"} min-h-screen`}>
-      <div className="p-4 border-b flex justify-between items-center">
-        {!isCollapsed && <h2 className="font-semibold text-gray-800">Menu</h2>}
-        <button onClick={toggleSidebar} className={`p-1 rounded-md hover:bg-gray-100 ${isCollapsed ? "mx-auto" : ""}`}>
-          {isCollapsed ? (
-            <ChevronRight className="h-5 w-5 text-gray-500" />
-          ) : (
-            <ChevronLeft className="h-5 w-5 text-gray-500" />
-          )}
-        </button>
+    <div className="w-64 bg-white shadow-md flex flex-col h-full">
+      <div className="p-4 border-b">
+        <h1 className="text-xl font-bold text-gray-800">Kiều Gia</h1>
+        <p className="text-sm text-gray-600">Quản lý xây dựng</p>
       </div>
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+          const isSubmenuOpen = openSubmenu === item.title
 
-      <nav className="p-2">
-        <ul className="space-y-1">
-          {navItems.map((item, index) => (
-            <li key={item.title}>
+          return (
+            <div key={item.href} className="space-y-1">
               {item.submenu ? (
-                <div>
+                <>
                   <button
-                    onClick={() => toggleSubmenu(index)}
-                    className={`w-full flex items-center p-2 rounded-md hover:bg-amber-50 ${
-                      pathname.startsWith(item.href) ? "bg-amber-50 text-amber-600" : "text-gray-700"
-                    }`}
-                  >
-                    <span className="mr-3">{item.icon}</span>
-                    {!isCollapsed && (
-                      <>
-                        <span className="flex-1 text-left">{item.title}</span>
-                        {item.expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                      </>
+                    onClick={() => toggleSubmenu(item.title)}
+                    className={cn(
+                      "flex items-center justify-between w-full px-4 py-2 text-left text-gray-700 rounded-md hover:bg-gray-100",
+                      isActive && "bg-gray-100 text-indigo-600 font-medium",
                     )}
+                  >
+                    <div className="flex items-center">
+                      <item.icon className="w-5 h-5 mr-3" />
+                      {item.title}
+                    </div>
+                    <ChevronDown
+                      className={cn("w-4 h-4 transition-transform", isSubmenuOpen && "transform rotate-180")}
+                    />
                   </button>
-                  {item.expanded && !isCollapsed && (
-                    <ul className="pl-10 mt-1 space-y-1">
-                      {item.submenu.map((subItem) => (
-                        <li key={subItem.title}>
-                          <Link
-                            href={subItem.href}
-                            className={`flex items-center p-2 rounded-md hover:bg-amber-50 ${
-                              pathname === subItem.href ? "bg-amber-50 text-amber-600" : "text-gray-700"
-                            }`}
-                          >
-                            <span className="mr-3">{subItem.icon}</span>
-                            <span>{subItem.title}</span>
-                          </Link>
-                        </li>
+                  {isSubmenuOpen && (
+                    <div className="pl-10 space-y-1 mt-1">
+                      {item.submenu.map((subitem) => (
+                        <Link
+                          key={subitem.href}
+                          href={subitem.href}
+                          className={cn(
+                            "block px-4 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100",
+                            pathname === subitem.href && "bg-gray-100 text-indigo-600 font-medium",
+                          )}
+                        >
+                          {subitem.title}
+                        </Link>
                       ))}
-                    </ul>
+                    </div>
                   )}
-                </div>
+                </>
               ) : (
                 <Link
                   href={item.href}
-                  className={`flex items-center p-2 rounded-md hover:bg-amber-50 ${
-                    pathname === item.href ? "bg-amber-50 text-amber-600" : "text-gray-700"
-                  }`}
+                  className={cn(
+                    "flex items-center px-4 py-2 text-gray-700 rounded-md hover:bg-gray-100",
+                    isActive && "bg-gray-100 text-indigo-600 font-medium",
+                  )}
                 >
-                  <span className="mr-3">{item.icon}</span>
-                  {!isCollapsed && <span>{item.title}</span>}
+                  <item.icon className="w-5 h-5 mr-3" />
+                  {item.title}
                 </Link>
               )}
-            </li>
-          ))}
-        </ul>
+            </div>
+          )
+        })}
       </nav>
+      <div className="p-4 border-t">
+        <button
+          onClick={handleLogout}
+          className="flex items-center w-full px-4 py-2 text-gray-700 rounded-md hover:bg-gray-100"
+        >
+          <LogOut className="w-5 h-5 mr-3" />
+          Đăng xuất
+        </button>
+      </div>
     </div>
-  )
-}
-
-// Thêm icon ChevronLeft
-function ChevronLeft(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="m15 18-6-6 6-6" />
-    </svg>
   )
 }

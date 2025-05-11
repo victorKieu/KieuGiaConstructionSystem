@@ -1,27 +1,42 @@
+import Link from "next/link"
+import { Plus } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { MainLayout } from "@/components/layout/main-layout"
 import { ProjectList } from "@/components/dashboard/project-list"
 import { getProjects } from "@/lib/actions/project-actions"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { PlusCircle } from "lucide-react"
 
+export const metadata = {
+  title: "Danh sách dự án | Kieu Gia Construction",
+  description: "Quản lý thông tin dự án xây dựng",
+}
+
+// Đảm bảo trang luôn được render động
 export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 export default async function ProjectListPage() {
+  // Lấy dữ liệu dự án từ Supabase
   const result = await getProjects()
   const projects = result.success ? result.data : []
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold tracking-tight">Quản lý dự án</h1>
-        <Link href="/dashboard/projects/create">
-          <Button className="bg-amber-500 hover:bg-amber-600">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Thêm dự án mới
+    <MainLayout>
+      <div className="flex flex-col gap-5 p-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Danh sách dự án</h1>
+            <p className="text-muted-foreground">Quản lý thông tin dự án xây dựng</p>
+          </div>
+          <Button asChild>
+            <Link href="/dashboard/projects/create">
+              <Plus className="mr-2 h-4 w-4" />
+              Thêm dự án mới
+            </Link>
           </Button>
-        </Link>
+        </div>
+
+        <ProjectList projects={projects} />
       </div>
-      <ProjectList projects={projects || []} />
-    </div>
+    </MainLayout>
   )
 }

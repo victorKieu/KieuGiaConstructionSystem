@@ -1,72 +1,66 @@
-import Link from "next/link"
+import Image from "next/image"
+import LoginForm from "@/components/auth/login-form"
+import { isSupabaseReady } from "@/lib/supabase/client"
 
 export default function LoginPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-amber-600">Kieu Gia Construction</h1>
-          <p className="text-gray-600">Đăng nhập vào hệ thống</p>
+  // Kiểm tra xem Supabase có sẵn sàng không
+  if (typeof window === "undefined" && !isSupabaseReady()) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+          <p className="font-bold">Cảnh báo</p>
+          <p>Không thể kết nối đến Supabase. Vui lòng kiểm tra biến môi trường.</p>
         </div>
+      </div>
+    )
+  }
 
-        <form className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-              placeholder="your.email@example.com"
-            />
+  return (
+    <div className="flex min-h-screen">
+      {/* Form đăng nhập */}
+      <div className="flex-1 flex flex-col items-center justify-center p-4 bg-white">
+        <div className="w-full max-w-md">
+          <div className="flex justify-center mb-6">
+            <Image src="/logo-kieu-gia.png" alt="Kieu Gia Logo" width={150} height={150} className="mb-4" />
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Mật khẩu
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-              placeholder="••••••••"
-            />
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-800">Kieu Gia Construction</h1>
+            <p className="text-gray-600 mt-1">Đăng Nhập Hệ Thống</p>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                Ghi nhớ đăng nhập
-              </label>
+          <LoginForm />
+
+          <div className="text-center mt-8 text-gray-600 text-sm">
+            <p>Nâng Tầm Cuộc Sống, Giá Trị Tương Lai</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar thông tin */}
+      <div className="hidden lg:flex lg:flex-col lg:w-1/2 bg-gray-800 text-white p-10">
+        <div className="flex-1 flex flex-col justify-center">
+          <h2 className="text-3xl font-bold mb-4">Kieu Gia Construction</h2>
+          <p className="text-gray-300 mb-10">Hệ thống quản lý toàn diện cho công ty xây dựng hàng đầu Việt Nam</p>
+
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Tầm nhìn:</h3>
+              <p className="text-gray-300">
+                Trở thành công ty tư vấn và xây dựng hàng đầu tại Việt Nam, nổi bật với chất lượng công trình và dịch vụ
+                khách hàng xuất sắc.
+              </p>
             </div>
 
-            <div className="text-sm">
-              <a href="#" className="font-medium text-amber-600 hover:text-amber-500">
-                Quên mật khẩu?
-              </a>
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Sứ mệnh:</h3>
+              <p className="text-gray-300">
+                Đem đến giải pháp xây dựng tối ưu, an toàn và bền vững cho khách hàng, góp phần phát triển hạ tầng và đô
+                thị Việt Nam.
+              </p>
             </div>
           </div>
-
-          <div>
-            <Link
-              href="/dashboard"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
-            >
-              Đăng nhập
-            </Link>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   )

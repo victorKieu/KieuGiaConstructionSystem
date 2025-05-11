@@ -7,7 +7,6 @@ import { MainLayout } from "@/components/layout/main-layout"
 import { getMaterials, getWarehouses } from "@/lib/actions/inventory-actions"
 
 export const dynamic = "force-dynamic"
-export const revalidate = 0
 
 export const metadata = {
   title: "Tổng quan Kho vật tư",

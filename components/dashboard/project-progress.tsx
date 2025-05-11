@@ -1,96 +1,36 @@
-"use client"
+import Link from "next/link"
+import { ProgressBar } from "./project-progress-bar"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { useState, useEffect } from "react"
+interface ProjectProgressProps {
+  projects: any[]
+}
 
-export function ProjectProgress() {
-  const [projects, setProjects] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export function ProjectProgress({ projects }: ProjectProgressProps) {
+  // Sắp xếp dự án theo tiến độ giảm dần
+  const sortedProjects = [...projects].sort((a, b) => (b.progress || 0) - (a.progress || 0))
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setLoading(true)
-        // Sử dụng dữ liệu mẫu thay vì gọi API để tránh lỗi
-        setProjects([
-          { id: 1, name: "Dự án A", progress: 75 },
-          { id: 2, name: "Dự án B", progress: 45 },
-          { id: 3, name: "Dự án C", progress: 90 },
-        ])
-        setLoading(false)
-      } catch (err: any) {
-        console.error("Error fetching projects:", err)
-        setError("Không thể tải dữ liệu dự án")
-        setLoading(false)
-      }
-    }
-
-    fetchProjects()
-  }, [])
-
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Tiến độ dự án</CardTitle>
-          <CardDescription>Đang tải dữ liệu...</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="space-y-2">
-                <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse"></div>
-                <div className="h-2 bg-gray-200 rounded animate-pulse"></div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Tiến độ dự án</CardTitle>
-          <CardDescription className="text-red-500">{error}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="p-4 text-center">
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Thử lại
-            </button>
-          </div>
-        </CardContent>
-      </Card>
-    )
+  if (projects.length === 0) {
+    return <p className="text-muted-foreground">Không có dự án đang thực hiện</p>
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Tiến độ dự án</CardTitle>
-        <CardDescription>Theo dõi tiến độ các dự án đang thực hiện</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {projects.map((project) => (
-            <div key={project.id} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{project.name}</span>
-                <span className="text-sm text-gray-500">{project.progress}%</span>
-              </div>
-              <Progress value={project.progress} className="h-2" />
-            </div>
-          ))}
+    <div className="space-y-6">
+      {sortedProjects.slice(0, 5).map((project) => (
+        <div key={project.id} className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Link href={`/dashboard/projects/${project.id}`} className="font-medium hover:underline">
+              {project.name}
+            </Link>
+            <span className="text-sm text-muted-foreground">{project.code}</span>
+          </div>
+          <ProgressBar
+            label="Tiến độ"
+            value={project.progress || 0}
+            color="#3498db"
+            description={`${project.progress || 0}%`}
+          />
         </div>
-      </CardContent>
-    </Card>
+      ))}
+    </div>
   )
 }

@@ -1,94 +1,92 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
+import { useEffect, useRef } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-interface StatusData {
+interface ChartData {
   status: string
   count: number
   color: string
 }
 
 interface ProjectStatusChartProps {
-  data: StatusData[]
+  data: ChartData[]
   title: string
 }
 
 export function ProjectStatusChart({ data, title }: ProjectStatusChartProps) {
-  const [chartData, setChartData] = useState<StatusData[]>([])
-  const [totalProjects, setTotalProjects] = useState(0)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    if (data && data.length > 0) {
-      setChartData(data)
-      const total = data.reduce((sum, item) => sum + item.count, 0)
-      setTotalProjects(total)
-    }
+    if (!canvasRef.current || !data || data.length === 0) return
+
+    const ctx = canvasRef.current.getContext("2d")
+    if (!ctx) return
+
+    // Vẽ biểu đồ tròn
+    const total = data.reduce((sum, item) => sum + item.count, 0)
+    let startAngle = 0
+
+    // Xóa canvas
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+
+    // Vẽ biểu đồ
+    data.forEach((item) => {
+      const sliceAngle = (2 * Math.PI * item.count) / total
+
+      ctx.beginPath()
+      ctx.moveTo(100, 100)
+      ctx.arc(100, 100, 80, startAngle, startAngle + sliceAngle)
+      ctx.fillStyle = item.color
+      ctx.fill()
+
+      startAngle += sliceAngle
+    })
+
+    // Vẽ hình tròn trắng ở giữa để tạo hiệu ứng donut
+    ctx.beginPath()
+    ctx.arc(100, 100, 50, 0, 2 * Math.PI)
+    ctx.fillStyle = "white"
+    ctx.fill()
+
+    // Vẽ chú thích
+    const legendY = 220
+    data.forEach((item, index) => {
+      const x = 20
+      const y = legendY + index * 25
+
+      // Vẽ ô màu
+      ctx.fillStyle = item.color
+      ctx.fillRect(x, y, 15, 15)
+
+      // Vẽ text
+      ctx.fillStyle = "#000"
+      ctx.font = "14px Arial"
+      ctx.fillText(`${item.status} (${item.count})`, x + 25, y + 12)
+    })
   }, [data])
 
-  if (!chartData || chartData.length === 0) {
+  if (!data || data.length === 0) {
     return (
-      <div className="bg-emerald-500 rounded-lg p-4 h-[200px] flex items-center justify-center">
-        <p className="text-white">Không có dữ liệu</p>
-      </div>
-    )
-  }
-
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-    const RADIAN = Math.PI / 180
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5
-    const x = cx + radius * Math.cos(-midAngle * RADIAN)
-    const y = cy + radius * Math.sin(-midAngle * RADIAN)
-
-    return (
-      <text x={x} y={y} fill="white" textAnchor={x > cx ? "start" : "end"} dominantBaseline="central">
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center h-[300px]">
+          <p className="text-muted-foreground">Không có dữ liệu</p>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <div className="bg-emerald-500 rounded-lg p-4 h-[200px]">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-white font-medium">{title}</h3>
-      </div>
-      <div className="flex h-[150px]">
-        <ResponsiveContainer width="50%" height="100%">
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={renderCustomizedLabel}
-              outerRadius={60}
-              fill="#8884d8"
-              dataKey="count"
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="font-bold text-white">
-              {totalProjects}
-            </text>
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="w-1/2 flex flex-col justify-center">
-          {chartData.map((item, index) => (
-            <div key={index} className="flex items-center justify-between mb-1">
-              <div className="flex items-center">
-                <div className="w-3 h-3 mr-2" style={{ backgroundColor: item.color }}></div>
-                <span className="text-white text-xs">{item.status}</span>
-              </div>
-              <div className="flex items-center">
-                <span className="text-white text-xs mr-1">{item.count}</span>
-                <span className="text-white text-xs">({((item.count / totalProjects) * 100).toFixed(0)}%)</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex justify-center">
+        <canvas ref={canvasRef} width="200" height="300" />
+      </CardContent>
+    </Card>
   )
 }

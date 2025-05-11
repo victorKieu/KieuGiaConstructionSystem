@@ -6,9 +6,6 @@ import { ProjectProgress } from "@/components/dashboard/project-progress"
 import { RecentActivities } from "@/components/dashboard/recent-activities"
 import { InventoryList } from "@/components/dashboard/inventory-list"
 
-export const dynamic = "force-dynamic"
-export const revalidate = 0
-
 export const metadata: Metadata = {
   title: "Tổng quan | Kieu Gia Construction",
   description: "Tổng quan về hiệu suất hoạt động của công ty",

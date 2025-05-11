@@ -1,36 +1,20 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-// Danh sách các đường dẫn không cần xác thực
-const publicPaths = ["/", "/login", "/api/auth", "/api/maintenance", "/error"]
-
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  // Lấy đường dẫn từ URL
+  const path = request.nextUrl.pathname
 
-  // Kiểm tra xem đường dẫn có nằm trong danh sách công khai không
-  const isPublicPath = publicPaths.some((path) => pathname.startsWith(path))
-
-  // Nếu đường dẫn không công khai, kiểm tra xem người dùng đã đăng nhập chưa
-  if (!isPublicPath) {
-    // Trong môi trường production thực tế, bạn sẽ kiểm tra session ở đây
-    // Nhưng hiện tại, chúng ta sẽ bỏ qua để tránh lỗi build
-
-    // Chuyển hướng tạm thời đến trang đăng nhập
+  // Nếu đường dẫn là trang chủ, chuyển hướng đến trang đăng nhập
+  if (path === "/") {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
+  // Xử lý các route khác như bình thường
   return NextResponse.next()
 }
 
+// Chỉ áp dụng middleware cho các route cụ thể
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public (public files)
-     */
-    "/((?!_next/static|_next/image|favicon.ico|public).*)",
-  ],
+  matcher: ["/", "/api/:path*"],
 }

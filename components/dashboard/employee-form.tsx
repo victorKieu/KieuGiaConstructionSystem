@@ -152,6 +152,7 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
       const result = await uploadAvatarAction(formData)
 
       if (result.error) {
+        console.error("Lỗi tải lên:", result.error)
         toast({
           title: "Lỗi tải lên",
           description: result.error,
@@ -162,6 +163,7 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
 
       if (result.success && result.url) {
         // Cập nhật URL hình ảnh
+        console.log("URL hình ảnh:", result.url)
         setAvatarUrl(result.url)
         form.setValue("avatar_url", result.url)
 
@@ -174,7 +176,7 @@ export function EmployeeForm({ employee, action }: EmployeeFormProps) {
       console.error("Lỗi khi tải lên file:", error)
       toast({
         title: "Lỗi tải lên",
-        description: "Đã xảy ra lỗi khi tải lên hình ảnh",
+        description: "Đã xảy ra lỗi khi tải lên hình ảnh. Vui lòng kiểm tra console để biết thêm chi tiết.",
         variant: "destructive",
       })
     } finally {

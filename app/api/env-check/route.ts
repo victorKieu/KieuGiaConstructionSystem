@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server"
 
-export const dynamic = "force-dynamic"
-
 export async function GET() {
   // Kiểm tra các biến môi trường cần thiết
   const envVars = {

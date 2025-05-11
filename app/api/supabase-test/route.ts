@@ -1,36 +1,47 @@
 import { NextResponse } from "next/server"
-
-export const dynamic = "force-dynamic"
+import { supabase } from "@/lib/supabase/client"
 
 export async function GET() {
   try {
-    // Kiểm tra biến môi trường
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    // Kiểm tra kết nối Supabase
+    const { data, error } = await supabase.from("projects").select("count").single()
 
-    if (!supabaseUrl || !supabaseKey) {
+    if (error) {
+      console.error("Supabase connection error:", error)
       return NextResponse.json(
         {
-          error: "Missing Supabase environment variables",
-          variables: {
-            supabaseUrl: !!supabaseUrl,
-            supabaseKey: !!supabaseKey,
+          success: false,
+          error: error.message,
+          details: {
+            url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+            hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
           },
         },
         { status: 500 },
       )
     }
 
-    // Trả về thông tin biến môi trường (không hiển thị giá trị thực)
     return NextResponse.json({
-      status: "Environment variables available",
-      variables: {
-        supabaseUrl: !!supabaseUrl,
-        supabaseKey: !!supabaseKey,
+      success: true,
+      message: "Kết nối Supabase thành công",
+      data,
+      details: {
+        url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       },
     })
   } catch (error) {
-    console.error("Error in supabase-test route:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Error testing Supabase connection:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Lỗi khi kiểm tra kết nối Supabase",
+        details: {
+          url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+          hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        },
+      },
+      { status: 500 },
+    )
   }
 }
