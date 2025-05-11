@@ -1,4 +1,5 @@
-import { isSupabaseReady } from "@/lib/supabase/client"
+export const dynamic = "force-dynamic"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -7,18 +8,6 @@ import { Search, Plus, Filter } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function UsersPage() {
-  // Kiểm tra xem Supabase có sẵn sàng không
-  if (typeof window === "undefined" && !isSupabaseReady()) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-          <p className="font-bold">Cảnh báo</p>
-          <p>Không thể kết nối đến Supabase. Vui lòng kiểm tra biến môi trường.</p>
-        </div>
-      </div>
-    )
-  }
-
   // Dữ liệu mẫu cho người dùng
   const users = [
     {
