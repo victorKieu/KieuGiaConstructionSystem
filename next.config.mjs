@@ -14,8 +14,11 @@ const nextConfig = {
     unoptimized: true,
   },
   
-  // Tắt SWC Minify để tránh lỗi
-  swcMinify: false,
+  // Loại bỏ swcMinify vì không còn được hỗ trợ trong Next.js 15
+  experimental: {
+    // Loại bỏ serverComponentsExternalPackages và turbotrace
+    disableOptimizedLoading: true
+  }
 }
 
 export default nextConfig
