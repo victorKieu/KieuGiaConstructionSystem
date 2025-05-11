@@ -35,7 +35,16 @@ const nextConfig = {
         ],
       },
     ]
-  }
+  },
+  
+  // Thêm cấu hình để giải quyết lỗi copy traced files
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Cấu hình để tránh lỗi khi copy traced files
+      config.optimization.nodeEnv = false;
+    }
+    return config;
+  },
 }
 
 export default nextConfig

@@ -1,27 +1,28 @@
 "use client"
+
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PerformanceChart } from "@/components/dashboard/performance-chart"
 import { ProjectProgress } from "@/components/dashboard/project-progress"
 import { RecentActivities } from "@/components/dashboard/recent-activities"
 import { InventoryList } from "@/components/dashboard/inventory-list"
-import { useEffect, useState } from "react"
 
 export default function OverviewPageClient() {
-  // Thêm state để kiểm soát việc render
-  const [isClient, setIsClient] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
 
-  // Chỉ render sau khi component được mount ở client
   useEffect(() => {
-    setIsClient(true)
+    setIsLoaded(true)
   }, [])
 
-  // Nếu không phải ở client, hiển thị placeholder
-  if (!isClient) {
+  if (!isLoaded) {
     return (
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <div className="flex items-center justify-between space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight">Đang tải...</h2>
+      <div className="flex-1 p-8">
+        <div className="h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold mb-2">Đang tải dữ liệu...</h2>
+            <p className="text-muted-foreground">Vui lòng đợi trong giây lát</p>
+          </div>
         </div>
       </div>
     )
