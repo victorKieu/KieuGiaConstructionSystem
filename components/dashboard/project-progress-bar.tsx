@@ -22,3 +22,6 @@ export function ProjectProgressBar({ progress }: ProjectProgressBarProps) {
     </div>
   )
 }
+
+// Thêm export cho ProgressBar
+export const ProgressBar = ProjectProgressBar

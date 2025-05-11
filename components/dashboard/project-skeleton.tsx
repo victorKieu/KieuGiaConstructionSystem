@@ -53,3 +53,6 @@ export function ProjectListSkeleton() {
     </div>
   )
 }
+
+// Thêm export cho ProjectSkeleton
+export const ProjectSkeleton = ProjectListSkeleton

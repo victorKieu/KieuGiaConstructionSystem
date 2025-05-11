@@ -3,42 +3,35 @@ import { createClient } from "@/lib/supabase/client"
 
 export async function GET() {
   try {
-    // Tạo client Supabase
+    // Sử dụng createClient thay vì testSupabaseConnection
     const supabase = createClient()
-
-    // Kiểm tra kết nối bằng cách thực hiện một truy vấn đơn giản
-    const { data, error } = await supabase.from("projects").select("count").single()
+    const { data, error } = await supabase.from("test").select("*").limit(1)
 
     if (error) {
-      console.error("Lỗi kết nối Supabase:", error.message)
-      return NextResponse.json({
-        success: false,
-        error: error.message,
-        details: {
-          url: process.env.NEXT_PUBLIC_SUPABASE_URL ? "Đã cấu hình" : "Chưa cấu hình",
-          anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Đã cấu hình" : "Chưa cấu hình",
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Lỗi kết nối: ${error.message}`,
+          error,
         },
-      })
+        { status: 500 },
+      )
     }
 
     return NextResponse.json({
       success: true,
-      message: "Kết nối Supabase thành công",
+      message: "Kết nối thành công",
       data,
-      details: {
-        url: process.env.NEXT_PUBLIC_SUPABASE_URL ? "Đã cấu hình" : "Chưa cấu hình",
-        anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Đã cấu hình" : "Chưa cấu hình",
-      },
     })
   } catch (error) {
-    console.error("Lỗi kiểm tra kết nối Supabase:", error)
-    return NextResponse.json({
-      success: false,
-      error: "Lỗi không xác định khi kiểm tra kết nối Supabase",
-      details: {
-        url: process.env.NEXT_PUBLIC_SUPABASE_URL ? "Đã cấu hình" : "Chưa cấu hình",
-        anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Đã cấu hình" : "Chưa cấu hình",
+    console.error("Error in supabase-check API:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        message: `Lỗi không xác định: ${error instanceof Error ? error.message : String(error)}`,
+        error,
       },
-    })
+      { status: 500 },
+    )
   }
 }

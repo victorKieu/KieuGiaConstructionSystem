@@ -55,3 +55,31 @@ export const supabase = isBuildProcess
 export function isSupabaseReady() {
   return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 }
+
+// Thêm hàm testSupabaseConnection
+export async function testSupabaseConnection() {
+  try {
+    const client = createClient()
+    const { data, error } = await client.from("test").select("*").limit(1)
+
+    if (error) {
+      return {
+        success: false,
+        message: `Lỗi kết nối: ${error.message}`,
+        error,
+      }
+    }
+
+    return {
+      success: true,
+      message: "Kết nối thành công",
+      data,
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: `Lỗi không xác định: ${error instanceof Error ? error.message : String(error)}`,
+      error,
+    }
+  }
+}
