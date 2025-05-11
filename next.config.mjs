@@ -14,13 +14,13 @@ const nextConfig = {
     unoptimized: true,
   },
   
-  // Cấu hình cho Next.js 15
-  experimental: {
-    disableOptimizedLoading: true
-  },
+  // Tắt SWC Minify để tránh lỗi
+  swcMinify: false,
   
-  // Thêm serverExternalPackages thay vì serverComponentsExternalPackages
-  serverExternalPackages: ['@supabase/supabase-js']
+  experimental: {
+    serverComponentsExternalPackages: ['@supabase/supabase-js'],
+    disableOptimizedLoading: true
+  }
 }
 
 export default nextConfig
