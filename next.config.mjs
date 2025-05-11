@@ -14,11 +14,13 @@ const nextConfig = {
     unoptimized: true,
   },
   
-  // Loại bỏ swcMinify vì không còn được hỗ trợ trong Next.js 15
+  // Cấu hình cho Next.js 15
   experimental: {
-    // Loại bỏ serverComponentsExternalPackages và turbotrace
     disableOptimizedLoading: true
-  }
+  },
+  
+  // Thêm serverExternalPackages thay vì serverComponentsExternalPackages
+  serverExternalPackages: ['@supabase/supabase-js']
 }
 
 export default nextConfig
